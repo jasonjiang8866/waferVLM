@@ -47,12 +47,14 @@ AUTHORIZATION_EXPIRES = 1794614400  # 2026-11-14 00:00 UTC; before ledger expiry
 DISK_GB = 60
 DISK_HOURLY = DISK_GB * 0.10 / (28 * 24)
 CLEANUP_SECONDS = 600
-MAX_WORK_SECONDS = 5400  # startup, data, 8-step smoke, 100-step baseline, retrieval
+MAX_WORK_SECONDS = 180 * 60  # per attempt; below the Actions job limit
+APPROVED_TOTAL_SECONDS = 500 * 60
+PRIOR_RUNTIME_RESERVE_SECONDS = 70 * 60  # first attempt: 3988.653 s, rounded up
 MAX_RATE = max(GPU_CAPS.values())
 MAX_ARCHIVE = 2 * 1024**3
 MARKER = "runpod-authorization-" + AUTHORIZATION
-RECONCILED_MARKERS = {}
-PRIOR_SPEND_RESERVE = 0.0
+RECONCILED_MARKERS = {"42346201550": 13564060530}
+PRIOR_SPEND_RESERVE = 0.80  # verified first-attempt estimate $0.774385, rounded up
 APPROVED_USD = 20.0
 
 
@@ -76,14 +78,17 @@ def quote(rate):
     if not finite(rate, 0.001) or rate > MAX_RATE:
         raise ValueError("GPU quote exceeds authorized maximum")
     hourly = rate + DISK_HOURLY
-    work = min(MAX_WORK_SECONDS, math.floor((APPROVED_USD - PRIOR_SPEND_RESERVE - 2) / hourly * 3600) - CLEANUP_SECONDS)
+    work = min(MAX_WORK_SECONDS, APPROVED_TOTAL_SECONDS - PRIOR_RUNTIME_RESERVE_SECONDS - CLEANUP_SECONDS, math.floor((APPROVED_USD - PRIOR_SPEND_RESERVE - 2) / hourly * 3600) - CLEANUP_SECONDS)
     if work < 600:
-        raise ValueError("Insufficient budget")
+        raise ValueError("Insufficient budget or aggregate runtime")
     estimate = PRIOR_SPEND_RESERVE + hourly * (work + CLEANUP_SECONDS) / 3600
     return {"gpu_hourly_usd": rate, "disk_hourly_usd": DISK_HOURLY,
             "work_seconds": work, "cleanup_seconds": CLEANUP_SECONDS,
             "planned_total_usd": estimate, "approved_usd": APPROVED_USD,
             "prior_spend_reserve_usd": PRIOR_SPEND_RESERVE,
+            "prior_runtime_reserve_seconds": PRIOR_RUNTIME_RESERVE_SECONDS,
+            "approved_total_seconds": APPROVED_TOTAL_SECONDS,
+            "planned_total_seconds": PRIOR_RUNTIME_RESERVE_SECONDS + work + CLEANUP_SECONDS,
             "unallocated_reserve_usd": APPROVED_USD - estimate,
             "transfer_usd": 0, "storage_gb": DISK_GB,
             "pricing_source": "https://docs.runpod.io/pods/pricing",
@@ -313,14 +318,16 @@ def cleanup(api):
                         elapsed_billing_bound_s=elapsed,
                         estimated_total_usd=estimate,
                         within_budget=estimate <= APPROVED_USD,
+                        estimated_total_seconds=state["cost"].get("prior_runtime_reserve_seconds", 0) + elapsed,
+                        within_runtime=state["cost"].get("prior_runtime_reserve_seconds", 0) + elapsed <= APPROVED_TOTAL_SECONDS,
                         persistent_volumes_created=False,
                         cost_basis="conservative_intent_to_absence_estimate_not_invoice",
                     )
                 else:
                     evidence["cost"] = "unverified_no_local_intent"
                 save("cleanup.json", evidence)
-                if evidence.get("within_budget") is False:
-                    raise RuntimeError("Estimated spend exceeded authorization")
+                if evidence.get("within_budget") is False or evidence.get("within_runtime") is False:
+                    raise RuntimeError("Estimated spend or runtime exceeded authorization")
                 return
         else:
             absent_checks = 0
@@ -491,6 +498,7 @@ def launch(api):
         )
         url = "https://" + pod_id + "-8888.proxy.runpod.net"
         last_phase = None
+        last_progress = None
         next_inventory = time.time() + 60
         worker_seen = False
         while time.time() < deadline - 35:
@@ -512,6 +520,13 @@ def launch(api):
             if phase != last_phase and phase in {"starting", "data", "smoke", "baseline"}:
                 print("Worker phase: " + phase, flush=True)
                 last_phase = phase
+            progress = result.get("progress", {})
+            step, total = progress.get("optimizer_step"), progress.get("optimizer_steps")
+            if (phase in {"smoke", "baseline"} and type(step) is int and type(total) is int
+                    and total == (8 if phase == "smoke" else 100) and 0 <= step <= total
+                    and (phase, step) != last_progress):
+                print(f"Training progress: {phase} optimizer step {step}/{total}", flush=True)
+                last_progress = (phase, step)
             if result.get("status") in {"accepted", "rejected", "partial"}:
                 # Worker returns only explicit evidence fields, never its environment.
                 save("result.json", result)

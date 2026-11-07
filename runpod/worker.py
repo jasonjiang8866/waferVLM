@@ -3,6 +3,7 @@ import hashlib
 import hmac
 import json
 import os
+import re
 import signal
 import subprocess
 import sys
@@ -17,6 +18,7 @@ OUT = Path('/workspace/wafer-results')
 ARCHIVE = Path('/workspace/wafer-results.tar.gz')
 RESULT = {'status': 'running', 'phase': 'starting'}
 TOKEN = ''
+PROFILE_LIMITS = [('smoke', 8, 1800), ('baseline', 100, 7200)]
 
 
 def digest(path):
@@ -31,6 +33,28 @@ def write(name, data):
     (OUT / name).write_text(json.dumps(data, indent=2, allow_nan=False))
 
 
+def progress_snapshot():
+    """Bounded numeric telemetry only; never expose raw subprocess logs."""
+    snapshot = dict(RESULT)
+    phase = snapshot.get('phase')
+    if snapshot.get('status') != 'running' or phase not in {'smoke', 'baseline'}:
+        return snapshot
+    total = 8 if phase == 'smoke' else 100
+    try:
+        with (OUT / (phase + '.log')).open('rb') as log:
+            log.seek(0, 2)
+            log.seek(max(0, log.tell() - 65536))
+            tail = log.read(65536).decode('utf-8', errors='replace')
+        # Trainer tqdm uses the optimizer-step total; eval has 160 samples.
+        matches = re.findall(r'(?<![0-9])([0-9]+)/' + str(total) + r'(?=\s|\[)', tail)
+        steps = [int(x) for x in matches if 0 <= int(x) <= total]
+        if steps:
+            snapshot['progress'] = {'optimizer_step': max(steps), 'optimizer_steps': total}
+    except OSError:
+        pass  # Missing telemetry must never terminate a healthy workload.
+    return snapshot
+
+
 class Handler(BaseHTTPRequestHandler):
     def log_message(self, *args):
         pass
@@ -40,7 +64,7 @@ class Handler(BaseHTTPRequestHandler):
             self.send_error(403)
             return
         if self.path == '/result':
-            data = json.dumps(RESULT, allow_nan=False).encode()
+            data = json.dumps(progress_snapshot(), allow_nan=False).encode()
             self.send_response(200)
             self.send_header('Content-Type', 'application/json')
             self.send_header('Content-Length', str(len(data)))
@@ -79,6 +103,7 @@ def work():
               'image_digest': os.environ['WAFERVLM_IMAGE_DIGEST']})
         environment = {k: v for k, v in os.environ.items()
                        if k not in {'WAFER_RESULT_TOKEN', 'RUNPOD_API_KEY', 'GH_TOKEN', 'GITHUB_TOKEN'}}
+        environment['PYTHONUNBUFFERED'] = '1'
         def run(phase, args, cap):
             nonlocal child
             RESULT['phase'] = phase
@@ -106,7 +131,7 @@ def work():
         if digest(Path(dataset) / 'dataset.json') != os.environ['WAFER_DATASET_SHA']:
             raise ValueError('dataset_protocol_mismatch')
         write('acquisition.json', json.loads((Path(dataset) / 'acquisition.json').read_text()))
-        for profile, steps, seconds in [('smoke', 8, 1800), ('baseline', 100, 3000)]:
+        for profile, steps, seconds in PROFILE_LIMITS:
             run(profile, ['scripts/run_experiment.py', '--dataset', dataset,
                 '--output', str(OUT / profile), '--profile', profile,
                 '--timeout-seconds', str(seconds)], seconds + 30)
