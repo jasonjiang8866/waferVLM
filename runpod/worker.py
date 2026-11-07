@@ -37,19 +37,20 @@ def progress_snapshot():
     """Bounded numeric telemetry only; never expose raw subprocess logs."""
     snapshot = dict(RESULT)
     phase = snapshot.get('phase')
-    if snapshot.get('status') != 'running' or phase not in {'smoke', 'baseline'}:
+    if snapshot.get('status') != 'running' or phase not in {'smoke', 'baseline', 'continuation'}:
         return snapshot
-    total = 8 if phase == 'smoke' else 100
+    totals = [8] if phase == 'smoke' else [100] if phase == 'baseline' else [150, 200]
     try:
         with (OUT / (phase + '.log')).open('rb') as log:
             log.seek(0, 2)
             log.seek(max(0, log.tell() - 65536))
             tail = log.read(65536).decode('utf-8', errors='replace')
-        # Trainer tqdm uses the optimizer-step total; eval has 160 samples.
-        matches = re.findall(r'(?<![0-9])([0-9]+)/' + str(total) + r'(?=\s|\[)', tail)
-        steps = [int(x) for x in matches if 0 <= int(x) <= total]
-        if steps:
-            snapshot['progress'] = {'optimizer_step': max(steps), 'optimizer_steps': total}
+        for total in reversed(totals):
+            matches = re.findall(r'(?<![0-9])([0-9]+)/' + str(total) + r'(?=\s|\[)', tail)
+            steps = [int(x) for x in matches if 0 <= int(x) <= total]
+            if steps:
+                snapshot['progress'] = {'optimizer_step': max(steps), 'optimizer_steps': total}
+                break
     except OSError:
         pass  # Missing telemetry must never terminate a healthy workload.
     return snapshot
@@ -92,7 +93,7 @@ def work():
         OUT.mkdir(parents=True, exist_ok=False)  # restart must not rerun training
         if os.environ.get('WAFERVLM_SOURCE_SHA') != result['source_sha']:
             raise ValueError('image_source_mismatch')
-        if digest(ROOT / 'configs/baseline.json') != result['config_sha256']:
+        if digest(ROOT / 'configs/continuation.json') != result['config_sha256']:
             raise ValueError('configuration_mismatch')
         import torch
         if not torch.cuda.is_available() or not torch.cuda.is_bf16_supported():
@@ -131,15 +132,16 @@ def work():
         if digest(Path(dataset) / 'dataset.json') != os.environ['WAFER_DATASET_SHA']:
             raise ValueError('dataset_protocol_mismatch')
         write('acquisition.json', json.loads((Path(dataset) / 'acquisition.json').read_text()))
-        for profile, steps, seconds in PROFILE_LIMITS:
-            run(profile, ['scripts/run_experiment.py', '--dataset', dataset,
-                '--output', str(OUT / profile), '--profile', profile,
-                '--timeout-seconds', str(seconds)], seconds + 30)
-            state = json.loads((OUT / profile / 'status.json').read_text())
-            training = json.loads((OUT / profile / 'train/training.json').read_text())
-            if state['status'] != 'completed' or training['gradient_checks'] != steps or training['nonzero_gradient_checks'] < 1:
+        run('continuation', ['scripts/run_continuation.py', '--dataset', dataset,
+            '--output', str(OUT / 'continuation'), '--timeout-seconds', '9600'], 9630)
+        state = json.loads((OUT / 'continuation/status.json').read_text())
+        if state['status'] != 'completed' or state['additional_steps'] != 100:
+            raise ValueError('continuation_acceptance_failed')
+        for step in (150, 200):
+            tr = json.loads((OUT / f'continuation/step{step}/training.json').read_text())
+            if tr['gradient_checks'] != 50 or tr['nonzero_gradient_checks'] < 1:
                 raise ValueError('training_acceptance_failed')
-            result['profiles'].append(profile)
+        result['profiles'] = ['continuation']
         # Accepted means execution/integrity, not a claim of improved quality.
         result.update(status='accepted', quality_accepted=False)
     except Exception as exc:

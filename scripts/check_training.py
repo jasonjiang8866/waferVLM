@@ -16,7 +16,7 @@ from transformers import AutoConfig, AutoProcessor, Qwen3_5ForConditionalGenerat
 
 from wafervlm.core import LABELS, sha256_file
 from wafervlm.data import prepare
-from wafervlm.experiment import train
+from wafervlm.experiment import train, evaluate
 from wafervlm.modeling import MODEL_ID, MODEL_REVISION
 
 
@@ -57,6 +57,25 @@ def main():
         prepare(pkl, root / "data", sha256_file(pkl), trust_pickle=True, train_cap=1, eval_cap=1)
         with patch("wafervlm.experiment.load_model", side_effect=tiny_loader):
             train(root / "data", root / "run", steps=2, accumulation=2, rank=2, device="cpu")
+        with patch("wafervlm.experiment.load_model", side_effect=tiny_loader):
+            train(root / "data", root / "resumed", steps=4, accumulation=2, rank=2,
+                  device="cpu", resume_from=root / "run/checkpoints/checkpoint-2")
+            train(root / "data", root / "full", steps=4, accumulation=2, rank=2, device="cpu")
+        resumed = json.loads((root / "resumed/training.json").read_text())
+        assert (resumed["start_step"], resumed["end_step"], resumed["executed_steps"]) == (2, 4, 2)
+        from safetensors.torch import load_file
+        continued = load_file(root / "resumed/adapter/adapter_model.safetensors")
+        uninterrupted = load_file(root / "full/adapter/adapter_model.safetensors")
+        assert continued.keys() == uninterrupted.keys()
+        for name in continued:
+            torch.testing.assert_close(continued[name], uninterrupted[name], atol=1e-6, rtol=1e-5)
+        with patch("wafervlm.experiment.load_model", side_effect=tiny_loader):
+            score=evaluate(root/"data",root/"validation",split="validation",adapter=root/"resumed/adapter",
+                           device="cpu",include_loss=True,max_new_tokens=2)
+        assert score["n"] == 8 and score["answer_tokens"] > 0
+        assert 0 <= score["answer_token_loss"] < float('inf')
+        print("PASS: teacher-forced answer-token validation loss and generation share the same adapter")
+        print("PASS: resumed optimizer/RNG/data position reproduces uninterrupted four-step adapters")
         diagnostics = json.loads((root / "run/training.json").read_text())
         assert diagnostics["gradient_checks"] == 2
         assert diagnostics["nonzero_gradient_checks"] == 2

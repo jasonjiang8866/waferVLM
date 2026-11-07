@@ -12,5 +12,6 @@ RUN uv sync --frozen --extra train --no-dev
 COPY configs ./configs
 COPY scripts ./scripts
 COPY tests ./tests
+COPY resume-input ./resume-input
 RUN python -m unittest discover -s tests -v
 ENTRYPOINT ["python", "scripts/run_experiment.py"]

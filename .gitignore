@@ -14,3 +14,6 @@ out/
 observation-task.json
 runpod-results/
 runpod-authorization/
+
+resume-input/
+parent-artifact/

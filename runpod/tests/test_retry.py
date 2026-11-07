@@ -10,7 +10,7 @@ class RetryTests(unittest.TestCase):
     def test_aggregate_runtime_and_spend_include_prior_attempt(self):
         for rate in c.GPU_CAPS.values():
             quote = c.quote(rate)
-            self.assertEqual(quote['planned_total_seconds'], 260 * 60)
+            self.assertEqual(quote['planned_total_seconds'], 370 * 60)
             self.assertLessEqual(quote['planned_total_seconds'], 500 * 60)
             self.assertGreater(quote['planned_total_usd'], .80)
             self.assertLessEqual(quote['planned_total_usd'], 20)

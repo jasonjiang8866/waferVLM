@@ -7,6 +7,39 @@ budget state. The first attempt passed the 8-step smoke but timed out at
 The user subsequently raised the aggregate runtime ceiling to **500 minutes**;
 the total US$20 cap and per-GPU price caps remain unchanged.
 
+## Current continuation: checkpoint 100 → 200
+
+The completed baseline reached test accuracy 0.53125 / macro-F1 0.521659 and
+validation accuracy 0.64375 / macro-F1 0.640676. User approved **100 additional
+steps** on 2026-11-08. This is a true Trainer resume: adapter, AdamW optimizer,
+constant scheduler, RNG state and data position are restored, with immutable
+parent hashes checked before deserialization. Hyperparameters and dataset stay
+unchanged. Real tiny-model CPU CI compares resumed vs uninterrupted adapters.
+
+The build retrieves artifact `13582826145` from run `42385615853`, verifies inner
+archive SHA256 `e7e4fad8a89af270278b72529db333f1698d8c027e761a6629a0464cac32633c`,
+and embeds only the public-data checkpoint-100 and provenance in the image.
+No GitHub or RunPod credential enters an image layer or Pod. This avoids needing
+new persistent storage or exposing an account token to download a checkpoint.
+
+- Re-evaluate checkpoint 100 on validation, including answer-token cross-entropy.
+- Resume to 150, validate; resume to 200, validate (exactly 50 + 50 new steps).
+- Select highest validation macro-F1, breaking ties toward the earlier step.
+- Record selection **before** evaluating that selected adapter on test once.
+- Retain all checkpoints and report results in **experiment.tar.gz**; no new smoke.
+
+Both earlier Pods are independently verified deleted. Prior reserves now total
+**US$2.10 / 180 minutes**, rounded above the observed cumulative estimate. Same
+US$20 / 500-minute authorization, same four GPU caps and CUDA >=12.8. One new
+attempt is bounded to 180 minutes work + 10 cleanup, thus **370 minutes cumulative**
+and at most **US$5.89661 cumulative** at the highest approved rate. A further
+attempt remains blocked by its authorization marker until reconciled in code.
+
+The worker's continuation deadline is 160 minutes within the outer controller
+limit. A new immutable image is required because the workload changed; preflight
+fails closed until the image/source pins match reviewed code. The historical
+launch specification below describes the completed first two attempts.
+
 ## Launch specification
 
 - Workflow: **WaferVLM bounded GPU experiment** (`gpu.yml`), manual main only,

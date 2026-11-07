@@ -48,7 +48,7 @@ jobs:
           path: runpod-authorization/
           retention-days: 90
           if-no-files-found: error
-      - name: Run smoke then baseline, retrieve and verify, delete Pod
+      - name: Resume 100 to 200, validate and select, retrieve results, delete Pod
         if: inputs.confirm_paid
         env:
           RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY }}

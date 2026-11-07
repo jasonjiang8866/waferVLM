@@ -26,6 +26,7 @@ def main():
         p.add_argument("--revision", default=MODEL_REVISION)
         p.add_argument("--device", choices=("cuda", "cpu"), default="cuda")
         if name == "train":
+            p.add_argument("--resume-from")
             p.add_argument("--steps", type=int, default=100)
             p.add_argument("--seed", type=int, default=17)
             p.add_argument("--accumulation", type=int, default=8)
@@ -33,6 +34,7 @@ def main():
             p.add_argument("--learning-rate", type=float, default=0.0002)
             p.add_argument("--max-length", type=int, default=1024)
         else:
+            p.add_argument("--include-loss", action="store_true")
             p.add_argument("--split", choices=("validation", "test"), default="test")
             p.add_argument("--adapter")
             p.add_argument("--max-new-tokens", type=int, default=16)

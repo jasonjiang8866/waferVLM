@@ -49,12 +49,12 @@ DISK_HOURLY = DISK_GB * 0.10 / (28 * 24)
 CLEANUP_SECONDS = 600
 MAX_WORK_SECONDS = 180 * 60  # per attempt; below the Actions job limit
 APPROVED_TOTAL_SECONDS = 500 * 60
-PRIOR_RUNTIME_RESERVE_SECONDS = 70 * 60  # first attempt: 3988.653 s, rounded up
+PRIOR_RUNTIME_RESERVE_SECONDS = 180 * 60  # two reconciled attempts; rounded up
 MAX_RATE = max(GPU_CAPS.values())
 MAX_ARCHIVE = 2 * 1024**3
 MARKER = "runpod-authorization-" + AUTHORIZATION
-RECONCILED_MARKERS = {"42346201550": 13564060530}
-PRIOR_SPEND_RESERVE = 0.80  # verified first-attempt estimate $0.774385, rounded up
+RECONCILED_MARKERS = {"42346201550": 13564060530, "42385615853": 13579825671}
+PRIOR_SPEND_RESERVE = 2.10  # prior cumulative estimate $2.030026, rounded up
 APPROVED_USD = 20.0
 
 
@@ -133,9 +133,9 @@ def provenance():
         "image_source_sha": SOURCE,
         "image": IMAGE,
         "anonymous_manifest_verified": verify_image_manifest(),
-        "suite": "smoke-then-baseline",
+        "suite": "resume100-to200-validation-selection",
         "config_sha256": hashlib.sha256(
-            (ROOT / "configs/baseline.json").read_bytes()
+            (ROOT / "configs/continuation.json").read_bytes()
         ).hexdigest(),
         "worker_sha256": hashlib.sha256((ROOT / "runpod/worker.py").read_bytes()).hexdigest(),
     }
@@ -381,7 +381,7 @@ def download(url, token, expected, inline=None):
         response = io.BytesIO(base64.b64decode(inline, validate=True))
     else:
         response = urllib.request.build_opener(NoRedirect).open(req, timeout=30)
-    path = OUT / "smoke.tar.gz"
+    path = OUT / "experiment.tar.gz"
     hasher, count = hashlib.sha256(), 0
     with response, path.open("wb") as f:
         while block := response.read(1024 * 1024):
@@ -517,13 +517,13 @@ def launch(api):
                 continue
             worker_seen = True
             phase = result.get("phase")
-            if phase != last_phase and phase in {"starting", "data", "smoke", "baseline"}:
+            if phase != last_phase and phase in {"starting", "data", "smoke", "baseline", "continuation"}:
                 print("Worker phase: " + phase, flush=True)
                 last_phase = phase
             progress = result.get("progress", {})
             step, total = progress.get("optimizer_step"), progress.get("optimizer_steps")
-            if (phase in {"smoke", "baseline"} and type(step) is int and type(total) is int
-                    and total == (8 if phase == "smoke" else 100) and 0 <= step <= total
+            if (phase in {"smoke", "baseline", "continuation"} and type(step) is int and type(total) is int
+                    and total in ({8} if phase == "smoke" else {100} if phase == "baseline" else {150, 200}) and 0 <= step <= total
                     and (phase, step) != last_progress):
                 print(f"Training progress: {phase} optimizer step {step}/{total}", flush=True)
                 last_progress = (phase, step)
@@ -543,13 +543,13 @@ def launch(api):
                     result.get("source_sha") != SOURCE
                     or result.get("config_sha256") != evidence["config_sha256"]
                     or result.get("controller_sha") != evidence["controller_sha"]
-                    or result.get("profiles") != ["smoke", "baseline"]
-                    or not (OUT / "smoke.tar.gz").is_file()
+                    or result.get("profiles") != ["continuation"]
+                    or not (OUT / "experiment.tar.gz").is_file()
                 ):
                     raise RuntimeError("Result provenance/completeness mismatch")
                 from runpod.verify import verify_archive
 
-                verify_archive(OUT / "smoke.tar.gz", evidence["controller_sha"])
+                verify_archive(OUT / "experiment.tar.gz", evidence["controller_sha"], continuation=True)
                 save("acceptance.json", {"status": "accepted", "archive_verified": True})
                 return
             time.sleep(10)

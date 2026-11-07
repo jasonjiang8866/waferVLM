@@ -162,8 +162,8 @@ class ControllerTests(unittest.TestCase):
     def test_budget_includes_disk_and_cleanup(self):
         for rate in (0.50, 0.69, 0.89, 1.19):
             q = c.quote(rate)
-            self.assertLessEqual(q["planned_total_usd"], 4.60)
-            self.assertGreaterEqual(q["unallocated_reserve_usd"], 15.40)
+            self.assertLessEqual(q["planned_total_usd"], 6.0)
+            self.assertGreaterEqual(q["unallocated_reserve_usd"], 14.0)
             self.assertGreater(q["work_seconds"], 0)
             self.assertLessEqual(q["work_seconds"], 10800)
             self.assertGreater(q["disk_hourly_usd"], 0)
@@ -419,7 +419,7 @@ class ControllerTests(unittest.TestCase):
         req = opener.open.call_args.args[0]
         self.assertEqual(req.get_header("User-agent"), "wafervlm-actions/0.1")
         self.assertEqual(req.get_header("Authorization"), "Bearer test-token")
-        self.assertEqual((self.out / "smoke.tar.gz").read_bytes(), data)
+        self.assertEqual((self.out / "experiment.tar.gz").read_bytes(), data)
 
     def test_inline_diagnostics_validated_without_network(self):
         data = b"diagnostic archive"
