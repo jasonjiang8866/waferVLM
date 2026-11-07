@@ -1,66 +1,91 @@
-# RunPod worker readiness
+# Bounded RunPod GPU experiment
 
-The repository contains a runnable training/evaluation **worker** and a pinned Broker **GET-only observation** workflow. No workflow creates a Pod, retries allocation or deletes account resources. The user has reported configuring `RUNPOD_API_KEY`; secret existence and live account inventory have not yet been independently verified.
+User authorization (2026-11-07): **US$20 total**, including compute, retries,
+temporary disk, transfer and cleanup. This replaces the earlier observation-only
+budget state. No paid experiment has completed yet.
 
-## Current entry points
+## Launch specification
 
-- `CPU protocol and model compatibility`: PR/main CPU tests; no paid RunPod calls.
-- `Pinned public WM-811K data audit`: real public-data download, hash verification, conflict quarantine, split audit and comparison with committed evidence. No credentials/GPU.
-- `Build worker image`: builds without publishing on relevant PRs; manual `publish=false` by default. `publish=true` publishes a source-SHA tag and prints the immutable digest. This does not create a GPU Pod.
-- `RunPod observation and offline contract`: PRs run credential-free Broker contract checks. A manual dispatch on **main only** also reads catalog prices/capacity and Pod counts through RunPod REST GET endpoints.
-- `scripts/run_experiment.py`: `smoke` (8 steps, validation) or `baseline` (100 steps, paired test), bounded by an explicit worker timeout.
+- Workflow: **WaferVLM bounded GPU experiment** (`gpu.yml`), manual main only,
+  `confirm_paid=true`, `expected_sha=<exact reviewed current main SHA>`.
+- Immutable worker: `ghcr.io/jasonjiang8866/wafervlm@sha256:31c645533047eb8912c00fa5790bfa4f96cdf07cdaae1779bdcd3eb113a5b440`.
+- Worker source: `81a2b1a34ddc8cd75aa432d36c44ae0be3174948`. Controller additions
+  do not change the image's workload. Preflight rejects any source/config/lockfile
+  drift and rechecks anonymous manifest access.
+- Model: Qwen/Qwen3.5-0.8B, revision `2fc06364715b967f1860aea9cf38778875588b17`.
+- Data: hash-pinned public WM-811K mirror; worker reproduces the audited
+  790/160/160 split and compares its dataset identity with committed evidence.
+  No factory/private data. Download and data preparation count toward runtime.
+- One GPU, minimum 32GB host RAM / 4 vCPUs; host **CUDA >=12.8** for every GPU.
+  No exact-version filter. BF16/CUDA is checked on the real allocated worker.
+- 60GB ephemeral container disk; no persistent or Global Volume creation.
+- 8-step validation smoke followed only on success by a fresh 100-step baseline
+  (seed17, accumulation8) and paired test evaluation. An execution pass does not
+  assert quality improvement; compare macro-F1, accuracy and invalid output rate.
 
-## CUDA compatibility and read-only preflight
+| Allowed GPU (preference order) | Maximum GPU-only USD/hour |
+|---|---:|
+| PRO 6000 Blackwell MIG 1g.24gb | 0.69 |
+| RTX 4090 | 0.89 |
+| RTX 3090 | 0.50 |
+| RTX 5090 | 1.19 |
 
-The inspected Broker dependency is pinned to [`dfd8c3c7250ac5a73c4c703932e9fb93d07dcb45`](https://github.com/jasonjiang8866/runpod-ci-broker/tree/dfd8c3c7250ac5a73c4c703932e9fb93d07dcb45). That version has no live create/delete execution implementation. Both workflow jobs check out this exact commit and install its locked dependencies in a separate environment.
+Fresh catalog price and capacity must pass before the only create request.
+Startup, data, workloads and result retrieval share a **5,400-second** controller
+deadline, plus a **600-second** cleanup allowance. Worker startup is limited to
+20 minutes. At the highest allowed rate, the planned GPU + disk bound is
+**$1.99822**, leaving over $18 of the total authorization unallocated.
+The 60GB disk estimate uses $0.10/GB/month and a conservative 28-day month;
+[RunPod Pod pricing](https://docs.runpod.io/pods/pricing) states no ingress/egress
+charge. An estimate is not a provider-enforced hard cap: prolonged API/cleanup
+failure can overrun. Account credit adequacy and the existing $500 monthly
+headroom guard are checked without exporting balances or raw billing history.
 
-`preflight.json` declares **`min_cuda_version: "12.8"`**. The actual REST adapter sends **`minCudaVersion=12.8`**, with no exact `cudaVersions` filter. Contract checks accept 12.8, 12.9, 12.10 and 13.0 and reject 12.7. Versions are compared as integer components, not floats. This is host catalog compatibility; it does not change the worker's locked Torch/CUDA runtime, prove BF16/architecture support, or replace a real CUDA smoke test.
+## Lifecycle and credential boundaries
 
-The observation candidates are PRO 6000 Blackwell MIG 24GB, RTX 4090, RTX 3090 and RTX 5090 (one GPU, at least 24GB VRAM). This is an observation list, not paid authorization or proof of memory fit. GPU price cap, total budget and storage/transfer reserves are deliberately **unset**; budgets from other repositories are not reused. The all-zero image digest is an explicit unbuilt-image placeholder, and no volume/staging route has been selected. The workflow updates the observed source SHA to the actual workflow commit.
+`RUNPOD_API_KEY` stays in Actions. The Pod receives only ownership/provenance
+markers and a random, masked, run-scoped result-read token. Training subprocesses
+receive no account credential or result token. HTTP results use the RunPod HTTPS
+proxy, constant-time bearer checking and bounded download/checksum verification.
 
-Consequently, authenticated preflight is expected to report `budget_inputs_missing` and finish nonzero while still uploading its observation report. A red run with this blocker is not proof of missing capacity. Inspect per-GPU observations and query/inventory statuses separately. A successful offline contract job is not a live RunPod check. Do not use this template for a paid launch: replace the placeholder image, bind dataset hashes/staging and supply an approved budget in a reviewed deployment configuration first.
+A 90-day Actions artifact consumes authorization **before** POST /pods. Duplicate
+run attempts, another dispatch with an unreconciled marker, non-main execution,
+changed main SHA, unconfirmed inputs and expired authorization are rejected.
+This initial implementation makes one create request and never retries an
+ambiguous create. Any retry needs reconciliation of its marker, cleanup and
+spend in code; it does not grant a fresh $20. Authorization expires November 14.
 
-`RUNPOD_API_KEY` exists only in the main-only observation step's environment. It is not passed to the worker, PR jobs, dependency installation, task JSON or artifacts. The Broker returns sanitized observations; raw Pod environment values are not uploaded.
+Cleanup uses exact repository, authorization, run ID, name and known Pod ID.
+It refuses unrelated Pods and unexpected persistent mounts. `finally` cleanup
+and an `always()` inventory check run in the controller workflow. A separate
+`workflow_run` recovery workflow runs on completion/cancellation/timeout even if
+the original runner is lost. It can also be manually dispatched with
+`origin_run_id`. Repeated independent inventory absence is required. These
+controls depend on GitHub/RunPod availability; a stopped worker alone does not
+prove compute deletion or billing cessation.
 
-## Container example after image publication
+Artifacts include sanitized preflight, intent, allocation, worker result,
+full checkpoint/adapter/log archive, integrity acceptance and cleanup evidence.
+All archive paths/types/sizes, nested checksums, data/model/image/source identity,
+step/gradient counts and complete 160-example evaluations are independently
+verified before marking the execution accepted. Report quality separately.
+
+## Validation and provenance
 
 ```bash
-# Replace the image digest with the verified build output.
-docker run --rm --gpus all \
-  -v /path/to/prepared-data:/data:ro \
-  -v /path/to/outputs:/outputs \
-  -v /path/to/hf-cache:/workspace/hf-cache \
-  -e WAFERVLM_IMAGE_DIGEST=sha256:VERIFIED_DIGEST \
-  ghcr.io/jasonjiang8866/wafervlm@sha256:VERIFIED_DIGEST \
-  --dataset /data --output /outputs/smoke-17 \
-  --profile smoke --timeout-seconds 1800
+python -m unittest discover -s runpod/tests -v
 ```
 
-The model revision is fixed in source, including processor/tokenizer loading. The image records the source SHA from its build argument. The initial Docker base tag is mutable; the final built **worker image digest** must be pinned before launch. No weights, data, account keys or local cache are baked into the image.
+Controller/provider and lifecycle fault tests were adapted from this user's
+MIT-licensed `flashattentionanycard` commit
+`d53afd9aa6f3ce68ac896db0924558d1fe72ffe7`; the upstream notice is retained in
+`UPSTREAM-LICENSE`. REST v2 schema was checked against the
+[official create API](https://docs.runpod.io/api-reference-v2/pods/create-a-pod).
 
-## Required before any paid launch
+The previous `preflight.yml` / `preflight.json` remain explicitly GET-only,
+unbudgeted observation fixtures used by the Broker contract tests. They do not
+control this paid workflow. The Broker dependency has not been changed and is
+not claimed to implement live lifecycle management.
 
-1. Reproduce the [verified data subset](../docs/data-audit.md) and stage it on an approved volume or verified download route. Local preparation is complete; remote staging is not.
-2. Verify current source CI and build/publish the image; record source SHA and worker digest.
-3. Integrate an inspected lifecycle controller (potentially `runpod-ci-broker`) in a separate reviewed change. Read live GPU price/capacity and existing project-owned resources. Confirm region/storage compatibility.
-4. Obtain this experiment's total budget and allowed GPUs. A possible workload target is a single BF16-capable 24 GB GPU, but fit, availability and price are **unverified**. Prior experiments' budgets do not apply.
-5. Record maximum aggregate runtime, retries, temporary storage, transfer and cleanup reserve inside the cap. A worker timeout stops the workload; it does **not** delete the Pod or enforce a billing hard cap.
-6. Keep `RUNPOD_API_KEY` only in the Actions controller environment. Never inject it into the worker, logs or artifacts. Reconcile resources before retrying ambiguous creation.
-7. Collect and verify all output checksums, including incremental failure artifacts. Delete only owned temporary compute and independently confirm deletion. Preserve persistent volumes.
-
-The controller must provide cancellation-independent cleanup/reconciliation; GitHub `always()` alone does not cover every cancellation or runner-loss scenario. A scheduled reaper is a fallback, not deletion evidence.
-
-## Launch record for this stage
-
-| Field | State |
-|---|---|
-| Repository | jasonjiang8866/waferVLM |
-| Workload | Qwen3.5-0.8B BF16 language LoRA, 8-step smoke |
-| Model revision | 2fc06364715b967f1860aea9cf38778875588b17 |
-| Dataset | Real mirror verified; 790/160/160 subset audited; remote staging pending |
-| Worker image digest | Not yet built/published |
-| GPU, region and quote | Unverified |
-| Budget | Not authorized for this experiment |
-| Paid execution | Not run |
-| Host CUDA selection | >= 12.8; higher versions accepted |
-| Cleanup | No resources created by this stage; account inventory unverified |
+Published image evidence: [42342921932](https://github.com/jasonjiang8866/waferVLM/actions/runs/42342921932).
+Earlier inventory evidence: [42342948679](https://github.com/jasonjiang8866/waferVLM/actions/runs/42342948679).

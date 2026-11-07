@@ -1,0 +1,479 @@
+import base64
+import hashlib
+import io
+import json
+import os
+import tarfile
+import tempfile
+import time
+import unittest
+import urllib.error
+import urllib.parse
+from pathlib import Path
+from unittest.mock import Mock, patch
+
+from runpod import controller as c
+from runpod import provider
+from runpod.provider import REPOSITORY, SOURCE, Runpod
+from runpod.verify import verify_archive
+
+
+class ControllerTests(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.out = Path(self.tmp.name)
+        self.patches = [
+            patch.object(c, "OUT", self.out),
+            patch.object(c, "verify_image_manifest", return_value=True),
+            patch.dict(
+                os.environ,
+                {
+                    "GITHUB_REPOSITORY": REPOSITORY,
+                    "GITHUB_RUN_ID": "1234",
+                    "GITHUB_RUN_ATTEMPT": "1",
+                    "GITHUB_EVENT_NAME": "workflow_dispatch",
+                    "GITHUB_REF": "refs/heads/main",
+                    "EXPECTED_SHA": "a" * 40,
+                    "CONFIRM_PAID": "true",
+                    "GH_TOKEN": "test-only",
+                },
+            ),
+        ]
+        for p in self.patches:
+            p.start()
+            self.addCleanup(p.stop)
+
+    def state(self):
+        return {
+            "name": c.AUTHORIZATION + "-1234",
+            "run_id": "1234",
+            "pod_id": "pod1",
+            "started_epoch": time.time(),
+            "cost": c.quote(0.5),
+        }
+
+    def pod(self):
+        return {
+            "name": c.AUTHORIZATION + "-1234",
+            "id": "pod1",
+            "env": {
+                c.OWNER: REPOSITORY,
+                "WAFER_RUN_ID": "1234",
+                "WAFER_AUTHORIZATION": c.AUTHORIZATION,
+                "WAFER_STARTED": str(time.time()),
+                "WAFER_RATE": ".5",
+            },
+        }
+
+    def test_failed_preflight_preserves_capacity_evidence(self):
+        api = Mock()
+        api.listing.return_value = []
+        api.call.return_value = {"price": {"secure": 0.50}, "dataCenters": []}
+        with patch.object(c, "provenance", return_value={}), patch.object(c, "budget") as budget:
+            with self.assertRaises(RuntimeError):
+                c.preflight(api)
+            budget.assert_not_called()
+        evidence = json.loads((self.out / "preflight.json").read_text())
+        self.assertEqual(evidence["status"], "blocked_no_approved_gpu")
+        self.assertTrue(evidence["read_only"])
+        self.assertEqual(len(evidence["catalog"]), 4)
+        self.assertTrue(all(x["status"] == "no_capacity" for x in evidence["catalog"]))
+        self.assertTrue(all(len(call.args) == 1 for call in api.call.call_args_list))
+
+    def test_cuda_floor_matches_catalog_evidence_and_create_for_each_gpu(self):
+        expected = {
+            c.MIG: "12.8",
+            "NVIDIA GeForce RTX 3090": "12.8",
+            "NVIDIA GeForce RTX 4090": "12.8",
+            "NVIDIA GeForce RTX 5090": "12.8",
+        }
+        self.assertEqual(set(c.GPUS), set(expected))
+        for selected, minimum in expected.items():
+            with self.subTest(gpu=selected):
+                api = Mock()
+                api.listing.return_value = []
+
+                def catalog(path):
+                    parsed = urllib.parse.urlsplit(path)
+                    name = urllib.parse.unquote(parsed.path.rsplit("/", 1)[1])
+                    query = urllib.parse.parse_qs(parsed.query)
+                    self.assertEqual(query["minCudaVersion"], [expected[name]])
+                    self.assertEqual(query["cloud"], ["SECURE"])
+                    return {
+                        "price": {"secure": 0.5},
+                        "dataCenters": [{"id": "US-TEST-1", "availability": "LOW"}]
+                        if name == selected
+                        else [],
+                    }
+
+                api.call.side_effect = catalog
+                with (
+                    patch.object(c, "provenance", return_value={}),
+                    patch.object(c, "budget", return_value={}),
+                ):
+                    evidence = c.preflight(api)
+                self.assertEqual(evidence["gpu"], selected)
+                self.assertEqual(evidence["min_cuda_version"], minimum)
+                self.assertEqual(api.call.call_count, 4)
+                self.assertEqual(
+                    {x["gpu"]: x["min_cuda_version"] for x in evidence["catalog"]}, expected
+                )
+                evidence.update(config_sha256="b" * 64, controller_sha="a" * 40)
+                api.reset_mock()
+                api.call.side_effect = RuntimeError("create outcome unknown")
+                with (
+                    patch.object(c, "authorization_guard"),
+                    patch.object(c, "preflight", return_value=evidence),
+                    patch.object(c, "cleanup") as cleanup,
+                    patch("builtins.print"),
+                    self.assertRaises(RuntimeError),
+                ):
+                    c.launch(api)
+                api.call.assert_called_once()
+                self.assertEqual(api.call.call_args.args[:2], ("/pods", "POST"))
+                payload = api.call.call_args.args[2]
+                self.assertEqual(payload["gpu"]["id"], selected)
+                self.assertEqual(payload["gpu"]["minCudaVersion"], minimum)
+                cleanup.assert_called_once_with(api)
+
+    def test_failed_preflight_does_not_expose_provider_error_text(self):
+        api = Mock()
+        api.listing.return_value = []
+        api.call.side_effect = RuntimeError("Remote HTTP 403; secret-test-value")
+        with patch.object(c, "provenance", return_value={}), self.assertRaises(RuntimeError):
+            c.preflight(api)
+        text = (self.out / "preflight.json").read_text()
+        self.assertNotIn("secret-test-value", text)
+        evidence = json.loads(text)
+        self.assertTrue(all(x["http_status"] == 403 for x in evidence["catalog"]))
+        self.assertTrue(all(x["status"] == "catalog_request_failed" for x in evidence["catalog"]))
+
+    def test_failed_preflight_distinguishes_invalid_quote(self):
+        api = Mock()
+        api.listing.return_value = []
+        api.call.return_value = {"price": {"secure": float("nan")}, "dataCenters": []}
+        with patch.object(c, "provenance", return_value={}), self.assertRaises(RuntimeError):
+            c.preflight(api)
+        evidence = json.loads((self.out / "preflight.json").read_text())
+        self.assertTrue(all(x["status"] == "quote_rejected" for x in evidence["catalog"]))
+        self.assertTrue(all(x["rate"] is None for x in evidence["catalog"]))
+
+    def test_budget_includes_disk_and_cleanup(self):
+        for rate in (0.50, 0.69, 0.89, 1.19):
+            q = c.quote(rate)
+            self.assertLessEqual(q["planned_total_usd"], 2.0)
+            self.assertGreaterEqual(q["unallocated_reserve_usd"], 18.0)
+            self.assertGreater(q["work_seconds"], 0)
+            self.assertLessEqual(q["work_seconds"], 5400)
+            self.assertGreater(q["disk_hourly_usd"], 0)
+
+    def test_per_model_price_caps_are_enforced(self):
+        api = Mock()
+        api.listing.return_value = []
+        def catalog(path):
+            name = urllib.parse.unquote(urllib.parse.urlsplit(path).path.rsplit("/", 1)[1])
+            return {"price": {"secure": c.GPU_CAPS[name] + 0.01},
+                    "dataCenters": [{"id": "US-TEST-1", "availability": "HIGH"}]}
+        api.call.side_effect = catalog
+        with patch.object(c, "provenance", return_value={}), self.assertRaises(RuntimeError):
+            c.preflight(api)
+        observed = json.loads((self.out / "preflight.json").read_text())
+        self.assertTrue(all(row["status"] == "quote_rejected" for row in observed["catalog"]))
+
+    def test_bad_prices_rejected(self):
+        for price in (True, None, float("nan"), float("inf"), 0, -1, 1.20):
+            with self.subTest(price=price), self.assertRaises(ValueError):
+                c.quote(price)
+
+    def test_cleanup_requires_repeated_absence(self):
+        c.save("provision.json", self.state())
+        api = Mock()
+        api.listing.side_effect = [[self.pod()], [], [], []]
+        with patch.object(c.time, "sleep"):
+            c.cleanup(api)
+        api.call.assert_called_once_with("/pods/pod1", "DELETE")
+        self.assertEqual(api.listing.call_count, 4)
+        self.assertEqual(
+            json.loads((self.out / "cleanup.json").read_text())["status"], "verified_absent"
+        )
+
+    def test_cleanup_recovers_unknown_creation(self):
+        state = self.state()
+        state["pod_id"] = None
+        c.save("provision.json", state)
+        api = Mock()
+        api.listing.side_effect = [[], [self.pod()], [], [], []]
+        with patch.object(c.time, "sleep"):
+            c.cleanup(api)
+        api.call.assert_called_once_with("/pods/pod1", "DELETE")
+
+    def test_cleanup_unknown_delete_reconciled(self):
+        c.save("provision.json", self.state())
+        api = Mock()
+        api.listing.side_effect = [[self.pod()], [], [], []]
+        api.call.side_effect = RuntimeError("timeout")
+        with patch.object(c.time, "sleep"):
+            c.cleanup(api)
+        self.assertEqual(
+            json.loads((self.out / "cleanup.json").read_text())["status"], "verified_absent"
+        )
+
+    def test_cleanup_refuses_unrelated_or_mounted_pods(self):
+        for field in ("owner", "mount"):
+            c.save("provision.json", self.state())
+            pod = self.pod()
+            if field == "owner":
+                pod["env"][c.OWNER] = "other"
+            else:
+                pod["mounts"] = [{"id": "retain-me"}]
+            api = Mock()
+            api.listing.return_value = [pod]
+            with self.assertRaises(RuntimeError):
+                c.cleanup(api)
+            api.call.assert_not_called()
+
+    def test_fresh_runner_cleanup(self):
+        api = Mock()
+        api.listing.side_effect = [[self.pod()], [], [], []]
+        with patch.object(c.time, "sleep"):
+            c.cleanup(api)
+        api.call.assert_called_once_with("/pods/pod1", "DELETE")
+
+    def test_no_id_absence_is_verified_without_claiming_zero_cost(self):
+        state = self.state()
+        state["pod_id"] = None
+        state["started_epoch"] -= 60
+        c.save("provision.json", state)
+        api = Mock()
+        api.listing.return_value = []
+        with patch.object(c.time, "sleep"):
+            c.cleanup(api)
+        result = json.loads((self.out / "cleanup.json").read_text())
+        self.assertEqual(result["status"], "verified_absent")
+        self.assertEqual(result["consecutive_absent_checks"], 8)
+        self.assertEqual(api.listing.call_count, 8)
+        self.assertFalse(result["creation_confirmed"])
+        self.assertGreater(result["estimated_total_usd"], c.PRIOR_SPEND_RESERVE)
+        api.call.assert_not_called()
+
+    def test_fresh_recovery_requires_repeated_absence(self):
+        api = Mock()
+        api.listing.return_value = []
+        with patch.object(c.time, "sleep"):
+            c.cleanup(api)
+        self.assertEqual(api.listing.call_count, 3)
+        result = json.loads((self.out / "cleanup.json").read_text())
+        self.assertEqual(result["cost"], "unverified_no_local_intent")
+
+    def test_delayed_creation_resets_consecutive_absence(self):
+        state = self.state()
+        state["pod_id"] = None
+        c.save("provision.json", state)
+        api = Mock()
+        api.listing.side_effect = [[], [], [self.pod()], [], [], []]
+        with patch.object(c.time, "sleep"):
+            c.cleanup(api)
+        self.assertEqual(api.listing.call_count, 6)
+        api.call.assert_called_once_with("/pods/pod1", "DELETE")
+
+    def test_inventory_error_invalidates_stale_cleanup_success(self):
+        c.save("cleanup.json", {"status": "verified_absent"})
+        api = Mock()
+        api.listing.side_effect = RuntimeError("inventory unavailable")
+        with self.assertRaises(RuntimeError):
+            c.cleanup(api)
+        self.assertEqual(json.loads((self.out / "cleanup.json").read_text())["status"], "unknown")
+
+    def test_cleanup_failure_never_claims_success(self):
+        c.save("provision.json", self.state())
+        api = Mock()
+        api.listing.return_value = [self.pod()]
+        with patch.object(c.time, "sleep"), self.assertRaises(RuntimeError):
+            c.cleanup(api)
+        self.assertEqual(json.loads((self.out / "cleanup.json").read_text())["status"], "unknown")
+
+    def test_unknown_create_never_retried_and_no_account_key_in_payload(self):
+        api = Mock()
+        api.call.side_effect = RuntimeError("create outcome unknown")
+        evidence = {
+            "cost": c.quote(0.5),
+            "gpu": c.MIG,
+            "regions": ["US-TEST-1"],
+            "config_sha256": "b" * 64,
+            "controller_sha": "a" * 40,
+        }
+        with (
+            patch.object(c, "authorization_guard"),
+            patch.object(c, "preflight", return_value=evidence),
+            patch.object(c, "cleanup") as cleanup,
+            patch("builtins.print"),
+            self.assertRaises(RuntimeError),
+        ):
+            c.launch(api)
+        self.assertEqual(api.call.call_count, 1)
+        payload = api.call.call_args.args[2]
+        self.assertNotIn("RUNPOD_API_KEY", payload["env"])
+        self.assertNotIn("GH_TOKEN", payload["env"])
+        self.assertNotIn("WAFER_RESULT_TOKEN", (self.out / "provision.json").read_text())
+        cleanup.assert_called_once_with(api)
+
+    def test_create_http_error_has_sanitized_artifact_before_cleanup(self):
+        api = Mock()
+        api.call.side_effect = provider.RemoteHTTPError(400, ["capacity"])
+        evidence = {
+            "cost": c.quote(0.69),
+            "gpu": c.MIG,
+            "regions": ["US-TEST-1"],
+            "config_sha256": "b" * 64,
+            "controller_sha": "a" * 40,
+        }
+
+        def check_cleanup(_):
+            result = json.loads((self.out / "create-error.json").read_text())
+            self.assertEqual(result["http_status"], 400)
+            self.assertEqual(result["categories"], ["capacity"])
+            self.assertEqual(result["status"], "create_not_confirmed")
+
+        with (
+            patch.object(c, "authorization_guard"),
+            patch.object(c, "preflight", return_value=evidence),
+            patch.object(c, "cleanup", side_effect=check_cleanup),
+            patch("builtins.print"),
+            self.assertRaises(provider.RemoteHTTPError),
+        ):
+            c.launch(api)
+        api.call.assert_called_once()
+
+    def test_provider_error_categories_never_include_raw_body(self):
+        for detail, expected in (
+            ("There are no longer any instances available", "capacity"),
+            ("insufficient memory", "memory"),
+            ("invalid minCudaVersion", "cuda"),
+            ("unrecognized response", "unclassified"),
+        ):
+            raw = json.dumps({"detail": detail, "echo": "secret-test-value"}).encode()
+            opener = Mock()
+            opener.open.side_effect = urllib.error.HTTPError(
+                "https://test.invalid/pods", 400, "Bad Request", {}, io.BytesIO(raw)
+            )
+            with patch.object(provider.urllib.request, "build_opener", return_value=opener):
+                with self.assertRaises(provider.RemoteHTTPError) as caught:
+                    provider.request("https://test.invalid/pods", token="test-token")
+            self.assertIn(expected, caught.exception.categories)
+            self.assertNotIn("secret-test-value", str(caught.exception))
+            self.assertNotIn("test-token", str(caught.exception))
+
+    def test_auth_rejects_second_attempt_or_wrong_branch(self):
+        for variable, value in (
+            ("GITHUB_RUN_ATTEMPT", "2"),
+            ("GITHUB_REF", "refs/heads/test"),
+            ("CONFIRM_PAID", "false"),
+            ("GITHUB_EVENT_NAME", "push"),
+        ):
+            with (
+                patch.dict(os.environ, {variable: value}),
+                patch.object(c, "git", return_value="a" * 40),
+                patch.object(c.time, "time", return_value=1793664000),
+                self.assertRaises(RuntimeError),
+            ):
+                c.authorization_guard()
+
+    def test_authorization_ledger_rejects_previous_run(self):
+        response = [
+            {"object": {"sha": "a" * 40}},
+            {"artifacts": [{"name": c.MARKER, "workflow_run": {"id": 99}}]},
+        ]
+        with (
+            patch.object(c, "git", return_value="a" * 40),
+            patch.object(c, "request", side_effect=response),
+            patch.object(c.time, "time", return_value=1793664000),
+            self.assertRaises(RuntimeError),
+        ):
+            c.authorization_guard()
+
+    def test_authorization_requires_own_marker(self):
+        for artifacts, allowed in (
+            ([], False),
+            ([{"name": c.MARKER, "workflow_run": {"id": 1234}}], True),
+        ):
+            response = [{"object": {"sha": "a" * 40}}, {"artifacts": artifacts}]
+            with (
+                patch.object(c, "git", return_value="a" * 40),
+                patch.object(c, "request", side_effect=response),
+                patch.object(c.time, "time", return_value=1793664000),
+            ):
+                if allowed:
+                    c.authorization_guard()
+                else:
+                    with self.assertRaises(RuntimeError):
+                        c.authorization_guard()
+
+    def test_download_uses_same_headers_and_checks_bytes(self):
+        data = b"diagnostic archive"
+        expected = {"size": len(data), "sha256": hashlib.sha256(data).hexdigest()}
+        opener = Mock()
+        opener.open.return_value = io.BytesIO(data)
+        with patch.object(c.urllib.request, "build_opener", return_value=opener):
+            c.download("https://test.invalid/archive", "test-token", expected)
+        req = opener.open.call_args.args[0]
+        self.assertEqual(req.get_header("User-agent"), "wafervlm-actions/0.1")
+        self.assertEqual(req.get_header("Authorization"), "Bearer test-token")
+        self.assertEqual((self.out / "smoke.tar.gz").read_bytes(), data)
+
+    def test_inline_diagnostics_validated_without_network(self):
+        data = b"diagnostic archive"
+        expected = {"size": len(data), "sha256": hashlib.sha256(data).hexdigest()}
+        with patch.object(c.urllib.request, "build_opener") as network:
+            c.download(
+                "https://test.invalid/archive",
+                "test-token",
+                expected,
+                base64.b64encode(data).decode(),
+            )
+            network.assert_not_called()
+            with self.assertRaises(RuntimeError):
+                c.download(
+                    "https://test.invalid/archive",
+                    "test-token",
+                    expected,
+                    base64.b64encode(b"corrupt").decode(),
+                )
+            with self.assertRaises(RuntimeError):
+                c.download("https://test.invalid/archive", "test-token", expected, "a" * 180001)
+
+    def test_pagination_must_be_complete(self):
+        with patch.dict(os.environ, {"RUNPOD_API_KEY": "test"}):
+            api = Runpod()
+        with patch.object(api, "call", return_value={"pods": []}), self.assertRaises(RuntimeError):
+            api.listing("/pods", "pods")
+
+    def test_provenance_requires_workload_to_match_image(self):
+        with patch.object(c, "git", side_effect=["a" * 40, ""]):
+            self.assertEqual(c.provenance()["image_source_sha"], SOURCE)
+        for changed in ("runpod/launch.py", "bo_kernel_tuner/tests/test_correctness.py"):
+            with patch.object(c, "git", side_effect=["a" * 40, changed]):
+                with self.assertRaisesRegex(RuntimeError, "differs from pinned image"):
+                    c.provenance()
+
+    def test_archive_rejects_traversal_symlink_and_duplicate(self):
+        for kind in ("traversal", "symlink", "duplicate", "checksum"):
+            path = self.out / "bad.tar.gz"
+            with tarfile.open(path, "w:gz") as tar:
+                info = tarfile.TarInfo(
+                    "../outside" if kind == "traversal" else "results/checksums.json"
+                )
+                data = b"{}"
+                info.size = len(data)
+                if kind == "symlink":
+                    info.type, info.linkname = tarfile.SYMTYPE, "/etc/passwd"
+                    info.size = 0
+                tar.addfile(info, io.BytesIO(data))
+                if kind == "duplicate":
+                    tar.addfile(info, io.BytesIO(data))
+            with self.assertRaises(ValueError):
+                verify_archive(path, "a" * 40)
+
+
+if __name__ == "__main__":
+    unittest.main()
