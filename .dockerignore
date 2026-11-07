@@ -1,0 +1,12 @@
+*
+!pyproject.toml
+!uv.lock
+!src/
+!src/**
+!configs/
+!configs/**
+!scripts/
+!scripts/**
+!tests/
+!tests/**
+**/__pycache__/

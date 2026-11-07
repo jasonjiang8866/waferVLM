@@ -1,0 +1,39 @@
+name: CPU protocol and model compatibility
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: cpu-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  protocol:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install uv==0.13.5
+      - run: uv sync --frozen
+      - run: uv run --frozen python -m unittest discover -s tests -p test_protocol.py -v
+      - run: uv run --frozen wafervlm --help
+  model-compatibility:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install uv==0.13.5
+      - run: uv sync --frozen --extra train
+      - run: uv run --frozen --extra train python -m unittest discover -s tests -v
+      - name: Pinned real tokenizer and image processor (no model weights)
+        run: uv run --frozen --extra train python scripts/check_processor.py
+      - name: Real Trainer integration with tiny random weights
+        run: uv run --frozen --extra train python scripts/check_training.py
