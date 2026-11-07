@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "wafervlm"
+version = "0.1.0"
+description = "Small vision-language models for reproducible wafer-map classification"
+requires-python = ">=3.11,<3.14"
+dependencies = ["numpy>=1.26,<3", "pandas>=2.2,<3", "Pillow>=11,<13"]
+
+[project.optional-dependencies]
+train = ["torch==2.10.0", "torchvision==0.25.0", "transformers==5.3.0", "peft==0.18.1", "accelerate==1.12.0"]
+
+[project.scripts]
+wafervlm = "wafervlm.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

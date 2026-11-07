@@ -1,0 +1,9 @@
+{
+  "steps": 100,
+  "seed": 17,
+  "accumulation": 8,
+  "rank": 8,
+  "learning_rate": 0.0002,
+  "max_length": 1024,
+  "evaluation_split": "test"
+}

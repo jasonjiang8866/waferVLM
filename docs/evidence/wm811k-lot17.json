@@ -1,0 +1,99 @@
+{
+  "archive_sha256": "0e4bd4316a110a04e475a88071f5e1c7fe4303b12ee53c851d2cae4d995a93e2",
+  "audit": "passed",
+  "dataset": {
+    "conflict_policy": "exclude",
+    "counts": {
+      "test": {
+        "center": 20,
+        "donut": 20,
+        "edge-loc": 20,
+        "edge-ring": 20,
+        "loc": 20,
+        "near-full": 20,
+        "random": 20,
+        "scratch": 20
+      },
+      "train": {
+        "center": 100,
+        "donut": 100,
+        "edge-loc": 100,
+        "edge-ring": 100,
+        "loc": 100,
+        "near-full": 90,
+        "random": 100,
+        "scratch": 100
+      },
+      "validation": {
+        "center": 20,
+        "donut": 20,
+        "edge-loc": 20,
+        "edge-ring": 20,
+        "loc": 20,
+        "near-full": 20,
+        "random": 20,
+        "scratch": 20
+      }
+    },
+    "eval_per_class_cap": 20,
+    "excluded_unlabeled_or_none": 785938,
+    "labels": [
+      "center",
+      "donut",
+      "edge-loc",
+      "edge-ring",
+      "loc",
+      "near-full",
+      "random",
+      "scratch"
+    ],
+    "manifest_sha256": {
+      "test": "ab869b84befa34972da3a7a50e0d9766a13d40702bf6bd17d77493095cd6f8a4",
+      "train": "6e0a80abff694c4f2581fa897edf3b3d778b292e4c45b7aea40200a01805149f",
+      "validation": "3243e450163721eecac5ce5f4667f9a93599674337fed46e5e40ddeb940ab54f"
+    },
+    "prompt": "Classify the defect pattern in this wafer map. Yellow cells are defective, blue cells are good dies, and black is outside the wafer. Return exactly one label from: center, donut, edge-loc, edge-ring, loc, near-full, random, scratch. Do not explain.",
+    "quarantine_sha256": "1b4e92cd6f2741e3e85960ce7d240a03e77a864e602fdad6b3a0f9b073aa58ab",
+    "quarantined_class_counts": {
+      "center": 1,
+      "donut": 0,
+      "edge-loc": 2,
+      "edge-ring": 2,
+      "loc": 1,
+      "near-full": 0,
+      "random": 0,
+      "scratch": 0
+    },
+    "quarantined_rows": 6,
+    "quarantined_unique_maps": 3,
+    "render": "256x256 nearest-neighbor, aspect-preserving, black padding; palette 0:black 1:blue 2:yellow",
+    "retained_unique_maps": 25422,
+    "schema_version": 2,
+    "seed": 17,
+    "selected_lot_counts": {
+      "test": 144,
+      "train": 660,
+      "validation": 133
+    },
+    "source_class_counts": {
+      "center": 4294,
+      "donut": 555,
+      "edge-loc": 5189,
+      "edge-ring": 9680,
+      "loc": 3593,
+      "near-full": 149,
+      "random": 866,
+      "scratch": 1193
+    },
+    "source_labeled_rows": 25519,
+    "source_sha256": "1d04fccb3dd3176b276878b926b20fead7e077c5751e4d353ea9741a5e7b5c65",
+    "source_total_rows": 811457,
+    "split_protocol": "sha256-lot-group-70-15-15-with-duplicate-union",
+    "train_per_class_cap": 100
+  },
+  "dataset_sha256": "c588b3ef59d9dba57cfc745ec20db903e6ff2dcc75504112348f8b9f1ad3ab68",
+  "download_url": "https://www.kaggle.com/api/v1/datasets/download/qingyi/wm811k-wafer-map",
+  "pickle_sha256": "1d04fccb3dd3176b276878b926b20fead7e077c5751e4d353ea9741a5e7b5c65",
+  "pretrained_model_executed": false,
+  "source_page": "https://www.kaggle.com/datasets/qingyi/wm811k-wafer-map"
+}

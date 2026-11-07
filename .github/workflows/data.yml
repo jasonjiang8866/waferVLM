@@ -1,0 +1,43 @@
+name: Pinned public WM-811K data audit
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - src/wafervlm/data.py
+      - src/wafervlm/core.py
+      - src/wafervlm/acquisition.py
+      - scripts/prepare_public_data.py
+      - .github/workflows/data.yml
+      - uv.lock
+permissions:
+  contents: read
+concurrency:
+  group: data-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  data:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
+        with:
+          version: '0.13.5'
+          enable-cache: false
+      - run: uv sync --frozen --python 3.12
+      - name: Download pinned mirror and audit the real lot-isolated subset
+        run: |
+          uv run --frozen python scripts/prepare_public_data.py --trust-pickle --output data/wm811k-lot17
+          uv run --frozen wafervlm audit --dataset data/wm811k-lot17
+          diff -u docs/evidence/wm811k-lot17.json data/wm811k-lot17/acquisition.json
+      - name: Preserve provenance and manifests (no raw pickle or images)
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: wm811k-audit-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            data/wm811k-lot17/*.json
+            data/wm811k-lot17/*.jsonl
+          retention-days: 30
+          if-no-files-found: error
