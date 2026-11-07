@@ -52,13 +52,18 @@ def seal_output(output):
 
 
 def train(dataset, output, steps=100, seed=17, accumulation=8, rank=8, learning_rate=0.0002,
-          revision=MODEL_REVISION, device="cuda", max_length=1024):
+          revision=MODEL_REVISION, device="cuda", max_length=1024, resume_from=None):
     import torch
     from transformers import Trainer, TrainerCallback, TrainingArguments, set_seed
 
     if min(steps, accumulation, rank, max_length) < 1 or learning_rate <= 0:
         raise ValueError("Training parameters must be positive")
     rows = audit_dataset(dataset)
+    config = dict(steps=steps, seed=seed, accumulation=accumulation, rank=rank,
+                  learning_rate=learning_rate, max_length=max_length, device=device)
+    from .resume import check_resume
+    resumed = check_resume(resume_from, dataset, revision, config) if resume_from else None
+    start_step = resumed["global_step"] if resumed else 0
     output = new_output(output)
     set_seed(seed)
     model, processor = load_model(revision, device)
@@ -67,7 +72,17 @@ def train(dataset, output, steps=100, seed=17, accumulation=8, rank=8, learning_
     model.config.text_config.use_cache = False
     diagnostics = {"lora_targets": targets, "gradient_checks": 0, "nonzero_gradient_checks": 0}
 
+    logged_losses = []
+
     class GradientCheck(TrainerCallback):
+        def on_train_begin(self, args, state, control, **kwargs):
+            if state.global_step != start_step:
+                raise ValueError("Trainer failed to restore global step")
+
+        def on_log(self, args, state, control, logs=None, **kwargs):
+            if logs and "loss" in logs:
+                logged_losses.append(float(logs["loss"]))
+
         def on_pre_optimizer_step(self, args, state, control, **kwargs):
             grads = [p.grad for p in kwargs["model"].parameters() if p.requires_grad and p.grad is not None]
             if not grads or any(not torch.isfinite(g).all() for g in grads):
@@ -76,9 +91,9 @@ def train(dataset, output, steps=100, seed=17, accumulation=8, rank=8, learning_
             if any(torch.count_nonzero(g).item() for g in grads):
                 diagnostics["nonzero_gradient_checks"] += 1
 
-    config = dict(steps=steps, seed=seed, accumulation=accumulation, rank=rank,
-                  learning_rate=learning_rate, max_length=max_length, device=device)
-    write_json(output / "run.json", provenance(dataset, revision, config))
+    run_info = provenance(dataset, revision, config)
+    run_info["resume"] = resumed
+    write_json(output / "run.json", run_info)
     args = TrainingArguments(
         output_dir=str(output / "checkpoints"), max_steps=steps,
         per_device_train_batch_size=1, gradient_accumulation_steps=accumulation,
@@ -86,7 +101,7 @@ def train(dataset, output, steps=100, seed=17, accumulation=8, rank=8, learning_
         weight_decay=0.0, max_grad_norm=1.0, seed=seed, data_seed=seed,
         bf16=device == "cuda", use_cpu=device == "cpu", report_to="none",
         remove_unused_columns=False, dataloader_num_workers=0,
-        save_strategy="steps", save_steps=max(1, steps // 2), save_total_limit=2,
+        save_strategy="steps", save_steps=max(1, steps - start_step) if resumed else max(1, steps // 2), save_total_limit=2,
         logging_steps=1, gradient_checkpointing=True,
         gradient_checkpointing_kwargs={"use_reentrant": False}, optim="adamw_torch",
     )
@@ -96,7 +111,9 @@ def train(dataset, output, steps=100, seed=17, accumulation=8, rank=8, learning_
     trainer = Trainer(model=model, args=args, train_dataset=rows["train"],
                       data_collator=AnswerCollator(processor, dataset, max_length),
                       callbacks=[GradientCheck()])
-    result = trainer.train()
+    result = trainer.train(resume_from_checkpoint=str(resume_from) if resumed else None)
+    if trainer.state.global_step != steps or diagnostics["gradient_checks"] != steps - start_step:
+        raise ValueError("Unexpected optimizer-step count after resume")
     if not math.isfinite(result.training_loss):
         raise ValueError("Non-finite training loss")
     if not diagnostics["nonzero_gradient_checks"]:
@@ -105,7 +122,12 @@ def train(dataset, output, steps=100, seed=17, accumulation=8, rank=8, learning_
     model.save_pretrained(adapter, safe_serialization=True)
     processor.save_pretrained(adapter)
     write_json(output / "training.json", {
-        **result.metrics, **diagnostics, "elapsed_seconds": time.perf_counter() - start,
+        **result.metrics, **diagnostics,
+        "trainer_reported_train_loss": result.training_loss,
+        "train_loss": sum(logged_losses) / len(logged_losses),
+        "start_step": start_step, "end_step": trainer.state.global_step,
+        "executed_steps": diagnostics["gradient_checks"],
+        "elapsed_seconds": time.perf_counter() - start,
         "peak_allocated_bytes": torch.cuda.max_memory_allocated() if device == "cuda" else None,
         "status": "training-completed-quality-not-yet-evaluated",
     })
@@ -114,7 +136,7 @@ def train(dataset, output, steps=100, seed=17, accumulation=8, rank=8, learning_
 
 
 def evaluate(dataset, output, split="test", adapter=None, revision=MODEL_REVISION,
-             device="cuda", max_new_tokens=16):
+             device="cuda", max_new_tokens=16, include_loss=False):
     import torch
     from peft import PeftModel
     from PIL import Image
@@ -150,15 +172,28 @@ def evaluate(dataset, output, split="test", adapter=None, revision=MODEL_REVISIO
                                   eos_token_id=eos, pad_token_id=processor.tokenizer.pad_token_id or eos,
                                   use_cache=True)
     config = dict(split=split, adapter=bool(adapter), device=device, max_new_tokens=max_new_tokens,
+                  include_loss=include_loss,
                   do_sample=False, enable_thinking=False)
     info = provenance(dataset, revision, config)
     if adapter:
         info["adapter_checksums_sha256"] = sha256_file(adapter.parent / "checksums.json")
     write_json(output / "run.json", info)
     predictions = []
+    loss_sum, answer_tokens = 0.0, 0
+    loss_collator = AnswerCollator(processor, dataset, 1024) if include_loss else None
     if device == "cuda":
         torch.cuda.reset_peak_memory_stats()
     for row in rows:
+        if loss_collator is not None:
+            batch = loss_collator([row]).to(device)
+            tokens = int((batch["labels"][:, 1:] != -100).sum().item())
+            with torch.inference_mode():
+                answer_loss = float(model(**batch, use_cache=False).loss.item())
+            if tokens < 1 or not math.isfinite(answer_loss):
+                raise ValueError("Invalid validation answer loss")
+            loss_sum += answer_loss * tokens
+            answer_tokens += tokens
+            del batch
         with Image.open(checked_image(dataset, row)) as source:
             inputs = encode(processor, source.convert("RGB")).to(device)
         if device == "cuda":
@@ -180,6 +215,8 @@ def evaluate(dataset, output, split="test", adapter=None, revision=MODEL_REVISIO
     report = metrics(predictions)
     report.update(mean_generation_seconds=sum(r["seconds"] for r in predictions) / len(predictions),
                   peak_allocated_bytes=torch.cuda.max_memory_allocated() if device == "cuda" else None)
+    if include_loss:
+        report.update(answer_token_loss=loss_sum / answer_tokens, answer_tokens=answer_tokens)
     write_json(output / "metrics.json", report)
     seal_output(output)
     return report

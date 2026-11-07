@@ -8,7 +8,7 @@ from pathlib import Path, PurePosixPath
 from runpod.provider import IMAGE, SOURCE
 
 
-def verify_archive(path, controller_sha):
+def verify_archive(path, controller_sha, continuation=False):
     with tarfile.open(path, 'r:gz') as tar:
         files = {}
         total = 0
@@ -47,6 +47,9 @@ def verify_archive(path, controller_sha):
                         raise ValueError('Unsafe checksum path')
                     if files[str(PurePosixPath(name).parent / p)][1] != digest:
                         raise ValueError('Checksum mismatch')
+        if continuation:
+            _verify_continuation(read, files, controller_sha)
+            return {'status': 'accepted', 'file_count': len(files), 'unpacked_bytes': total}
         worker = read('worker.json')
         if (worker['status'] != 'accepted' or worker['source_sha'] != SOURCE
                 or worker['controller_sha'] != controller_sha or worker['profiles'] != ['smoke', 'baseline']):
@@ -86,3 +89,71 @@ def verify_archive(path, controller_sha):
             if not any(n.startswith('results/' + profile + '/train/adapter/') and n.endswith('.safetensors') for n in files):
                 raise ValueError('Missing adapter weights')
         return {'status': 'accepted', 'file_count': len(files), 'unpacked_bytes': total}
+
+
+def _verify_continuation(read, files, controller_sha):
+    root = Path(__file__).resolve().parents[1]
+    expected = json.loads((root/'docs/evidence/wm811k-lot17.json').read_text())
+    cfg = json.loads((root/'configs/continuation.json').read_text())
+    worker = read('worker.json')
+    if (worker['status'] != 'accepted' or worker['profiles'] != ['continuation']
+            or worker['source_sha'] != SOURCE or worker['controller_sha'] != controller_sha
+            or worker['config_sha256'] != hashlib.sha256((root/'configs/continuation.json').read_bytes()).hexdigest()
+            or read('acquisition.json') != expected):
+        raise ValueError('Continuation provenance mismatch')
+    base = 'continuation/'
+    for part in ('', 'step100/', 'step150/', 'step200/', 'validation-100/', 'validation-150/', 'validation-200/', 'selected-test/'):
+        if not read(base+part+'checksums.json'):
+            raise ValueError('Missing continuation checksums')
+    origin = read(base+'resume-origin.json')
+    if (origin['run_id'] != cfg['parent_run_id'] or origin['artifact_id'] != cfg['parent_artifact_id']
+            or origin['archive_sha256'] != cfg['parent_archive_sha256'] or origin['global_step'] != 100):
+        raise ValueError('Wrong parent checkpoint')
+    status = read(base+'status.json')
+    if status['status'] != 'completed' or (status['start_step'],status['end_step'],status['additional_steps']) != (100,200,100):
+        raise ValueError('Incomplete continuation')
+    for step in (150,200):
+        tr = read(base+f'step{step}/training.json')
+        run = read(base+f'step{step}/run.json')
+        resume = run['resume']
+        if (tr['start_step'] != step-50 or tr['end_step'] != step or tr['gradient_checks'] != 50
+                or tr['executed_steps'] != 50 or tr['nonzero_gradient_checks'] < 1
+                or not math.isfinite(tr['train_loss']) or tr['peak_allocated_bytes'] <= 0
+                or resume['global_step'] != step-50 or run['source_sha'] != SOURCE
+                or run['image_digest'] != IMAGE.split('@')[1]
+                or run['dataset_sha256'] != expected['dataset_sha256']
+                or run['config']['device'] != 'cuda'):
+            raise ValueError('Resume training gate failed')
+        parent = base+'step100/adapter/adapter_model.safetensors' if step==150 else base+'step150/checkpoints/checkpoint-150/adapter_model.safetensors'
+        if resume['adapter_sha256'] != files['results/'+parent][1]:
+            raise ValueError('Resume adapter chain mismatch')
+        if step==150 and resume['optimizer_sha256'] != 'd1168af8d924c1e5654ad7854dd9d2344763aa68c119f8eae4716a8aa32e7fbe':
+            raise ValueError('Original optimizer mismatch')
+        if step==200:
+            for key,name in [('optimizer_sha256','optimizer.pt'),('scheduler_sha256','scheduler.pt'),('rng_sha256','rng_state.pth')]:
+                if resume[key] != files['results/'+base+'step150/checkpoints/checkpoint-150/'+name][1]:
+                    raise ValueError('Resume optimizer/RNG chain mismatch')
+    scores=[]
+    for step in (100,150,200):
+        m=read(base+f'validation-{step}/metrics.json')
+        run=read(base+f'validation-{step}/run.json')
+        if (m['n'] != 160 or not math.isfinite(m['answer_token_loss']) or m['answer_token_loss'] < 0
+                or m['answer_tokens'] <= 0 or not 0 <= m['macro_f1'] <= 1
+                or run['config']['split'] != 'validation' or run['config']['device'] != 'cuda'
+                or run['dataset_sha256'] != expected['dataset_sha256']
+                or run['source_sha'] != SOURCE or run['image_digest'] != IMAGE.split('@')[1]):
+            raise ValueError('Validation gate failed')
+        scores.append({'step':step,**m})
+    selection=read(base+'selection.json')
+    best=max(scores,key=lambda x:(x['macro_f1'],-x['step']))['step']
+    if (selection['validation'] != scores or selection['best_step'] != best
+            or selection['test_used_for_selection'] is not False or status['best_step'] != best
+            or selection['criterion'] != cfg['selection']):
+        raise ValueError('Selection gate failed')
+    test=read(base+'selected-test/metrics.json')
+    run=read(base+'selected-test/run.json')
+    if (test['n'] != 160 or not 0 <= test['macro_f1'] <= 1 or run['config']['split'] != 'test'
+            or run['adapter_checksums_sha256'] != files['results/'+base+f'step{best}/checksums.json'][1]
+            or run['source_sha'] != SOURCE or run['image_digest'] != IMAGE.split('@')[1]
+            or run['dataset_sha256'] != expected['dataset_sha256'] or run['config']['device'] != 'cuda'):
+        raise ValueError('Selected test gate failed')

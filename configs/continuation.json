@@ -1,0 +1,14 @@
+{
+  "parent_run_id": 42385615853,
+  "parent_artifact_id": 13582826145,
+  "parent_archive_sha256": "e7e4fad8a89af270278b72529db333f1698d8c027e761a6629a0464cac32633c",
+  "start_step": 100,
+  "validation_steps": [100, 150, 200],
+  "target_step": 200,
+  "selection": "validation_macro_f1_then_earlier_step",
+  "seed": 17,
+  "accumulation": 8,
+  "rank": 8,
+  "learning_rate": 0.0002,
+  "max_length": 1024
+}
