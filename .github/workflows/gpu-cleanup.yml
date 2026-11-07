@@ -1,0 +1,43 @@
+name: WaferVLM independent GPU cleanup
+on:
+  workflow_run:
+    workflows: ['WaferVLM bounded GPU experiment']
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      origin_run_id:
+        description: 'Originating waferVLM GPU experiment run ID to reconcile'
+        required: true
+        type: string
+permissions:
+  contents: read
+jobs:
+  cleanup:
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      (github.event_name == 'workflow_dispatch' ||
+       (github.event.workflow_run.event == 'workflow_dispatch' &&
+        github.event.workflow_run.head_branch == 'main' &&
+        github.event.workflow_run.repository.full_name == github.repository))
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Delete only the originating run's owned temporary Pod
+        env:
+          RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY }}
+          ORIGIN_RUN_ID: ${{ inputs.origin_run_id || github.event.workflow_run.id }}
+        run: GITHUB_RUN_ID="$ORIGIN_RUN_ID" python -m runpod.controller cleanup
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: wafervlm-cleanup-${{ inputs.origin_run_id || github.event.workflow_run.id }}
+          path: runpod-results/
+          retention-days: 30
+          if-no-files-found: error

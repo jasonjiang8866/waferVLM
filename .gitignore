@@ -12,3 +12,5 @@ outputs/
 _broker/
 out/
 observation-task.json
+runpod-results/
+runpod-authorization/

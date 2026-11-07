@@ -1,0 +1,70 @@
+name: WaferVLM bounded GPU experiment
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_paid:
+        description: 'Use the one-off 2026-11-07 US$20 total authorization'
+        type: boolean
+        required: true
+        default: false
+      expected_sha:
+        description: 'Exact reviewed current main SHA'
+        type: string
+        required: true
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: wafervlm-paid-usd20
+  cancel-in-progress: false
+jobs:
+  experiment:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 110
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Offline lifecycle and integrity tests
+        run: python -m unittest discover -s runpod/tests -v
+      - name: Fresh GET-only capacity, rate and account guardrails
+        env:
+          RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY }}
+        run: python -m runpod.controller preflight
+      - name: Write one-off authorization ledger
+        if: inputs.confirm_paid && github.run_attempt == 1
+        run: |
+          mkdir -p runpod-authorization
+          printf '%s\n' "$GITHUB_RUN_ID" > runpod-authorization/run-id.txt
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: inputs.confirm_paid && github.run_attempt == 1
+        with:
+          name: runpod-authorization-wafer-20261107-usd20
+          path: runpod-authorization/
+          retention-days: 90
+          if-no-files-found: error
+      - name: Run smoke then baseline, retrieve and verify, delete Pod
+        if: inputs.confirm_paid
+        env:
+          RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY }}
+          GH_TOKEN: ${{ github.token }}
+          CONFIRM_PAID: ${{ inputs.confirm_paid }}
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+        run: python -m runpod.controller run
+      - name: Independent inventory check and cleanup
+        if: always() && inputs.confirm_paid
+        env:
+          RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY }}
+        run: python -m runpod.controller cleanup
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: wafervlm-gpu-${{ github.run_id }}-${{ github.run_attempt }}
+          path: runpod-results/
+          retention-days: 30
+          if-no-files-found: warn
