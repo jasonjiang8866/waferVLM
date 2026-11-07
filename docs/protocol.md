@@ -25,13 +25,15 @@ These are initial experimental choices, not tuned recommendations. Language proj
 
 1. Verify the trusted pickle's SHA256 before deserialization.
 2. Preserve source row index and lot identity. Reject missing lots and malformed maps.
-3. Reject conflicting labels on identical maps; deduplicate exact maps.
+3. Reject conflicting target labels on identical maps by default. The pinned public-data recipe explicitly uses `conflict_policy=exclude`: quarantine every copy of each conflicting map before splitting, recording original row IDs, labels, lots and hashes. It never picks a majority label. Deduplicate the remaining exact maps.
 4. Join lots linked by a duplicate map, then hash the resulting group with the seed into 70% train / 15% validation / 15% test buckets.
 5. Sample at most 100/20/20 images per class from the already isolated splits. Never duplicate rare examples to fill quotas. Actual sample counts are authoritative.
 6. Render with nearest-neighbor interpolation, preserve aspect ratio, and add black padding. No filenames containing labels, plot axes, legends or annotation text enter the model.
 7. Check IDs, lots, raw-map hashes and rendered-image hashes across splits; verify all file checksums before every run.
 
 This checks exact duplicates, not arbitrary rotated/near-duplicate morphology or hidden manufacturing relations across lots. Cross-fab, product, time and inspection-point-map generalization remain separate studies.
+
+This first protocol considers conflicts among the eight target defect labels; normal and unlabeled rows are excluded before conflict analysis. It does not adjudicate defect-vs-normal annotations. The 2026-11-07 real-data audit quarantined 6 rows / 3 maps and retained 25,422 unique target-class maps before split sampling. The final subset is 790/160/160. The seed and sample caps were unchanged after encountering the annotation conflicts; no model scores were inspected.
 
 The official WM-811K `trianTestLabel` field (including its spelling) is not used: this protocol uses explicitly declared lot-group isolation. Missing classes are a preparation failure. Changing the split seed must be declared before any model evaluation; do not search for a seed based on accuracy.
 

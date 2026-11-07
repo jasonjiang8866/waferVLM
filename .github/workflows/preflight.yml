@@ -1,0 +1,78 @@
+name: RunPod observation and offline contract
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: wafervlm-observation-${{ github.ref }}
+  cancel-in-progress: false
+env:
+  BROKER_SHA: dfd8c3c7250ac5a73c4c703932e9fb93d07dcb45
+jobs:
+  offline:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          repository: jasonjiang8866/runpod-ci-broker
+          ref: ${{ env.BROKER_SHA }}
+          path: _broker
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
+        with:
+          version: '0.13.5'
+          enable-cache: false
+      - run: uv sync --project _broker --locked --no-dev --python 3.12
+      - name: Numeric CUDA floor and missing-budget contract (no network)
+        run: uv run --project _broker --locked --no-dev python scripts/check_broker.py
+  observe:
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          repository: jasonjiang8866/runpod-ci-broker
+          ref: ${{ env.BROKER_SHA }}
+          path: _broker
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
+        with:
+          version: '0.13.5'
+          enable-cache: false
+      - run: uv sync --project _broker --locked --no-dev --python 3.12
+      - name: Record observed source (image is still an explicit placeholder)
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          task = json.loads(Path('runpod/preflight.json').read_text())
+          task['source_sha'] = os.environ['GITHUB_SHA']
+          Path('observation-task.json').write_text(json.dumps(task))
+          PY
+      - name: GET-only inventory and CUDA floor query
+        env:
+          RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY }}
+        run: |
+          uv run --project _broker --locked --no-dev runpod-ci-broker \
+            --config observation-task.json --action preflight --output out
+      - name: Publish observations including blockers
+        if: always()
+        run: |
+          if [ -f out/summary.md ]; then cat out/summary.md >> "$GITHUB_STEP_SUMMARY"; fi
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: wafervlm-preflight-${{ github.run_id }}-${{ github.run_attempt }}
+          path: out/
+          retention-days: 30
+          if-no-files-found: error

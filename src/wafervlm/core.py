@@ -50,6 +50,12 @@ def audit_dataset(root):
     report = json.loads((root / "dataset.json").read_text())
     if report["labels"] != list(LABELS) or report["prompt"] != PROMPT:
         raise ValueError("Dataset protocol does not match this version")
+    quarantined_maps = set()
+    if report.get("schema_version", 1) >= 2:
+        path = root / "quarantine.jsonl"
+        if sha256_file(path) != report["quarantine_sha256"]:
+            raise ValueError("Quarantine checksum mismatch")
+        quarantined_maps = {r["map_sha256"] for r in read_jsonl(path)}
     seen = {key: {} for key in ("id", "lot", "map_sha256", "image_sha256")}
     all_rows = {}
     for split in ("train", "validation", "test"):
@@ -60,6 +66,8 @@ def audit_dataset(root):
         if not rows:
             raise ValueError(f"Empty split: {split}")
         for row in rows:
+            if row["map_sha256"] in quarantined_maps:
+                raise ValueError("Quarantined map included in selected split")
             if row["label"] not in LABELS or row["split"] != split:
                 raise ValueError("Invalid label or split")
             checked_image(root, row)

@@ -12,11 +12,19 @@ Initial target: Qwen3.5-0.8B wafer-map SFT baseline.
 
 These are compatibility/protocol tests. Random fixtures are not WM-811K, and the tiny randomly initialized model is not the pretrained 0.8B checkpoint. No wafer accuracy is inferred from them.
 
+## Real-data and preflight integration
+
+- The public Kaggle WM-811K mirror was downloaded and SHA256-pinned. pandas 2.3.3 loaded the historical pickle without a compatibility shim.
+- Strict preparation detected contradictory target labels on 3 identical maps (6 rows). An explicit exclusion policy now quarantines all copies, while the default generic importer still fails on conflicts. Checksummed quarantine membership is audited against selected splits.
+- Full real-data preparation and PNG/manifest audit passed: **790 train / 160 validation / 160 test**, all eight classes, disjoint lots/raw maps/rendered images. See [data audit](data-audit.md) and its committed machine-readable evidence.
+- **17 protocol tests passed locally** after the changes, including conflict opt-in, quarantine enforcement, cached archive tampering and incomplete-download cleanup. The two model integration tests were not rerun locally in this stage; CI runs them with the locked training dependencies.
+- The pinned Broker contract passed locally with no network calls: numerical CUDA floor 12.8 accepts 12.9/12.10/13.0; the actual adapter emits `minCudaVersion`, and missing budget prevents selection. No live RunPod request was made locally.
+- Added PR real-data reproduction and container-build checks. Their actual CI outcomes must be read from the current commit's Actions runs; adding a workflow is not evidence it passed.
+
 ## Not yet verified
 
-- Trusted WM-811K acquisition and actual per-class lot-isolated counts. MIR Lab returned unavailable/error responses during this session.
 - Pretrained 0.8B CUDA forward/backward, memory/time, full training, or quality improvement.
-- Docker build (no Docker executable in the local environment), GHCR publication and RunPod controller.
+- GHCR publication and a live provision/monitor/collect/delete RunPod controller. Docker validation is delegated to the PR image build because the local environment has no Docker executable.
 - Secret existence, RunPod inventory, capacity, prices, experiment spend or owned-resource cleanup evidence.
 
 No paid resources were created. Public read-only downloads for model configuration and processor files are separate from GPU execution.

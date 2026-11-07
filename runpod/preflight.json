@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "experiment_id": "wafervlm-qwen35-08b-smoke",
+  "scope": "waferVLM",
+  "repository": "jasonjiang8866/waferVLM",
+  "source_sha": "2a73af3560ffa63129d9cd3beca3292454c8fabc",
+  "image": "ghcr.io/jasonjiang8866/wafervlm@sha256:0000000000000000000000000000000000000000000000000000000000000000",
+  "entrypoint": [
+    "python",
+    "/app/scripts/run_experiment.py",
+    "--dataset",
+    "/workspace/data/wm811k-lot17",
+    "--output",
+    "/workspace/results",
+    "--profile",
+    "smoke",
+    "--timeout-seconds",
+    "1800"
+  ],
+  "strategy": "flexible_smoke",
+  "gpu_allowlist": [
+    "NVIDIA RTX PRO 6000 Blackwell Server Edition MIG 1g.24gb",
+    "NVIDIA GeForce RTX 4090",
+    "NVIDIA GeForce RTX 3090",
+    "NVIDIA GeForce RTX 5090"
+  ],
+  "gpu_preference": [
+    "NVIDIA RTX PRO 6000 Blackwell Server Edition MIG 1g.24gb",
+    "NVIDIA GeForce RTX 4090",
+    "NVIDIA GeForce RTX 3090",
+    "NVIDIA GeForce RTX 5090"
+  ],
+  "min_vram_gb": 24,
+  "gpu_count": 1,
+  "compatibility": {
+    "min_cuda_version": "12.8"
+  },
+  "limits": {
+    "runtime_seconds": 1800,
+    "max_start_attempts": 1,
+    "max_wait_seconds": 20,
+    "max_queries": 3,
+    "cost_basis": "UNAUTHORIZED: observation-only template; GPU price cap, total budget, storage and reserves are intentionally unset"
+  },
+  "results": {
+    "required_files": [
+      "status.json",
+      "checksums.json",
+      "comparison/comparison.json",
+      "train/training.json"
+    ],
+    "max_bytes": 1073741824
+  }
+}

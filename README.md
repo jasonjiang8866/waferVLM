@@ -4,7 +4,7 @@
 
 waferVLM starts with [`Qwen/Qwen3.5-0.8B`](https://huggingface.co/Qwen/Qwen3.5-0.8B), comparing its original weights with a BF16, language-only LoRA adapter on the **same held-out wafer maps**. Images and a fixed classification question are the inputs; the target is a single defect label.
 
-**Status:** initial implementation and CPU compatibility tests. No real WM-811K training result, CUDA qualification, published adapter, or production accuracy claim yet. See [validation](docs/validation.md) and the [experiment protocol](docs/protocol.md).
+**Status:** real WM-811K data audited: **790 training / 160 validation / 160 test images**, with all eight classes and disjoint lots. Three maps with contradictory target labels (six rows) are quarantined. CPU model compatibility is tested; pretrained CUDA training and accuracy are still unmeasured. See [data evidence](docs/data-audit.md), [validation](docs/validation.md) and the [experiment protocol](docs/protocol.md).
 
 ## What is included
 
@@ -13,7 +13,7 @@ waferVLM starts with [`Qwen/Qwen3.5-0.8B`](https://huggingface.co/Qwen/Qwen3.5-0
 - Zero-shot evaluation, fixed-budget SFT, adapted-model evaluation, and paired accuracy / macro-F1 comparison.
 - Strict output parsing: explanations, unknown labels and truncated responses count as failures.
 - Training checkpoints, adapter export, gradient diagnostics, predictions, dependency/GPU metadata and checksums.
-- CPU CI and a containerized worker for a future authorized RunPod experiment. The worker does **not** create Pods.
+- CPU/data/container CI, a containerized worker, and pinned RunPod Broker read-only preflight with **CUDA >= 12.8** host selection. Higher host versions are allowed; no workflow creates Pods.
 
 ```mermaid
 flowchart TD
@@ -45,23 +45,29 @@ The baseline pins Torch 2.10.0, torchvision 0.25.0, Transformers 5.3.0, PEFT 0.1
 
 ## Prepare WM-811K
 
-Obtain `WM811K.pkl` from a source you trust and record its source and applicable terms. NVIDIA points to [MIR Lab](https://mirlab.org/dataSet/public/); this endpoint was unavailable during initial implementation. This repository does not redistribute raw data or silently substitute an unverified mirror.
+The reproducible recipe uses the public [qingyi WM-811K Kaggle mirror](https://www.kaggle.com/datasets/qingyi/wm811k-wafer-map), with archive and `LSWMD.pkl` SHA256 checks pinned in source. NVIDIA points to [MIR Lab](https://mirlab.org/dataSet/public/); that endpoint was unavailable, so this mirror is explicitly recorded as the source. The Kaggle listing labels the mirror CC0; that does not independently establish the original dataset's rights. See [provenance and exact hashes](docs/data-audit.md). Raw data and images are not committed to Git.
 
 **Pickle loading can execute code.** Verify the file's provenance before explicitly opting in. A checksum identifies the bytes; computing your own checksum does not establish trust.
 
 ```bash
+# Downloads ~157 MB; extracts ~2.1 GB. Reserve ~3 GB disk and several GB RAM.
+# Fixed seed/caps, with explicit recipe-level quarantine of conflicting labels.
+uv run --frozen python scripts/prepare_public_data.py \
+  --trust-pickle --output data/wm811k-lot17
+uv run --frozen wafervlm audit --dataset data/wm811k-lot17
+
+# Alternatively import another trusted file (conflicting labels fail by default).
 sha256sum /path/to/WM811K.pkl
 uv run --frozen wafervlm prepare \
   --source /path/to/WM811K.pkl \
   --sha256 YOUR_VERIFIED_64_CHARACTER_SHA256 \
   --trust-pickle --seed 17 --train-cap 100 --eval-cap 20 \
-  --output data/wm811k-lot17
-uv run --frozen wafervlm audit --dataset data/wm811k-lot17
+  --output data/custom-lot17
 ```
 
 The eight labels are `center`, `donut`, `edge-loc`, `edge-ring`, `loc`, `near-full`, `random`, and `scratch`. Normal (`none`) and unlabeled samples are excluded from this initial **closed-set** protocol. It cannot establish normal-wafer false-alarm rates or unknown-defect detection.
 
-Each split requires every class. The 100/20/20 limits are **caps**, not promised counts: lot isolation takes priority over balancing. Inspect `dataset.json` for actual counts. If a class is absent, preparation fails; do not move individual images between splits to make counts fit. Identical raw maps connect their lots before splitting. Rendered-image collisions across splits also cause the audit to fail.
+Each split requires every class. The 100/20/20 limits are **caps**, not promised counts: the real `near-full` training count is 90. Inspect `dataset.json` for actual counts. If a class is absent, preparation fails; do not move individual images between splits to make counts fit. The generic importer defaults to rejecting contradictory labels. Its explicit `--conflict-policy exclude` option removes **all** copies of each conflicting target-class map, recording them in checksummed `quarantine.jsonl`; the pinned public recipe uses this declared policy. Remaining identical raw maps connect their lots before splitting. Rendered-image collisions across splits also cause the audit to fail.
 
 This protocol deliberately differs from NVIDIA's small demonstration split. Scores are **not directly comparable** to its reported 96.8%.
 
@@ -87,7 +93,7 @@ Individual stages are available through `wafervlm evaluate`, `train` and `compar
 
 ## RunPod
 
-See [runpod/README.md](runpod/README.md). `RUNPOD_API_KEY` stays in GitHub Actions Secrets. Neither the training code nor the worker receives it. This initial PR prepares the workload and image-build workflow; a provision/monitor/collect/delete controller must be integrated and reviewed before paid launch. Merging this code does not launch compute.
+See [runpod/README.md](runpod/README.md). `RUNPOD_API_KEY` stays in the main-branch, manually dispatched **GET-only observation** step. Neither the training code nor the worker receives it. Host filtering uses `minCudaVersion=12.8`, never an exact 12.8 requirement. The pinned Broker currently cannot provision compute; the image digest, storage route, budget and lifecycle controller remain launch prerequisites. Merging this code does not launch compute.
 
 ## References and scope
 

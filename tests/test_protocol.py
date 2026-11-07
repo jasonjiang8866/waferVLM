@@ -1,12 +1,14 @@
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
 from wafervlm.core import LABELS, PROMPT, audit_dataset, metrics, parse_label, sha256_file, write_json, write_jsonl
-from wafervlm.data import group_records, prepare, render_map, scalar, split_records
+from wafervlm.data import group_records, prepare, quarantine_conflicts, render_map, scalar, split_records
+from wafervlm.acquisition import acquire
 from wafervlm.experiment import compare
 
 
@@ -53,6 +55,35 @@ class ProtocolTests(unittest.TestCase):
             group_records([dict(lot="a", label="center", map_sha256="same"),
                            dict(lot="b", label="scratch", map_sha256="same")])
 
+    def test_conflict_quarantine_excludes_every_copy(self):
+        rows = [dict(lot="a", label="center", map_sha256="same"),
+                dict(lot="b", label="center", map_sha256="same"),
+                dict(lot="c", label="scratch", map_sha256="same"),
+                dict(lot="d", label="scratch", map_sha256="other")]
+        retained, excluded = quarantine_conflicts(rows)
+        self.assertEqual(retained, rows[3:])
+        self.assertEqual(excluded, rows[:3])
+        self.assertEqual(quarantine_conflicts(list(reversed(rows)))[0], retained)
+
+    def test_cached_archive_tampering_fails_without_extraction_or_network(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            archive = Path(tmp) / "wm811k.zip"
+            archive.write_bytes(b"bad archive")
+            with patch("wafervlm.acquisition.urllib.request.urlopen") as network:
+                with patch("wafervlm.acquisition.zipfile.ZipFile") as unzip:
+                    with self.assertRaisesRegex(ValueError, "checksum/size"):
+                        acquire(tmp)
+            network.assert_not_called()
+            unzip.assert_not_called()
+
+    def test_download_failure_removes_partial_and_never_unpickles(self):
+        import io
+        with tempfile.TemporaryDirectory() as tmp:
+            with patch("wafervlm.acquisition.urllib.request.urlopen", return_value=io.BytesIO(b"bad")):
+                with self.assertRaisesRegex(ValueError, "checksum/size"):
+                    acquire(tmp)
+            self.assertEqual(list(Path(tmp).iterdir()), [])
+
     def test_missing_class_fails(self):
         with self.assertRaisesRegex(ValueError, "No"):
             split_records(records()[:2])
@@ -96,6 +127,36 @@ class ProtocolTests(unittest.TestCase):
             p = output / splits["test"][0]["image"]
             p.write_bytes(b"changed")
             with self.assertRaisesRegex(ValueError, "checksum"):
+                audit_dataset(output)
+
+    def test_real_prepare_conflict_opt_in_and_quarantine_audit(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            rng = np.random.default_rng(7)
+            rows = [dict(waferMap=rng.integers(0, 3, (12, 12), dtype=np.uint8),
+                         lotName=r["lot"], failureType=np.array([[r["label"]]])) for r in records()]
+            conflict_map = np.ones((7, 9), dtype=np.uint8)
+            rows.extend(dict(waferMap=conflict_map, lotName=f"conflict-{i}", failureType=label)
+                        for i, label in enumerate(("center", "scratch")))
+            source = root / "source.pkl"
+            pd.DataFrame(rows).to_pickle(source)
+            output = root / "prepared"
+            with self.assertRaisesRegex(ValueError, "conflicting"):
+                prepare(source, output, sha256_file(source), trust_pickle=True)
+            self.assertFalse(output.exists())
+            report = prepare(source, output, sha256_file(source), trust_pickle=True,
+                             train_cap=2, eval_cap=1, conflict_policy="exclude")
+            self.assertEqual(report["quarantined_rows"], 2)
+            self.assertEqual(report["quarantined_unique_maps"], 1)
+            splits = audit_dataset(output)
+            # Even a rechecksummed manifest cannot reintroduce a quarantined map.
+            from wafervlm.core import read_jsonl
+            quarantined = read_jsonl(output / "quarantine.jsonl")
+            splits["train"][0]["map_sha256"] = quarantined[0]["map_sha256"]
+            write_jsonl(output / "train.jsonl", splits["train"])
+            report["manifest_sha256"]["train"] = sha256_file(output / "train.jsonl")
+            write_json(output / "dataset.json", report)
+            with self.assertRaisesRegex(ValueError, "Quarantined"):
                 audit_dataset(output)
 
     def test_audit_catches_cross_split_leakage_even_with_updated_manifest_hash(self):

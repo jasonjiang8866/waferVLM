@@ -1,5 +1,15 @@
 name: Build worker image
 on:
+  pull_request:
+    paths:
+      - runpod/Dockerfile
+      - .github/workflows/image.yml
+      - pyproject.toml
+      - uv.lock
+      - src/**
+      - scripts/**
+      - tests/**
+      - configs/**
   workflow_dispatch:
     inputs:
       publish:
@@ -30,7 +40,7 @@ jobs:
         with:
           context: .
           file: runpod/Dockerfile
-          push: ${{ inputs.publish }}
+          push: ${{ github.event_name == 'workflow_dispatch' && inputs.publish }}
           tags: ghcr.io/jasonjiang8866/wafervlm:${{ github.sha }}
           build-args: SOURCE_SHA=${{ github.sha }}
       - name: Record immutable image reference

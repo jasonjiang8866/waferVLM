@@ -16,6 +16,7 @@ def main():
     p.add_argument("--seed", type=int, default=17)
     p.add_argument("--train-cap", type=int, default=100)
     p.add_argument("--eval-cap", type=int, default=20)
+    p.add_argument("--conflict-policy", choices=("error", "exclude"), default="error")
     p = commands.add_parser("audit")
     p.add_argument("--dataset", required=True)
     for name in ("train", "evaluate"):

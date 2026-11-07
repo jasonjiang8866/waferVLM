@@ -2,6 +2,7 @@
 
 import hashlib
 import random
+from collections import defaultdict
 from pathlib import Path
 
 import numpy as np
@@ -90,7 +91,18 @@ def split_records(records, seed=17, train_cap=100, eval_cap=20):
     return selected
 
 
-def prepare(source, output, expected_sha256, trust_pickle=False, seed=17, train_cap=100, eval_cap=20):
+def quarantine_conflicts(records):
+    """Exclude every copy of a map with contradictory target-class annotations."""
+    labels = defaultdict(set)
+    for row in records:
+        labels[row["map_sha256"]].add(row["label"])
+    conflicts = {digest for digest, values in labels.items() if len(values) > 1}
+    return ([r for r in records if r["map_sha256"] not in conflicts],
+            [r for r in records if r["map_sha256"] in conflicts])
+
+
+def prepare(source, output, expected_sha256, trust_pickle=False, seed=17, train_cap=100, eval_cap=20,
+            conflict_policy="error"):
     source, output = Path(source), Path(output)
     if not trust_pickle:
         raise ValueError("Pickle can execute code: require --trust-pickle for a trusted source")
@@ -99,6 +111,8 @@ def prepare(source, output, expected_sha256, trust_pickle=False, seed=17, train_
         raise ValueError("Source SHA256 does not match")
     if train_cap < 1 or eval_cap < 1:
         raise ValueError("Sample caps must be positive")
+    if conflict_policy not in {"error", "exclude"}:
+        raise ValueError("Unknown conflict policy")
     if output.exists():
         raise ValueError("Output already exists; use a new directory")
     df = pd.read_pickle(source)
@@ -124,9 +138,13 @@ def prepare(source, output, expected_sha256, trust_pickle=False, seed=17, train_
         identity = hashlib.sha256(f"{actual}:{index}".encode()).hexdigest()[:24]
         records.append(dict(id=identity, source_row=index, lot=str(lot), label=label, map_sha256=digest))
         arrays.setdefault(digest, a)
-    selected = split_records(records, seed, train_cap, eval_cap)
+    retained, quarantined = quarantine_conflicts(records)
+    if quarantined and conflict_policy == "error":
+        raise ValueError("Identical raw map has conflicting labels; review before using --conflict-policy exclude")
+    selected = split_records(retained, seed, train_cap, eval_cap)
     output.mkdir(parents=True)
     (output / "images").mkdir()
+    write_jsonl(output / "quarantine.jsonl", quarantined)
     for split, rows in selected.items():
         for row in rows:
             row["image"] = f"images/{row['id']}.png"
@@ -135,14 +153,23 @@ def prepare(source, output, expected_sha256, trust_pickle=False, seed=17, train_
             row["image_sha256"] = sha256_file(p)
         write_jsonl(output / f"{split}.jsonl", rows)
     report = {
-        "schema_version": 1, "source_sha256": actual, "seed": seed,
+        "schema_version": 2, "source_sha256": actual, "seed": seed,
         "labels": list(LABELS), "prompt": PROMPT,
         "split_protocol": "sha256-lot-group-70-15-15-with-duplicate-union",
         "train_per_class_cap": train_cap, "eval_per_class_cap": eval_cap,
         "excluded_unlabeled_or_none": excluded,
         "source_labeled_rows": len(records),
+        "source_total_rows": len(df),
+        "source_class_counts": {k: sum(r["label"] == k for r in records) for k in LABELS},
+        "conflict_policy": conflict_policy,
+        "quarantined_rows": len(quarantined),
+        "quarantined_unique_maps": len({r["map_sha256"] for r in quarantined}),
+        "quarantined_class_counts": {k: sum(r["label"] == k for r in quarantined) for k in LABELS},
+        "quarantine_sha256": sha256_file(output / "quarantine.jsonl"),
+        "retained_unique_maps": len({r["map_sha256"] for r in retained}),
         "render": "256x256 nearest-neighbor, aspect-preserving, black padding; palette 0:black 1:blue 2:yellow",
         "counts": {s: {k: sum(r['label'] == k for r in rows) for k in LABELS} for s, rows in selected.items()},
+        "selected_lot_counts": {s: len({r["lot"] for r in rows}) for s, rows in selected.items()},
         "manifest_sha256": {s: sha256_file(output / f"{s}.jsonl") for s in selected},
     }
     write_json(output / "dataset.json", report)
