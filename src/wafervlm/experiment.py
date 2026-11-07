@@ -17,7 +17,11 @@ def provenance(dataset, revision, config):
     import torch
 
     def git(*args):
-        p = subprocess.run(["git", *args], capture_output=True, text=True, check=False)
+        try:
+            p = subprocess.run(["git", *args], capture_output=True, text=True, check=False)
+        except FileNotFoundError:
+            # The slim worker image intentionally has no Git binary/checkout.
+            return None
         return p.stdout.strip() if p.returncode == 0 else None
 
     return {

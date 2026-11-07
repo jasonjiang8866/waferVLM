@@ -187,6 +187,21 @@ class ProtocolTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "examples differ"):
                 compare(root / "base", root / "tuned", root / "out")
 
+    def test_container_provenance_without_git_binary(self):
+        from types import SimpleNamespace
+        from wafervlm.experiment import provenance
+        torch = SimpleNamespace(cuda=SimpleNamespace(is_available=lambda: False),
+                                version=SimpleNamespace(cuda=None))
+        with tempfile.TemporaryDirectory() as tmp:
+            write_json(Path(tmp) / "dataset.json", {"fixture": True})
+            with patch.dict("sys.modules", {"torch": torch}), \
+                 patch("wafervlm.experiment.subprocess.run", side_effect=FileNotFoundError), \
+                 patch("wafervlm.experiment.importlib.metadata.version", return_value="test"), \
+                 patch.dict("os.environ", {"WAFERVLM_SOURCE_SHA": "a" * 40}):
+                info = provenance(tmp, "b" * 40, {})
+            self.assertEqual(info["source_sha"], "a" * 40)
+            self.assertIsNone(info["git_status"])
+
 
 if __name__ == "__main__":
     unittest.main()
