@@ -41,7 +41,7 @@ uv run --frozen --extra train python scripts/check_processor.py
 uv run --frozen --extra train python scripts/check_training.py
 ```
 
-The baseline pins Torch 2.10.0, torchvision 0.25.0, Transformers 5.3.0, PEFT 0.18.1 and Accelerate 1.12.0. CUDA runs require a compatible NVIDIA driver and BF16-capable GPU; actual GPU compatibility and memory consumption still require smoke testing. Optional DeltaNet acceleration libraries are not installed in the initial baseline; the PyTorch fallback is slower and must be reported as such.
+The baseline pins Torch 2.10.0, torchvision 0.25.0, Transformers 5.3.0, PEFT 0.18.1 and Accelerate 1.12.0. CUDA runs require a compatible NVIDIA driver and BF16-capable GPU; the first real MIG 24GB smoke passed with approximately 2.10 GiB peak training allocation. Optional DeltaNet acceleration libraries are not installed in the initial baseline; the PyTorch fallback is slower and must be reported as such.
 
 ## Prepare WM-811K
 
@@ -93,7 +93,7 @@ Individual stages are available through `wafervlm evaluate`, `train` and `compar
 
 ## RunPod
 
-See [runpod/README.md](runpod/README.md) for the US$20 total experiment authorization, per-GPU price caps, pinned published image, data verification and cleanup design. `RUNPOD_API_KEY` stays in the Actions controller; neither the training code nor the worker receives it. Host filtering uses `minCudaVersion=12.8`, never an exact 12.8 requirement. The Broker remains GET-only; the separate waferVLM controller implements the paid lifecycle. Merging code does not launch compute: the GPU workflow requires a manual dispatch, exact main SHA and an unused authorization marker. GPU training/quality results are pending.
+See [runpod/README.md](runpod/README.md) for the US$20 total experiment authorization, per-GPU price caps, pinned published image, data verification and cleanup design. `RUNPOD_API_KEY` stays in the Actions controller; neither the training code nor the worker receives it. Host filtering uses `minCudaVersion=12.8`, never an exact 12.8 requirement. The Broker remains GET-only; the separate waferVLM controller implements the paid lifecycle. Merging code does not launch compute: the GPU workflow requires a manual dispatch, exact main SHA and an unused authorization marker. The first real GPU smoke passed, but the baseline timed out at step 74/100 and remains incomplete. See [measured results](docs/gpu-attempt-42346201550.md); the retry uses a longer stage deadline within the same US$20 / 500-minute cumulative authorization.
 
 ## References and scope
 

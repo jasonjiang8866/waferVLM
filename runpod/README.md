@@ -2,7 +2,10 @@
 
 User authorization (2026-11-07): **US$20 total**, including compute, retries,
 temporary disk, transfer and cleanup. This replaces the earlier observation-only
-budget state. No paid experiment has completed yet.
+budget state. The first attempt passed the 8-step smoke but timed out at
+74/100 baseline steps; its Pod is verified deleted. See [results](../docs/gpu-attempt-42346201550.md).
+The user subsequently raised the aggregate runtime ceiling to **500 minutes**;
+the total US$20 cap and per-GPU price caps remain unchanged.
 
 ## Launch specification
 
@@ -31,10 +34,21 @@ budget state. No paid experiment has completed yet.
 | RTX 5090 | 1.19 |
 
 Fresh catalog price and capacity must pass before the only create request.
-Startup, data, workloads and result retrieval share a **5,400-second** controller
-deadline, plus a **600-second** cleanup allowance. Worker startup is limited to
-20 minutes. At the highest allowed rate, the planned GPU + disk bound is
-**$1.99822**, leaving over $18 of the total authorization unallocated.
+Startup, data, workloads and result retrieval share a **180-minute** per-attempt
+controller deadline, plus a **10-minute** cleanup allowance. The Actions job has
+200 minutes to include setup and artifact upload. Baseline's stage deadline is
+120 minutes (formerly 50); smoke retains 30 minutes. Worker startup is limited
+to 20 minutes. Numeric optimizer-step telemetry appears in Actions logs.
+
+The first attempt is reconciled by exact run/artifact IDs, with conservative
+reserves of **US$0.80 and 70 minutes** (observed estimate $0.774385 / 3988.653 s).
+The next attempt therefore plans at most **260 cumulative minutes** and, at the
+highest allowed GPU rate, **US$4.59661 cumulative** including disk and cleanup.
+The controller clips time to both remaining dollars and the 500-minute aggregate
+limit. Any later retry remains blocked until its marker, spend, runtime and
+cleanup are reviewed and reconciled; this dispatch does not authorize an
+unbounded retry loop. The next baseline starts fresh with the unchanged pinned
+image/config; checkpoint-50 is retained, but resume is not yet implemented.
 The 60GB disk estimate uses $0.10/GB/month and a conservative 28-day month;
 [RunPod Pod pricing](https://docs.runpod.io/pods/pricing) states no ingress/egress
 charge. An estimate is not a provider-enforced hard cap: prolonged API/cleanup
