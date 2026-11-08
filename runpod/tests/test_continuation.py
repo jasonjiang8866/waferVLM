@@ -31,8 +31,13 @@ class ContinuationTests(unittest.TestCase):
              'config':{'device':'cuda','split':'validation'},'adapter_checksums_sha256':'b'*64}
         for step in (150,200):
             values[base+f'step{step}/training.json']={'start_step':step-50,'end_step':step,'gradient_checks':50,
-                'executed_steps':50,'nonzero_gradient_checks':50,'train_loss':.3,'peak_allocated_bytes':100}
-            values[base+f'step{step}/run.json']={**run,'resume':{'global_step':step-50,'adapter_sha256':'b'*64,
+                'executed_steps':50,'nonzero_gradient_checks':50,'train_loss':.3,'peak_allocated_bytes':100,
+                'optimizer_steps_at_resume':[step-50],
+                'learning_rate_trace':[{'step':s,'rates':[cfg['learning_rate']]} for s in range(step-49,step+1)],
+                'learning_rate_intervention':{'from':.0002,'to':cfg['learning_rate'],'scheduler_last_epoch':100} if step==150 else None}
+            values[base+f'step{step}/run.json']={**run,'config':{**run['config'],**{k:cfg[k] for k in
+                ('seed','accumulation','rank','learning_rate','max_length')}},'resume':{'global_step':step-50,'adapter_sha256':'b'*64,
+                'lower_learning_rate':step==150,'parent_learning_rate':.0002 if step==150 else cfg['learning_rate'],
                 'optimizer_sha256':'d1168af8d924c1e5654ad7854dd9d2344763aa68c119f8eae4716a8aa32e7fbe' if step==150 else 'b'*64,
                 'scheduler_sha256':'b'*64,'rng_sha256':'b'*64}}
         for step,score in [(100,.5),(150,.7),(200,.6)]:
@@ -54,8 +59,13 @@ class ContinuationTests(unittest.TestCase):
                ('continuation/validation-150/metrics.json','n',159),
                ('continuation/validation-150/metrics.json','answer_token_loss',float('nan')),
                ('continuation/selected-test/metrics.json','n',159)]
+        cases += [('continuation/step150/training.json','learning_rate_intervention',None),
+                  ('continuation/step200/training.json','learning_rate_trace',[]),
+                  ('continuation/step150/training.json','optimizer_steps_at_resume',[0])]
         for path,key,value in cases:
             v,f=self.fixture();v[path][key]=value
             with self.subTest(path=path,key=key),self.assertRaises(ValueError):_verify_continuation(v.__getitem__,f,'a'*40)
         v,f=self.fixture();v['continuation/step200/run.json']['resume']['rng_sha256']='bad'
         with self.assertRaises(ValueError):_verify_continuation(v.__getitem__,f,'a'*40)
+        v,f=self.fixture();v['continuation/step150/training.json']['learning_rate_trace'][0]['rates']=[.0002]
+        with self.assertRaisesRegex(ValueError,'learning rate'):_verify_continuation(v.__getitem__,f,'a'*40)

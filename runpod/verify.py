@@ -124,6 +124,24 @@ def _verify_continuation(read, files, controller_sha):
                 or run['dataset_sha256'] != expected['dataset_sha256']
                 or run['config']['device'] != 'cuda'):
             raise ValueError('Resume training gate failed')
+        if any(run['config'].get(k) != cfg[k] for k in
+               ('seed', 'accumulation', 'rank', 'learning_rate', 'max_length')):
+            raise ValueError('Continuation hyperparameter mismatch')
+        trace = tr.get('learning_rate_trace', [])
+        if (len(trace) != 50 or [row['step'] for row in trace] != list(range(step-49, step+1))
+                or any(not row['rates'] or any(not math.isfinite(lr) or not math.isclose(
+                    lr, cfg['learning_rate'], rel_tol=1e-12) for lr in row['rates']) for row in trace)
+                or tr.get('optimizer_steps_at_resume') != [step-50]):
+            raise ValueError('Effective learning rate or restored Adam state mismatch')
+        intervention = tr.get('learning_rate_intervention')
+        if step == 150:
+            if (resume.get('lower_learning_rate') is not True
+                    or resume.get('parent_learning_rate') != .0002
+                    or intervention != {'from': .0002, 'to': cfg['learning_rate'], 'scheduler_last_epoch': 100}):
+                raise ValueError('Missing initial learning rate intervention')
+        elif (resume.get('lower_learning_rate') is not False
+                or resume.get('parent_learning_rate') != cfg['learning_rate'] or intervention is not None):
+            raise ValueError('Second segment must preserve the lowered learning rate')
         parent = base+'step100/adapter/adapter_model.safetensors' if step==150 else base+'step150/checkpoints/checkpoint-150/adapter_model.safetensors'
         if resume['adapter_sha256'] != files['results/'+parent][1]:
             raise ValueError('Resume adapter chain mismatch')

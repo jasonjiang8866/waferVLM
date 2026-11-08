@@ -49,12 +49,13 @@ DISK_HOURLY = DISK_GB * 0.10 / (28 * 24)
 CLEANUP_SECONDS = 600
 MAX_WORK_SECONDS = 180 * 60  # per attempt; below the Actions job limit
 APPROVED_TOTAL_SECONDS = 500 * 60
-PRIOR_RUNTIME_RESERVE_SECONDS = 180 * 60  # two reconciled attempts; rounded up
+PRIOR_RUNTIME_RESERVE_SECONDS = 300 * 60  # three reconciled attempts; rounded up
 MAX_RATE = max(GPU_CAPS.values())
 MAX_ARCHIVE = 2 * 1024**3
 MARKER = "runpod-authorization-" + AUTHORIZATION
-RECONCILED_MARKERS = {"42346201550": 13564060530, "42385615853": 13579825671}
-PRIOR_SPEND_RESERVE = 2.10  # prior cumulative estimate $2.030026, rounded up
+RECONCILED_MARKERS = {"42346201550": 13564060530, "42385615853": 13579825671,
+                      "42431025521": 13597661487}
+PRIOR_SPEND_RESERVE = 3.50  # prior cumulative conservative estimate $3.485102
 APPROVED_USD = 20.0
 
 
@@ -133,7 +134,7 @@ def provenance():
         "image_source_sha": SOURCE,
         "image": IMAGE,
         "anonymous_manifest_verified": verify_image_manifest(),
-        "suite": "resume100-to200-validation-selection",
+        "suite": "resume100-to200-lr5e-5-constant",
         "config_sha256": hashlib.sha256(
             (ROOT / "configs/continuation.json").read_bytes()
         ).hexdigest(),
