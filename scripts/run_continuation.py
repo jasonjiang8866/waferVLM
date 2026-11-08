@@ -29,7 +29,8 @@ def main():
         from wafervlm.resume import check_resume
         from wafervlm.modeling import MODEL_REVISION
         check_resume(checkpoint,a.dataset,MODEL_REVISION,dict(steps=150,device='cuda',
-            **{k:cfg[k] for k in ('seed','accumulation','rank','learning_rate','max_length')}))
+            **{k:cfg[k] for k in ('seed','accumulation','rank','learning_rate','max_length')}),
+            lower_learning_rate=cfg['lower_learning_rate'])
         # Export a small independently sealed adapter for evaluation; no optimizer loading here.
         origin=root/'step100';(origin/'adapter').mkdir(parents=True)
         for name in ['adapter_config.json','adapter_model.safetensors']:
@@ -41,9 +42,10 @@ def main():
         for step in cfg['validation_steps']:
             if step>100:
                 out=root/f'step{step}'
+                intervention = ['--lower-learning-rate'] if step == 150 and cfg['lower_learning_rate'] else []
                 run('train',*common,'--output',out,'--steps',step,'--resume-from',checkpoint,
                     '--seed',cfg['seed'],'--accumulation',cfg['accumulation'],'--rank',cfg['rank'],
-                    '--learning-rate',cfg['learning_rate'],'--max-length',cfg['max_length'])
+                    '--learning-rate',cfg['learning_rate'],'--max-length',cfg['max_length'],*intervention)
                 checkpoint=out/f'checkpoints/checkpoint-{step}'
                 candidates[step]=out/'adapter'
                 training=json.loads((out/'training.json').read_text())

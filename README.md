@@ -4,7 +4,7 @@
 
 waferVLM starts with [`Qwen/Qwen3.5-0.8B`](https://huggingface.co/Qwen/Qwen3.5-0.8B), comparing its original weights with a BF16, language-only LoRA adapter on the **same held-out wafer maps**. Images and a fixed classification question are the inputs; the target is a single defect label.
 
-**Status:** real WM-811K data audited: **790 training / 160 validation / 160 test images**, with all eight classes and disjoint lots. Three maps with contradictory target labels (six rows) are quarantined. CPU model compatibility is tested; pretrained CUDA training and accuracy are still unmeasured. See [data evidence](docs/data-audit.md), [validation](docs/validation.md) and the [experiment protocol](docs/protocol.md).
+**Status:** real WM-811K data audited: **790 training / 160 validation / 160 test images**, with all eight classes and disjoint lots. Three maps with contradictory target labels (six rows) are quarantined. The verified 100-step CUDA adapter reached **53.13% test accuracy / 0.5217 macro-F1**. A 200-step constant-LR continuation did not improve validation macro-F1; the next arm isolates a lower learning rate. See [continuation results](docs/continuation-control-42431025521.md). See [data evidence](docs/data-audit.md), [validation](docs/validation.md) and the [experiment protocol](docs/protocol.md).
 
 ## What is included
 

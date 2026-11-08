@@ -70,6 +70,20 @@ def main():
         for name in continued:
             torch.testing.assert_close(continued[name], uninterrupted[name], atol=1e-6, rtol=1e-5)
         with patch("wafervlm.experiment.load_model", side_effect=tiny_loader):
+            train(root/"data",root/"low-lr",steps=4,accumulation=2,rank=2,device="cpu",
+                  resume_from=root/"run/checkpoints/checkpoint-2",learning_rate=.00005,lower_learning_rate=True)
+            train(root/"data",root/"low-lr-resumed",steps=5,accumulation=2,rank=2,device="cpu",
+                  resume_from=root/"low-lr/checkpoints/checkpoint-4",learning_rate=.00005)
+        for folder,first,last in [("low-lr",3,4),("low-lr-resumed",5,5)]:
+            report=json.loads((root/folder/"training.json").read_text())
+            assert report['optimizer_steps_at_resume']==[first-1]
+            assert [x['step'] for x in report['learning_rate_trace']]==list(range(first,last+1))
+            assert all(x['rates'] and all(lr==.00005 for lr in x['rates']) for x in report['learning_rate_trace'])
+            saved=torch.load(root/folder/f"checkpoints/checkpoint-{last}/optimizer.pt",weights_only=True)
+            assert all(float(v['step'])==last for v in saved['state'].values())
+            assert all(g['lr']==.00005 for g in saved['param_groups'])
+        print("PASS: explicit lower LR survives real Trainer restore, every optimizer step, save and second resume")
+        with patch("wafervlm.experiment.load_model", side_effect=tiny_loader):
             score=evaluate(root/"data",root/"validation",split="validation",adapter=root/"resumed/adapter",
                            device="cpu",include_loss=True,max_new_tokens=2)
         assert score["n"] == 8 and score["answer_tokens"] > 0

@@ -52,17 +52,21 @@ def seal_output(output):
 
 
 def train(dataset, output, steps=100, seed=17, accumulation=8, rank=8, learning_rate=0.0002,
-          revision=MODEL_REVISION, device="cuda", max_length=1024, resume_from=None):
+          revision=MODEL_REVISION, device="cuda", max_length=1024, resume_from=None,
+          lower_learning_rate=False):
     import torch
     from transformers import Trainer, TrainerCallback, TrainingArguments, set_seed
 
-    if min(steps, accumulation, rank, max_length) < 1 or learning_rate <= 0:
+    if min(steps, accumulation, rank, max_length) < 1 or not math.isfinite(learning_rate) or learning_rate <= 0:
         raise ValueError("Training parameters must be positive")
+    if lower_learning_rate and not resume_from:
+        raise ValueError("LR intervention requires a complete resume checkpoint")
     rows = audit_dataset(dataset)
     config = dict(steps=steps, seed=seed, accumulation=accumulation, rank=rank,
                   learning_rate=learning_rate, max_length=max_length, device=device)
-    from .resume import check_resume
-    resumed = check_resume(resume_from, dataset, revision, config) if resume_from else None
+    from .resume import check_resume, lower_constant_learning_rate
+    resumed = check_resume(resume_from, dataset, revision, config,
+                           lower_learning_rate=lower_learning_rate) if resume_from else None
     start_step = resumed["global_step"] if resumed else 0
     output = new_output(output)
     set_seed(seed)
@@ -70,7 +74,8 @@ def train(dataset, output, steps=100, seed=17, accumulation=8, rank=8, learning_
     model, targets = add_lora(model, rank)
     model.config.use_cache = False
     model.config.text_config.use_cache = False
-    diagnostics = {"lora_targets": targets, "gradient_checks": 0, "nonzero_gradient_checks": 0}
+    diagnostics = {"lora_targets": targets, "gradient_checks": 0, "nonzero_gradient_checks": 0,
+                   "learning_rate_trace": [], "learning_rate_intervention": None}
 
     logged_losses = []
 
@@ -78,12 +83,25 @@ def train(dataset, output, steps=100, seed=17, accumulation=8, rank=8, learning_
         def on_train_begin(self, args, state, control, **kwargs):
             if state.global_step != start_step:
                 raise ValueError("Trainer failed to restore global step")
+            if resumed:
+                optimizer = kwargs['optimizer']
+                state_steps = sorted({float(v['step']) for v in optimizer.state.values() if 'step' in v})
+                if state_steps != [float(start_step)]:
+                    raise ValueError("Adam optimizer state was not restored at the expected step")
+                diagnostics['optimizer_steps_at_resume'] = state_steps
+                if lower_learning_rate:
+                    diagnostics['learning_rate_intervention'] = lower_constant_learning_rate(
+                        optimizer, kwargs['lr_scheduler'], resumed['parent_learning_rate'], learning_rate)
 
         def on_log(self, args, state, control, logs=None, **kwargs):
             if logs and "loss" in logs:
                 logged_losses.append(float(logs["loss"]))
 
         def on_pre_optimizer_step(self, args, state, control, **kwargs):
+            rates = [float(g['lr']) for g in kwargs['optimizer'].param_groups]
+            if not rates or any(not math.isclose(lr, learning_rate, rel_tol=1e-12) for lr in rates):
+                raise ValueError("Effective optimizer LR differs from requested constant LR")
+            diagnostics['learning_rate_trace'].append({'step': state.global_step + 1, 'rates': rates})
             grads = [p.grad for p in kwargs["model"].parameters() if p.requires_grad and p.grad is not None]
             if not grads or any(not torch.isfinite(g).all() for g in grads):
                 raise ValueError("Missing or non-finite adapter gradients")
