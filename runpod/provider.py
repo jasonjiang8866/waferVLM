@@ -11,8 +11,8 @@ from datetime import datetime, timezone
 API = "https://api.runpod.io/v2"
 REPOSITORY = "jasonjiang8866/waferVLM"
 MIG = "NVIDIA RTX PRO 6000 Blackwell Server Edition MIG 1g.24gb"
-IMAGE = "ghcr.io/jasonjiang8866/wafervlm@sha256:31c645533047eb8912c00fa5790bfa4f96cdf07cdaae1779bdcd3eb113a5b440"
-SOURCE = "81a2b1a34ddc8cd75aa432d36c44ae0be3174948"
+IMAGE = "ghcr.io/jasonjiang8866/wafervlm@sha256:9bf7e57906d19b46c6d1ca8c01c0b9cf871fce4ee760518af71c3101e4f3cf1f"
+SOURCE = "d1111efdbe31f9b866610ad7f1ab4e167a7709ef"
 
 
 class NoRedirect(urllib.request.HTTPRedirectHandler):

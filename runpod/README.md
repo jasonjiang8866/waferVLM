@@ -36,11 +36,16 @@ and at most **US$5.89661 cumulative** at the highest approved rate. A further
 attempt remains blocked by its authorization marker until reconciled in code.
 
 The worker's continuation deadline is 160 minutes within the outer controller
-limit. A new immutable image is required because the workload changed; preflight
-fails closed until the image/source pins match reviewed code. The historical
-launch specification below describes the completed first two attempts.
+limit. Preflight checks that image/source pins match the reviewed workload.
+On 2026-11-08 the user explicitly approved publishing the checkpoint state
+(adapter, optimizer, scheduler and RNG, without credentials) in this GHCR image.
 
-## Launch specification
+- Current image: `ghcr.io/jasonjiang8866/wafervlm@sha256:9bf7e57906d19b46c6d1ca8c01c0b9cf871fce4ee760518af71c3101e4f3cf1f`.
+- Image source: `d1111efdbe31f9b866610ad7f1ab4e167a7709ef`.
+- Publication: [42430153900](https://github.com/jasonjiang8866/waferVLM/actions/runs/42430153900).
+- Launch `gpu.yml` on main with `confirm_paid=true` and the exact reviewed main SHA.
+
+## Historical launch specification (completed attempts 1 and 2)
 
 - Workflow: **WaferVLM bounded GPU experiment** (`gpu.yml`), manual main only,
   `confirm_paid=true`, `expected_sha=<exact reviewed current main SHA>`.
