@@ -40,14 +40,14 @@ approved GPU rate including ephemeral disk and cleanup. The continuation worker
 has a 160-minute stage deadline. Later dispatches remain blocked until this
 attempt's ledger, spend and cleanup are reconciled; this is not a retry loop.
 
-A new image is required for the LR implementation. The currently pinned image
-below is the completed control; paid preflight fails closed until a newly
-published digest/source is reviewed and pinned. Launch `gpu.yml` on main with
-`confirm_paid=true` and the exact reviewed main SHA.
+The lower-LR image has passed its build and embedded-checkpoint checks and is
+pinned below. Launch `gpu.yml` on main with `confirm_paid=true` and the exact
+reviewed main SHA. Preflight verifies anonymous manifest access and rejects
+any workload drift from this image's source.
 
-- Control image: `ghcr.io/jasonjiang8866/wafervlm@sha256:9bf7e57906d19b46c6d1ca8c01c0b9cf871fce4ee760518af71c3101e4f3cf1f`.
-- Control image source: `d1111efdbe31f9b866610ad7f1ab4e167a7709ef`.
-- Control publication: [42430153900](https://github.com/jasonjiang8866/waferVLM/actions/runs/42430153900).
+- Worker image: `ghcr.io/jasonjiang8866/wafervlm@sha256:84c6d4a5734421ecfc2cfc7c1b2d9bce5d855edda7b925e73238009825b34b6e`.
+- Worker image source: `ef254921225ded9bbb3aec818de177c9d718db73`.
+- Publication: [42502105471](https://github.com/jasonjiang8866/waferVLM/actions/runs/42502105471).
 
 ## Historical launch specification (completed attempts 1 and 2)
 
