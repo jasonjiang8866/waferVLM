@@ -129,22 +129,26 @@ outside this eight-label experiment.
 
 ## Budget and execution boundaries
 
+User extension on 2026-11-09 (SGT): **+US$10 / +600 minutes**.
+The [next diagnostic specification](docs/profile-checkpoint200-plan.md) reserves
+US$5.10 / 435 minutes for reconciled history and limits this attempt to 45 minutes
+work plus 10 minutes cleanup. The historical measured estimates remain below.
+
 | Item | Recorded state after run 42502913001 |
 |---|---:|
-| Authorized aggregate spend | US$20 |
+| Authorized aggregate spend | US$30 |
 | Conservative cumulative estimate, including prior reserves | US$5.051749 |
-| Arithmetic spend headroom before new work | US$14.948251 |
-| Authorized aggregate runtime | 500 minutes |
+| Arithmetic spend headroom before new work | US$24.948251 |
+| Authorized aggregate runtime | 1,100 minutes |
 | Conservative cumulative runtime, including prior reserves | 433.21 minutes |
-| Arithmetic runtime headroom before new work | **66.79 minutes** |
+| Arithmetic runtime headroom before new work | **666.79 minutes** |
 
 The previous 100-step continuation took about 129.55 minutes of workload / 133.21
-minutes of Pod lifecycle. The remaining 66.79 minutes cannot accommodate a
-similar complete continuation, especially after diagnostics. Recompute the plan
-from measured profiling results; if it exceeds the remainder, obtain an explicit
-increase to the cumulative runtime ceiling before dispatch. Dollar headroom does
-not automatically extend the time cap. These are conservative estimates, not
-provider invoices or new per-run allowances.
+minutes of Pod lifecycle. The extension provides room for diagnostics and a
+controlled continuation; re-estimate from observed profiling results before the
+next paid run. Include startup, data, retries, retrieval and cleanup in the same
+aggregate ledger. These are conservative estimates, not provider invoices or
+new allowances for each dispatch.
 
 - Keep GPU choices and price ceilings within existing authorization; obtain
   fresh capacity/price evidence at launch. Prefer the previously used MIG 24GB

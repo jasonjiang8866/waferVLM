@@ -18,7 +18,7 @@ OUT = Path('/workspace/wafer-results')
 ARCHIVE = Path('/workspace/wafer-results.tar.gz')
 RESULT = {'status': 'running', 'phase': 'starting'}
 TOKEN = ''
-PROFILE_LIMITS = [('smoke', 8, 1800), ('baseline', 100, 7200)]
+PROFILE_WORK_SECONDS = 1200
 
 
 def digest(path):
@@ -37,9 +37,9 @@ def progress_snapshot():
     """Bounded numeric telemetry only; never expose raw subprocess logs."""
     snapshot = dict(RESULT)
     phase = snapshot.get('phase')
-    if snapshot.get('status') != 'running' or phase not in {'smoke', 'baseline', 'continuation'}:
+    if snapshot.get('status') != 'running' or phase not in {'smoke', 'baseline', 'continuation', 'profile'}:
         return snapshot
-    totals = [8] if phase == 'smoke' else [100] if phase == 'baseline' else [150, 200]
+    totals = [8] if phase == 'smoke' else [100] if phase == 'baseline' else [204] if phase == 'profile' else [150, 200]
     try:
         with (OUT / (phase + '.log')).open('rb') as log:
             log.seek(0, 2)
@@ -93,7 +93,7 @@ def work():
         OUT.mkdir(parents=True, exist_ok=False)  # restart must not rerun training
         if os.environ.get('WAFERVLM_SOURCE_SHA') != result['source_sha']:
             raise ValueError('image_source_mismatch')
-        if digest(ROOT / 'configs/continuation.json') != result['config_sha256']:
+        if digest(ROOT / 'configs/profile.json') != result['config_sha256']:
             raise ValueError('configuration_mismatch')
         import torch
         if not torch.cuda.is_available() or not torch.cuda.is_bf16_supported():
@@ -105,9 +105,11 @@ def work():
         environment = {k: v for k, v in os.environ.items()
                        if k not in {'WAFER_RESULT_TOKEN', 'RUNPOD_API_KEY', 'GH_TOKEN', 'GITHUB_TOKEN'}}
         environment['PYTHONUNBUFFERED'] = '1'
+        phases = []
         def run(phase, args, cap):
             nonlocal child
             RESULT['phase'] = phase
+            phase_started = time.time()
             remaining = min(cap, float(os.environ['WAFER_DEADLINE']) - time.time() - 120)
             if remaining < 60:
                 raise TimeoutError('insufficient_worker_time')
@@ -124,6 +126,8 @@ def work():
                         os.killpg(child.pid, signal.SIGKILL)
                         child.wait()
                     raise
+                phases.append({'phase': phase, 'wall_seconds': time.time() - phase_started, 'returncode': code})
+                write('phase-timings.json', phases)
                 if code:
                     raise RuntimeError('child_failed_' + phase)
         dataset = '/workspace/wafer-data'
@@ -132,16 +136,14 @@ def work():
         if digest(Path(dataset) / 'dataset.json') != os.environ['WAFER_DATASET_SHA']:
             raise ValueError('dataset_protocol_mismatch')
         write('acquisition.json', json.loads((Path(dataset) / 'acquisition.json').read_text()))
-        run('continuation', ['scripts/run_continuation.py', '--dataset', dataset,
-            '--output', str(OUT / 'continuation'), '--timeout-seconds', '9600'], 9630)
-        state = json.loads((OUT / 'continuation/status.json').read_text())
-        if state['status'] != 'completed' or state['additional_steps'] != 100:
-            raise ValueError('continuation_acceptance_failed')
-        for step in (150, 200):
-            tr = json.loads((OUT / f'continuation/step{step}/training.json').read_text())
-            if tr['gradient_checks'] != 50 or tr['nonzero_gradient_checks'] < 1:
-                raise ValueError('training_acceptance_failed')
-        result['profiles'] = ['continuation']
+        run('analysis', ['scripts/analyze_validation.py', '--dataset', dataset,
+            '--evidence', '/app/profile-input/evidence', '--output', str(OUT / 'validation-analysis')], 120)
+        run('profile', ['scripts/run_profile.py', '--dataset', dataset,
+            '--output', str(OUT / 'profile')], PROFILE_WORK_SECONDS + 30)
+        state = json.loads((OUT / 'profile/status.json').read_text())
+        if state['status'] != 'completed' or state['diagnostic_only'] is not True:
+            raise ValueError('diagnostic_acceptance_failed')
+        result['profiles'] = ['profile']
         # Accepted means execution/integrity, not a claim of improved quality.
         result.update(status='accepted', quality_accepted=False)
     except Exception as exc:

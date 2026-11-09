@@ -29,15 +29,8 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
-        with:
-          artifact-ids: '13582826145'
-          repository: jasonjiang8866/waferVLM
-          run-id: '42385615853'
-          github-token: ${{ github.token }}
-          path: parent-artifact
-      - name: Verify immutable parent and stage full Trainer checkpoint
-        run: python3 scripts/prepare_resume.py --archive parent-artifact/smoke.tar.gz --output resume-input/train
+      - name: Download and verify released checkpoint-200 and validation evidence
+        run: python3 scripts/prepare_profile_parent.py --download --output profile-input
       - uses: docker/setup-buildx-action@v3
       - uses: docker/login-action@v3
         if: inputs.publish
