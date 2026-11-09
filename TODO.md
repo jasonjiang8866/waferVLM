@@ -17,7 +17,7 @@ are not completed experiments or new paid-launch authorization.
 - [x] Update README/results/recovery instructions and verify temporary Pod
   deletion. See [the completed-run report](docs/checkpoint-200-release.md).
 
-**Current status: partial.** [Diagnostic report](docs/checkpoint-200-diagnostics.md): run42655151230 was inspected and rejected by tensor parity; repeat42661065788 also failed final acceptance, but its internal results and final cost remain uninspected after the workspace/browser became unavailable. Both independent cleanup workflows passed. Finish artifact verification and permanent diagnostic archiving before the 200→300 continuation. No new quality-training checkpoint was promoted.
+**Current status:** both diagnostics are recovered and [permanently archived](https://github.com/jasonjiang8866/waferVLM/releases/tag/checkpoint-200-diagnostics-v1); their numerical-parity results remain rejected. [Measured results](docs/checkpoint-200-diagnostics.md) support retaining the original unprofiled implementation. The 148-image final holdout is frozen and unevaluated. [200→300 continuation](docs/continuation-300-plan.md) is implemented, with GPU execution pending the new image/pin and manual launch. No new quality-training checkpoint has been promoted.
 
 ## P1 — diagnose performance before more training
 
@@ -85,7 +85,7 @@ Start only after performance diagnosis, checkpoint recovery verification and a
 revised lifecycle estimate. Keep the current 0.8B generative VLM, frozen vision
 tower and language-only LoRA as the experimental baseline.
 
-- [ ] Prepare a new continuation configuration using the released complete
+- [x] Prepare a new continuation configuration using the released complete
   checkpoint-200; remove dependence on the expiring Actions download URL.
   Verify the release digest, dataset/model identity and checkpoint global step.
 - [ ] Restore adapter, AdamW moments/step counts, scheduler, RNG and data
@@ -111,7 +111,7 @@ validation quality enough to justify their measured cost.
 
 ## P3 — reserve an untouched lot-level final evaluation
 
-- [ ] Before another tuning cycle, identify and freeze a new holdout from lots
+- [x] Before another tuning cycle, identify and freeze a new holdout from lots
   never used in any previous training, validation or test subset. Exclude whole
   duplicate-connected lot groups; audit raw-map and rendered-image collisions
   against all development data. Declare the selection rule and actual class
@@ -134,20 +134,13 @@ outside this eight-label experiment.
 ## Budget and execution boundaries
 
 User extension on 2026-11-09 (SGT): **+US$10 / +600 minutes**.
-The historical table below predates the two diagnostics. First diagnostic cumulative estimate: US$5.234111 /446.513 minutes. The repeat's actual ledger is pending inspection; its predeclared conservative cumulative bound was below US$6.35 /502 minutes. Do not treat historical arithmetic headroom as current available budget.
-The [original diagnostic specification](docs/profile-checkpoint200-plan.md) reserved
-US$5.10 / 435 minutes for history; the repeat raised those reserves to
-US$5.24 /447 minutes. Each attempt had 45 minutes work plus 10 minutes cleanup.
-The historical measured estimates remain below.
-
-| Item | Recorded state after run 42502913001 |
-|---|---:|
-| Authorized aggregate spend | US$30 |
-| Conservative cumulative estimate, including prior reserves | US$5.051749 |
-| Arithmetic spend headroom before new work | US$24.948251 |
-| Authorized aggregate runtime | 1,100 minutes |
-| Conservative cumulative runtime, including prior reserves | 433.21 minutes |
-| Arithmetic runtime headroom before new work | **666.79 minutes** |
+Reconciled history after both diagnostics: **US$5.377863 /456.201817 minutes**,
+including earlier conservative reserves. For the next run round upward to
+**US$5.38 /457 minutes**. Its 185-minute work +10-minute cleanup cap yields
+**652 cumulative minutes**, and at most **US$9.276518 cumulative** at the highest
+approved GPU rate including ephemeral disk. These are bounds based on successful
+cleanup, not a provider-enforced cap or invoice. No new paid run is implied by
+this plan. See the [launch specification](docs/continuation-300-plan.md).
 
 The previous 100-step continuation took about 129.55 minutes of workload / 133.21
 minutes of Pod lifecycle. The extension provides room for diagnostics and a

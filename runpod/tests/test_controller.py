@@ -162,10 +162,10 @@ class ControllerTests(unittest.TestCase):
     def test_budget_includes_disk_and_cleanup(self):
         for rate in (0.50, 0.69, 0.89, 1.19):
             q = c.quote(rate)
-            self.assertLessEqual(q["planned_total_usd"], 6.35)
-            self.assertGreaterEqual(q["unallocated_reserve_usd"], 23.65)
+            self.assertLessEqual(q["planned_total_usd"], 9.28)
+            self.assertGreaterEqual(q["unallocated_reserve_usd"], 20.72)
             self.assertGreater(q["work_seconds"], 0)
-            self.assertLessEqual(q["work_seconds"], 10800)
+            self.assertLessEqual(q["work_seconds"], 11100)
             self.assertGreater(q["disk_hourly_usd"], 0)
 
     def test_per_model_price_caps_are_enforced(self):

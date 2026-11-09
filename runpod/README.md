@@ -1,13 +1,18 @@
 # Bounded RunPod GPU experiment
 
-**Current authorization:** the user added US$10 / 600 minutes on 2026-11-09
-(SGT), raising the cumulative cap to **US$30 / 1,100 minutes**. Two bounded checkpoint-200 diagnostics have now run; see
-[measured results and pending recovery](../docs/checkpoint-200-diagnostics.md).
-The first failed numerical parity, and the repeat's internal results/final cost
-remain uninspected after the execution workspace became unavailable. Both
-independent cleanup workflows passed. The repeat reserved US$5.24 /447 minutes
-for history; reconcile its actual ledger before another paid launch. GPU price caps
-and CUDA >=12.8 remain unchanged. Historical launch records follow below.
+**Current authorization:** US$30 /1,100 minutes cumulative. Both checkpoint-200
+diagnostics are [recovered and archived](../docs/checkpoint-200-diagnostics.md),
+with their numerical-parity failures preserved and both temporary Pods verified
+absent. Reconciled reserves are **US$5.38 /457 minutes**. The next workload is a
+[validation-only 200→300 continuation](../docs/continuation-300-plan.md), capped
+at 185 minutes work +10 minutes cleanup (652 minutes cumulative; at most
+US$9.276518 cumulative at the highest approved rate including disk).
+
+Prefer the already-authorized RTX 4090 after its measured 12.8–13.0s/step probe;
+MIG 24GB, 3090 and 5090 remain within their existing price caps. Fresh preflight
+must still establish price/capacity and owned-Pod absence. CUDA >=12.8 remains
+unchanged. The new workload requires a published/pinned image before manual
+launch; historical image pins below are not permission to run stale code.
 
 User authorization (2026-11-07): **US$20 total**, including compute, retries,
 temporary disk, transfer and cleanup. This replaces the earlier observation-only

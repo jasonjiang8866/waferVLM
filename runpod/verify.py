@@ -8,7 +8,7 @@ from pathlib import Path, PurePosixPath
 from runpod.provider import IMAGE, SOURCE
 
 
-def verify_archive(path, controller_sha, continuation=False, profile=False):
+def verify_archive(path, controller_sha, continuation=False, profile=False, extension=False):
     with tarfile.open(path, 'r:gz') as tar:
         files = {}
         total = 0
@@ -33,7 +33,10 @@ def verify_archive(path, controller_sha, continuation=False, profile=False):
             member = files['results/' + name][0]
             if member.size > 8_000_000:
                 raise ValueError('JSON exceeds limit')
-            return json.load(tar.extractfile(member))
+            stream = tar.extractfile(member)
+            if name.endswith('.jsonl'):
+                return [json.loads(line) for line in stream if line.strip()]
+            return json.load(stream)
 
         for name in files:
             if name.endswith('/checksums.json'):
@@ -47,6 +50,9 @@ def verify_archive(path, controller_sha, continuation=False, profile=False):
                         raise ValueError('Unsafe checksum path')
                     if files[str(PurePosixPath(name).parent / p)][1] != digest:
                         raise ValueError('Checksum mismatch')
+        if extension:
+            _verify_extension(read, files, controller_sha)
+            return {'status': 'accepted', 'file_count': len(files), 'unpacked_bytes': total}
         if profile:
             _verify_profile(read, files, controller_sha)
             return {'status': 'accepted', 'file_count': len(files), 'unpacked_bytes': total}
@@ -92,6 +98,85 @@ def verify_archive(path, controller_sha, continuation=False, profile=False):
             if not any(n.startswith('results/' + profile + '/train/adapter/') and n.endswith('.safetensors') for n in files):
                 raise ValueError('Missing adapter weights')
         return {'status': 'accepted', 'file_count': len(files), 'unpacked_bytes': total}
+
+
+def _verify_extension(read, files, controller_sha):
+    import runpy
+    root = Path(__file__).resolve().parents[1]
+    calculate_metrics = runpy.run_path(str(root/'src/wafervlm/core.py'))['metrics']
+    cfg = json.loads((root/'configs/extension.json').read_text())
+    expected = json.loads((root/'docs/evidence/wm811k-lot17.json').read_text())
+    worker = read('worker.json'); base = 'extension/'
+    if (worker['status'] != 'accepted' or worker['profiles'] != ['extension']
+            or worker['source_sha'] != SOURCE or worker['controller_sha'] != controller_sha
+            or worker['config_sha256'] != hashlib.sha256((root/'configs/extension.json').read_bytes()).hexdigest()
+            or read('acquisition.json') != expected or read(base+'workload.json') != cfg):
+        raise ValueError('Extension provenance mismatch')
+    if any('/selected-test/' in n or '/test/' in n for n in files):
+        raise ValueError('Extension must remain validation-only')
+    origin = read(base+'resume-origin.json'); status = read(base+'status.json')
+    if (origin['run_id'] != cfg['parent_run_id'] or origin['release_tag'] != cfg['parent_release_tag']
+            or origin['zip_sha256'] != cfg['parent_zip_sha256'] or origin['archive_sha256'] != cfg['parent_archive_sha256']
+            or origin['adapter_sha256'] != cfg['parent_adapter_sha256'] or origin['global_step'] != 200
+            or status['status'] != 'completed' or status['test_accessed'] is not False
+            or (status['start_step'],status['end_step'],status['additional_steps']) != (200,300,100)
+            or not math.isfinite(status['elapsed_seconds']) or not 0 < status['elapsed_seconds'] <= 9630):
+        raise ValueError('Extension parent/completion mismatch')
+    for part in ('','step200/','step250/','step300/','validation-200/','validation-250/','validation-300/'):
+        if not read(base+part+'checksums.json'):raise ValueError('Missing extension checksums')
+    if files['results/'+base+'step200/adapter/adapter_model.safetensors'][1] != cfg['parent_adapter_sha256']:
+        raise ValueError('Parent evaluation adapter mismatch')
+    def check_run(run):
+        if (run['source_sha'] != SOURCE or run['image_digest'] != IMAGE.split('@')[1]
+                or run['dataset_sha256'] != expected['dataset_sha256'] or not run['gpu']
+                or run['model_revision'] != '2fc06364715b967f1860aea9cf38778875588b17'
+                or run['config']['device'] != 'cuda'):
+            raise ValueError('Extension CUDA/model provenance mismatch')
+    for step in (250,300):
+        tr=read(base+f'step{step}/training.json');run=read(base+f'step{step}/run.json');resume=run['resume']
+        check_run(run)
+        if ((tr['start_step'],tr['end_step'],tr['executed_steps'],tr['gradient_checks'],tr['nonzero_gradient_checks'])
+                != (step-50,step,50,50,50) or tr['optimizer_steps_at_resume'] != [step-50]
+                or not math.isfinite(tr['train_loss']) or tr['peak_allocated_bytes'] <= 0
+                or resume['global_step'] != step-50 or resume['lower_learning_rate'] is not False
+                or resume['parent_learning_rate'] != cfg['learning_rate'] or tr['learning_rate_intervention'] is not None
+                or any(run['config'].get(k) != cfg[k] for k in ('seed','accumulation','rank','learning_rate','max_length'))):
+            raise ValueError('Extension training/state mismatch')
+        trace=tr['learning_rate_trace']
+        if ([r['step'] for r in trace] != list(range(step-49,step+1)) or
+                any(not r['rates'] or any(lr != cfg['learning_rate'] for lr in r['rates']) for r in trace)):
+            raise ValueError('Extension effective learning rate mismatch')
+        for kind,name in [('adapter','adapter_model.safetensors'),('optimizer','optimizer.pt'),('scheduler','scheduler.pt'),('rng','rng_state.pth')]:
+            sha=cfg['parent_'+kind+'_sha256'] if step==250 else files['results/'+base+'step250/checkpoints/checkpoint-250/'+name][1]
+            if resume[kind+'_sha256'] != sha:raise ValueError('Extension resume chain mismatch')
+        prefix='results/'+base+f'step{step}/checkpoints/checkpoint-{step}/'
+        for name in ('adapter_model.safetensors','adapter_config.json','optimizer.pt','scheduler.pt','rng_state.pth','trainer_state.json','training_args.bin'):
+            if prefix+name not in files:raise ValueError('Missing resumable extension state')
+        if read(base+f'step{step}/checkpoints/checkpoint-{step}/trainer_state.json')['global_step'] != step:
+            raise ValueError('Checkpoint global step mismatch')
+        if files[prefix+'adapter_model.safetensors'][1] != files['results/'+base+f'step{step}/adapter/adapter_model.safetensors'][1]:
+            raise ValueError('Checkpoint/export adapter mismatch')
+    if files['results/'+base+'validation-reference.jsonl'][1] != expected['dataset']['manifest_sha256']['validation']:
+        raise ValueError('Validation reference identity mismatch')
+    reference=read(base+'validation-reference.jsonl')
+    identity=lambda rows:{r['id']:(r['label'],r['image_sha256']) for r in rows}
+    if len(reference)!=160 or len(identity(reference))!=160:raise ValueError('Incomplete validation reference')
+    scores=[]
+    for step in (200,250,300):
+        m=read(base+f'validation-{step}/metrics.json');run=read(base+f'validation-{step}/run.json')
+        rows=read(base+f'validation-{step}/predictions.jsonl');check_run(run)
+        if (len(rows)!=160 or identity(rows)!=identity(reference) or run['config']['split']!='validation'
+                or run['adapter_checksums_sha256'] != files['results/'+base+f'step{step}/checksums.json'][1]
+                or not math.isfinite(m['answer_token_loss']) or m['answer_token_loss']<0 or m['answer_tokens']<=0):
+            raise ValueError('Extension validation identity/loss mismatch')
+        recomputed=calculate_metrics(rows)
+        if any(m.get(k)!=v for k,v in recomputed.items()):raise ValueError('Extension reported metrics mismatch')
+        scores.append({'step':step,**m})
+    selection=read(base+'selection.json');best=max(scores,key=lambda r:(r['macro_f1'],-r['step']))['step']
+    if (selection['validation']!=scores or selection['best_step']!=best or status['best_step']!=best
+            or selection['criterion']!=cfg['selection'] or selection['test_used_for_selection'] is not False
+            or selection['test_accessed'] is not False):
+        raise ValueError('Extension selection mismatch')
 
 
 def _verify_profile(read, files, controller_sha):

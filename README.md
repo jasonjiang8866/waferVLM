@@ -8,9 +8,9 @@ waferVLM starts with [`Qwen/Qwen3.5-0.8B`](https://huggingface.co/Qwen/Qwen3.5-0
 
 **Download:** [checkpoint-200-v1 Release](https://github.com/jasonjiang8866/waferVLM/releases/tag/checkpoint-200-v1) — inference adapter, complete resumable checkpoints, raw predictions, logs and SHA256 checks. See [results, provenance and recovery instructions](docs/checkpoint-200-release.md).
 
-**Diagnostics:** [performance evidence and recovery status](docs/checkpoint-200-diagnostics.md) — CUDA execution confirmed; the first four-step probe averaged 44.28 seconds per new optimizer step. Numerical-parity acceptance failed, and the repeat-control artifact still needs inspection after an execution-workspace outage. Both independent cleanup workflows passed; the official model remains checkpoint-200.
+**Diagnostics:** [recovered performance evidence](docs/checkpoint-200-diagnostics.md) and [preserved diagnostic Release](https://github.com/jasonjiang8866/waferVLM/releases/tag/checkpoint-200-diagnostics-v1). CUDA execution is confirmed. Two unprofiled four-step probes on RTX 4090 averaged 12.82/12.98 seconds per new optimizer step; both diagnostic runs remain rejected under the original numerical-parity gate. Repeated unprofiled runs also vary. No diagnostic weights are promoted.
 
-**Next steps:** [TODO](TODO.md) — profile the CPU/GPU bottleneck, inspect validation errors, plan a controlled 200→300 continuation, and reserve an untouched lot-level final evaluation.
+**Next steps:** [TODO](TODO.md) — execute a [validation-only 200→300 continuation](docs/continuation-300-plan.md), then assess the frozen 148-image unseen-lot holdout only after the recipe is fixed.
 
 | Test metric | Original model | Step 100 | Step 200 (lower LR) |
 |---|---:|---:|---:|

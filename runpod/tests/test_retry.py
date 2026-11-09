@@ -10,7 +10,7 @@ class RetryTests(unittest.TestCase):
     def test_aggregate_runtime_and_spend_include_prior_attempt(self):
         for rate in c.GPU_CAPS.values():
             quote = c.quote(rate)
-            self.assertEqual(quote['planned_total_seconds'], 502 * 60)
+            self.assertEqual(quote['planned_total_seconds'], 652 * 60)
             self.assertLessEqual(quote['planned_total_seconds'], 1100 * 60)
             self.assertGreater(quote['planned_total_usd'], 5.10)
             self.assertLessEqual(quote['planned_total_usd'], 30)
@@ -68,5 +68,5 @@ class RetryTests(unittest.TestCase):
             self.assertNotIn('progress', current)
 
     def test_stage_budget_fits_existing_image_cli(self):
-        self.assertEqual(w.PROFILE_WORK_SECONDS, 1200)
-        self.assertGreater(c.MAX_WORK_SECONDS, w.PROFILE_WORK_SECONDS + 1200 + 120 + 120)
+        self.assertEqual(w.EXTENSION_WORK_SECONDS, 9600)
+        self.assertGreater(c.MAX_WORK_SECONDS, w.EXTENSION_WORK_SECONDS + 1200 + 120 + 120)

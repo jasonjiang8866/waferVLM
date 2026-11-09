@@ -1,12 +1,13 @@
 # Checkpoint-200 diagnostics — measured findings and pending recovery
 
-Updated 2026-11-10 SGT. **Status: partial.** The first diagnostic was retrieved
-and independently inspected. Its numerical-parity gate failed. A three-arm
-repeat-control run also failed final acceptance and uploaded its result archive,
-but its internal comparison, inference timings and final cost have **not yet
-been inspected**: the execution workspace and browser became unavailable during
-artifact retrieval. Both originating runs' independent cleanup workflows passed.
-Do not describe the repeat as accepted or assume its failure has the same cause.
+Updated 2026-11-10 SGT. **Evidence recovery complete; both diagnostic numerical
+comparisons remain rejected.** Both raw archives, internal checksum manifests,
+parent/optimizer identities, actual steps/LRs, comparison tensors and cleanup
+records were inspected. The repeat confirms variation between two unprofiled
+runs as well as between profiled/unprofiled runs. It does not prove numerical
+or statistical equivalence. No diagnostic weights are promoted.
+
+[Permanent diagnostic Release](https://github.com/jasonjiang8866/waferVLM/releases/tag/checkpoint-200-diagnostics-v1) — both original ZIPs, metadata/figures, report and SHA256SUMS. All five uploaded asset sizes/hashes were checked against the local files.
 
 ## What is already established
 
@@ -83,12 +84,50 @@ mode. Changing that operation would change the implementation being measured.
 No numerical algorithm, model, dependency or training recipe was changed.
 
 [Repeat run 42661065788](https://github.com/jasonjiang8866/waferVLM/actions/runs/42661065788)
-has uploaded evidence but remains **uninspected beyond Actions metadata/logs**.
-Do not infer its internal parity result, probe completion, GPU allocation or
-actual cost until its archive is read. The displayed progress also retained the
-maximum from earlier arms; the accompanying fix resets progress to the current
-arm and labels each group. That fix was locally tested with 37 lifecycle/integrity
-tests before the workspace disconnected; it was not part of either GPU run.
+used **RTX 4090 in US-IL-1 at US$0.89/hour**. All three arms restored the same
+step-200 adapter/Adam/scheduler/RNG identities and completed steps 201–204 with
+four finite, nonzero gradient checks and constant LR5e-5. The actual adapter
+comparisons were recomputed independently from the saved safetensors.
+
+| Repeat comparison | Maximum absolute adapter difference | Original allclose gate |
+|---|---:|---|
+| Unprofiled vs unprofiled repeat | 2.2049207e-5 | failed |
+| Unprofiled vs profiled | 3.0776457e-5 | failed |
+| Unprofiled repeat vs profiled | 1.2092525e-5 | failed |
+
+The unchanged atol1e-6 /rtol1e-5 gate therefore rejected all three pairs.
+Variation exists without instrumentation; this does not identify its exact
+CUDA/BF16 mechanism or show that the profiler has no numerical effect.
+Strict deterministic mode and relaxed tolerances were not adopted.
+
+| Repeat timing | Unprofiled | Unprofiled repeat | Profiled |
+|---|---:|---:|---:|
+| Trainer loop, four new steps (s) | 51.2614 | 51.9300 | 104.6189 |
+| Seconds per new optimizer step | 12.8154 | 12.9825 | 26.1547 |
+| Whole subprocess (s) | 76.3318 | 64.5925 | 117.5528 |
+
+The profiled scopes recorded forward/loss 22.100s, backward 36.434s,
+image preprocessing 0.601s and host-to-device 0.0039s. One microbatch contained
+55,259 CUDA events and 50,396 kernel launches. The final two training-microbatch
+scope sums were 16.264s and 13.992s, excluding collation, optimizer and saving.
+Peak training allocation remained 2.138 GiB; host peak RSS was 3.550 GiB.
+The original checkpoint-200 timing probe completed on eight validation images:
+model loading 4.689s, generation total 5.001s, first image 1.106s, subsequent
+seven-image mean 0.556s, peak allocation 1.692 GiB. This is a small latency probe,
+not a new quality evaluation or a representative tail-latency benchmark.
+
+The 4090 run was faster than the previous MIG run, but host allocation, hardware
+and process timing changed together; **this is not an isolated GPU speedup**.
+Both used the same fallback path. The 4090 reported 64 intra-op /128 inter-op
+threads; CPU quota/affinity were not captured, so CPU saturation is not fully
+attributed. Keep the original unprofiled training implementation for continuation.
+Prefer the already-authorized 4090 when available; assess any thread-limit,
+preprocessing or fused-kernel change in a separate controlled experiment.
+
+PR #14 fixed progress retaining the previous arm's 204/204. Its 37 lifecycle/
+integrity tests, model compatibility checks and image build passed before merge.
+That telemetry fix was not part of either measured GPU run and requires a new
+published/pinned worker image for future runs.
 
 ## Validation quality evidence
 
@@ -118,8 +157,8 @@ The first artifact contains `validation-analysis/` with full confusion counts,
 per-class metrics, sample IDs, learning-curve source data/SVG and an HTML error
 gallery (up to four errors per class, sorted by ID). These outputs can also be
 regenerated with the committed analysis script and the immutable parent Release.
-The polished local figures and combined diagnostic Release were not uploaded
-before the workspace outage. The official model remains
+The reviewed learning-curve and loc/scratch error figures are included in the
+diagnostic evidence bundle. These figures use existing validation evidence. The official model remains
 [checkpoint-200-v1](https://github.com/jasonjiang8866/waferVLM/releases/tag/checkpoint-200-v1)
 with 64.375% test accuracy and 0.636059 test macro-F1; no new test evaluation occurred.
 
@@ -141,44 +180,42 @@ Its 58 regular files and 84 checksum-manifest entries were checked. This establi
 artifact integrity, not numerical acceptance. Pod `pesnvzd6sxdu40` was absent
 in three consecutive controller checks and again in the independent cleanup.
 
-For the repeat, the cleanup job explicitly used ORIGIN_RUN_ID 42661065788 and its
-owner-checked deletion/inventory step completed successfully. Its 297-byte cleanup
-artifact 13693809665 has SHA256
-`6242e251a9cd697b5cbd05d2ae09e22f1d4a72ead05feae462c2bfee5fac2fc7`.
-Its JSON and result archive still need direct inspection; no Pod ID is guessed.
+Repeat inner tar SHA256:
+`a7c5faa09b12a4792f511281fbbdc57755193e0e499e2bc8cc3bb3c43825483d`.
+Its **77 regular files /119 manifest entries** were independently verified.
+Pod `54pv0bke2e16ev` was absent in three consecutive controller checks and again
+in the independent cleanup. Cleanup artifact 13693809665, SHA256
+`6242e251a9cd697b5cbd05d2ae09e22f1d4a72ead05feae462c2bfee5fac2fc7`,
+was downloaded, hashed and read; it records verified_absent with three checks.
 
-The first result expires **2026-12-10 00:40:20 SGT**; the repeat result expires
-**2026-12-10 01:14:13 SGT**. They have not yet been copied to a diagnostic Release.
-The existing checkpoint-200 model Release is already preserved independently.
+The original Actions artifacts expire 2026-12-10 00:40:20 SGT (first) and
+01:14:13 SGT (repeat). The diagnostic Release preserves separate copies of both
+raw archives, a metadata/figure bundle and SHA256SUMS. Raw diagnostic archives
+contain disposable step-204 weights solely as rejected-experiment evidence;
+they are not deployable model releases. The official model remains checkpoint-200.
 
-## Cost and exact remaining work
+## Cost and continuation decision
 
-The user extension adds US$10 / 600 minutes, yielding **US$30 /1,100 minutes**
-aggregate. First diagnostic intent-to-absence time was 690.767 seconds
-(11.513 minutes), with estimated incremental GPU+ephemeral-disk cost
-**US$0.134111**. The conservative cumulative ledger then stood at
-US$5.234111 /446.513 minutes, including prior reserves. No persistent volume
-was created.
+The user extension adds US$10 /600 minutes, yielding **US$30 /1,100 minutes**
+aggregate. The first diagnostic added an estimated US$0.134111 and 11.513 minutes;
+its conservative cumulative ledger was US$5.234111 /446.513 minutes.
+The repeat started with rounded-up history reserves US$5.24 /447 minutes.
+Its intent-to-verified-absence interval was **552.109 seconds (9.202 minutes)**,
+adding estimated GPU+ephemeral-disk cost **US$0.137863**. The resulting
+conservative total is **US$5.377863 /456.201817 minutes**, not a provider invoice.
+No persistent volumes were created. Reserve **US$5.38 /457 minutes** before
+any next attempt; marker 13694661007 belongs to the reconciled repeat run.
 
-The repeat reserved US$5.24 /447 minutes for history and retained the 20-minute
-diagnostic and 45+10-minute lifecycle limits. Its highest-rate planned cumulative
-bound was below US$6.35 /502 minutes. This is a conservative plan, not an invoice;
-the repeat's actual cost and resource details remain uninspected.
+Proceed with a separate validation-only 200→250→300 continuation from the
+unchanged released full step-200 checkpoint. Retain LR5e-5, seed17, rank8,
+accumulation8, frozen vision and the existing fallback implementation. The
+failed profiler-equivalence experiment remains failed; no optimized kernel or
+instrumented trajectory is being adopted. Select by validation macro-F1, ties
+to the earlier checkpoint, retaining 200 if neither later candidate improves.
+Do not evaluate the existing test split again during this development cycle.
 
-1. Download repeat artifact 13693684721; verify its ZIP hash, inner result hash,
-   all member manifests, parent checkpoint/optimizer identity and every arm's
-   actual steps, LR trace, gradients and CUDA metadata.
-2. Read all pairwise adapter comparisons and the eight-image inference probe;
-   distinguish baseline variation from instrumented-run variation without
-   asserting statistical equivalence from one repeat.
-3. Read cleanup artifact 13693809665, reconcile marker 13694661007 (SHA256
-   `6a9f7d955eb2d5f7547b1e8125281b4bef7a9b07b55a883199cd4257aee5352b`)
-   and the actual conservative cost/runtime. Do not unlock another paid run
-   from guessed totals.
-4. Publish the diagnostic evidence/figures in a Release, clearly excluding
-   disposable diagnostic weights from model promotion, and finish this report.
-5. Only then finalize the 200→250→300 validation-only continuation estimate.
-   Keep LR5e-5 and the original step-200 parent; reserve an untouched lot-level
-   holdout before further tuning and keep seed confirmation separate.
-
-No 200→300 quality-training run was started in this phase.
+Freeze any available unseen, duplicate-connected lot groups before this run;
+report limited class coverage rather than reusing development lots. Re-estimate
+and bound the complete lifecycle using the measured timings, with startup,
+validation, retrieval and cleanup included. A next-stage configuration/CI merge
+alone is not evidence that paid training has launched or improved quality.

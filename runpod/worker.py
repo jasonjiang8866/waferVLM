@@ -19,6 +19,7 @@ ARCHIVE = Path('/workspace/wafer-results.tar.gz')
 RESULT = {'status': 'running', 'phase': 'starting'}
 TOKEN = ''
 PROFILE_WORK_SECONDS = 1200
+EXTENSION_WORK_SECONDS = 9600
 
 
 def digest(path):
@@ -37,9 +38,9 @@ def progress_snapshot():
     """Bounded numeric telemetry only; never expose raw subprocess logs."""
     snapshot = dict(RESULT)
     phase = snapshot.get('phase')
-    if snapshot.get('status') != 'running' or phase not in {'smoke', 'baseline', 'continuation', 'profile'}:
+    if snapshot.get('status') != 'running' or phase not in {'smoke', 'baseline', 'continuation', 'profile', 'extension'}:
         return snapshot
-    totals = [8] if phase == 'smoke' else [100] if phase == 'baseline' else [204] if phase == 'profile' else [150, 200]
+    totals = [8] if phase == 'smoke' else [100] if phase == 'baseline' else [204] if phase == 'profile' else [250, 300] if phase == 'extension' else [150, 200]
     try:
         with (OUT / (phase + '.log')).open('rb') as log:
             log.seek(0, 2)
@@ -51,6 +52,14 @@ def progress_snapshot():
                 marker = markers[-1]
                 snapshot['diagnostic_arm'] = marker.group(1)
                 tail = tail[marker.end():]
+        if phase == 'extension':
+            markers = list(re.finditer(r'(?:^|\n)EXTENSION_STAGE=(train-250|train-300|validation-200|validation-250|validation-300)(?:\n|$)', tail))
+            if markers:
+                marker = markers[-1]
+                snapshot['extension_stage'] = marker.group(1)
+                tail = tail[marker.end():]
+                if marker.group(1).startswith('validation-'):
+                    return snapshot
         for total in reversed(totals):
             matches = re.findall(r'(?<![0-9])([0-9]+)/' + str(total) + r'(?=\s|\[)', tail)
             steps = [int(x) for x in matches if 0 <= int(x) <= total]
@@ -99,7 +108,7 @@ def work():
         OUT.mkdir(parents=True, exist_ok=False)  # restart must not rerun training
         if os.environ.get('WAFERVLM_SOURCE_SHA') != result['source_sha']:
             raise ValueError('image_source_mismatch')
-        if digest(ROOT / 'configs/profile.json') != result['config_sha256']:
+        if digest(ROOT / 'configs/extension.json') != result['config_sha256']:
             raise ValueError('configuration_mismatch')
         import torch
         if not torch.cuda.is_available() or not torch.cuda.is_bf16_supported():
@@ -142,14 +151,13 @@ def work():
         if digest(Path(dataset) / 'dataset.json') != os.environ['WAFER_DATASET_SHA']:
             raise ValueError('dataset_protocol_mismatch')
         write('acquisition.json', json.loads((Path(dataset) / 'acquisition.json').read_text()))
-        run('analysis', ['scripts/analyze_validation.py', '--dataset', dataset,
-            '--evidence', '/app/profile-input/evidence', '--output', str(OUT / 'validation-analysis')], 120)
-        run('profile', ['scripts/run_profile.py', '--dataset', dataset,
-            '--output', str(OUT / 'profile')], PROFILE_WORK_SECONDS + 30)
-        state = json.loads((OUT / 'profile/status.json').read_text())
-        if state['status'] != 'completed' or state['diagnostic_only'] is not True:
-            raise ValueError('diagnostic_acceptance_failed')
-        result['profiles'] = ['profile']
+        run('extension', ['scripts/run_extension.py', '--dataset', dataset,
+            '--output', str(OUT / 'extension'), '--timeout-seconds', str(EXTENSION_WORK_SECONDS)],
+            EXTENSION_WORK_SECONDS + 30)
+        state = json.loads((OUT / 'extension/status.json').read_text())
+        if state['status'] != 'completed' or state['test_accessed'] is not False:
+            raise ValueError('extension_acceptance_failed')
+        result['profiles'] = ['extension']
         # Accepted means execution/integrity, not a claim of improved quality.
         result.update(status='accepted', quality_accepted=False)
     except Exception as exc:

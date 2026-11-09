@@ -1,0 +1,23 @@
+{
+  "parent_run_id": 42502913001,
+  "parent_release_tag": "checkpoint-200-v1",
+  "parent_zip_sha256": "b039ca64d37b2d343a0f94da5e26e741e3b463ee48af2ab5877659c555841490",
+  "parent_archive_sha256": "eb83e251e3a27a59ae643d89f7f98a7c620b6b225fd7e9926a4190c6f7226508",
+  "parent_adapter_sha256": "8cda3bcfcacdb62a4f6649d17fa415749af01aedd663986322fa7550ed328c55",
+  "parent_optimizer_sha256": "4429761bbe607c7fae356506487124679d29c0865718b056501649832f33cc6c",
+  "parent_scheduler_sha256": "37c9346d225deccff771594bb8343dc5fe37100b59d484fb90194174b473c854",
+  "parent_rng_sha256": "7602e13ee67ebde529f87333dadf638a4f7c70341a56309faa3a1d4d3c7d2ba3",
+  "reserved_holdout_manifest_sha256": "f08050ef4fcaca3b9c35ad29905a63957a375af7a024b69e0281968d06f4564f",
+  "start_step": 200,
+  "target_step": 300,
+  "validation_steps": [200, 250, 300],
+  "selection": "validation_macro_f1_then_earlier_step",
+  "seed": 17,
+  "accumulation": 8,
+  "rank": 8,
+  "learning_rate": 0.00005,
+  "max_length": 1024,
+  "test_access": false,
+  "profiler_enabled": false,
+  "workload_seconds": 9600
+}
