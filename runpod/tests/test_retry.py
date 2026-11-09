@@ -53,6 +53,20 @@ class RetryTests(unittest.TestCase):
             log.unlink()
             self.assertNotIn('progress', w.progress_snapshot())
 
+    def test_profile_progress_resets_for_current_arm(self):
+        with tempfile.TemporaryDirectory() as directory, patch.object(w, 'OUT', Path(directory)), \
+             patch.object(w, 'RESULT', {'status': 'running', 'phase': 'profile'}):
+            log = Path(directory) / 'profile.log'
+            log.write_text('DIAGNOSTIC_ARM_START=unprofiled\n204/204 [done]\n'
+                           'DIAGNOSTIC_ARM_START=unprofiled-repeat\n201/204 [running]')
+            current = w.progress_snapshot()
+            self.assertEqual(current['diagnostic_arm'], 'unprofiled-repeat')
+            self.assertEqual(current['progress']['optimizer_step'], 201)
+            log.write_text(log.read_text()+'\nDIAGNOSTIC_ARM_START=profiled\n')
+            current = w.progress_snapshot()
+            self.assertEqual(current['diagnostic_arm'], 'profiled')
+            self.assertNotIn('progress', current)
+
     def test_stage_budget_fits_existing_image_cli(self):
         self.assertEqual(w.PROFILE_WORK_SECONDS, 1200)
         self.assertGreater(c.MAX_WORK_SECONDS, w.PROFILE_WORK_SECONDS + 1200 + 120 + 120)

@@ -1,6 +1,6 @@
 # waferVLM TODO — after checkpoint 200
 
-Updated 2026-11-09 (Singapore time). This is the next-stage plan; unchecked items
+Updated 2026-11-10 (Singapore time). This is the next-stage plan; unchecked items
 are not completed experiments or new paid-launch authorization.
 
 ## Completed baseline
@@ -17,27 +17,31 @@ are not completed experiments or new paid-launch authorization.
 - [x] Update README/results/recovery instructions and verify temporary Pod
   deletion. See [the completed-run report](docs/checkpoint-200-release.md).
 
+**Current status: partial.** [Diagnostic report](docs/checkpoint-200-diagnostics.md): run42655151230 was inspected and rejected by tensor parity; repeat42661065788 also failed final acceptance, but its internal results and final cost remain uninspected after the workspace/browser became unavailable. Both independent cleanup workflows passed. Finish artifact verification and permanent diagnostic archiving before the 200→300 continuation. No new quality-training checkpoint was promoted.
+
 ## P1 — diagnose performance before more training
 
 ### Prepare instrumentation and reconcile the run ledger
 
-- [ ] Reconcile run `42502913001`: authorization marker, actual lifecycle bound,
+- [x] Reconcile run `42502913001`: authorization marker, actual lifecycle bound,
   conservative spend, verified cleanup and previously consumed runtime.
   Preserve the existing duplicate-launch and budget guards.
-- [ ] Add explicit phase/timing records for environment setup, model/data load,
+- [x] Add explicit phase/timing records for environment setup, model/data load,
   image decoding/processing, tokenization/collation, host-to-device transfer,
   forward, backward, optimizer update, evaluation, checkpoint save and export.
-- [ ] Separate startup, warm-up and steady-state measurements. Use CUDA-aware
+- [x] Separate startup, warm-up and steady-state measurements. Use CUDA-aware
   timing/profiling where appropriate; report instrumentation overhead and an
   unprofiled comparison rather than treating profiler overhead as training cost.
-- [ ] Record CPU utilization, data-loader settings, GPU memory, tensor/model
+- [x] Record process CPU time, data-loader settings, GPU memory, tensor/model
   devices, actual kernel path and optimizer-step progress beside those timings.
+- [ ] Relate process CPU use to the allocated cgroup quota/affinity and RunPod's
+  utilization sampling before attributing the reported CPU 100% reading.
   Existing CUDA/BF16 checks already fail without a suitable GPU: preserve that
   behavior and make failures visible; never silently fall back to CPU in RunPod.
 
 ### Run a bounded diagnostic
 
-- [ ] Prepare a diagnostic workload capped at **20 minutes**, using a short,
+- [x] Prepare a diagnostic workload capped at **20 minutes**, using a short,
   fixed training/validation subset and a disposable copy of checkpoint-200.
   Include cold start, artifact retrieval and cleanup in a separate lifecycle cap
   that fits the remaining aggregate allowance. Do not overwrite the release or
@@ -59,15 +63,15 @@ retains the current path. Export evidence and verify owned-Pod cleanup.
 
 ## P1 — inspect errors using existing evidence
 
-- [ ] Compare checkpoint-100/150/200 validation confusion matrices, per-class
+- [x] Compare checkpoint-100/150/200 validation confusion matrices, per-class
   precision/recall/F1, prediction counts and invalid outputs.
-- [ ] Build a validation error gallery, with particular attention to `loc` and
+- [x] Build a validation error gallery, with particular attention to `loc` and
   `scratch`, checking ambiguous morphology, map resolution and label quality.
   Record hypotheses separately from confirmed annotation problems.
-- [ ] Plot actual training loss, validation answer-token loss and validation
+- [x] Plot actual training loss, validation answer-token loss and validation
   macro-F1 against **global optimizer step**, marking the LR change at step 100.
   Keep the constant-LR control and lower-LR arm distinguishable.
-- [ ] Describe already observed test errors only as historical evidence.
+- [x] Describe already observed test errors only as historical evidence.
   Use validation evidence for new training, prompt or preprocessing decisions;
   do not silently relabel samples or alter the split in response to model errors.
 
@@ -130,9 +134,11 @@ outside this eight-label experiment.
 ## Budget and execution boundaries
 
 User extension on 2026-11-09 (SGT): **+US$10 / +600 minutes**.
-The [next diagnostic specification](docs/profile-checkpoint200-plan.md) reserves
-US$5.10 / 435 minutes for reconciled history and limits this attempt to 45 minutes
-work plus 10 minutes cleanup. The historical measured estimates remain below.
+The historical table below predates the two diagnostics. First diagnostic cumulative estimate: US$5.234111 /446.513 minutes. The repeat's actual ledger is pending inspection; its predeclared conservative cumulative bound was below US$6.35 /502 minutes. Do not treat historical arithmetic headroom as current available budget.
+The [original diagnostic specification](docs/profile-checkpoint200-plan.md) reserved
+US$5.10 / 435 minutes for history; the repeat raised those reserves to
+US$5.24 /447 minutes. Each attempt had 45 minutes work plus 10 minutes cleanup.
+The historical measured estimates remain below.
 
 | Item | Recorded state after run 42502913001 |
 |---|---:|

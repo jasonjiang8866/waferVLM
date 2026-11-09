@@ -523,11 +523,13 @@ def launch(api):
                 last_phase = phase
             progress = result.get("progress", {})
             step, total = progress.get("optimizer_step"), progress.get("optimizer_steps")
+            arm = result.get("diagnostic_arm")
+            arm = arm if arm in {"unprofiled", "unprofiled-repeat", "profiled"} else None
             if (phase == "profile" and type(step) is int and type(total) is int
                     and total == 204 and 0 <= step <= total
-                    and (phase, step) != last_progress):
-                print(f"Training progress: {phase} optimizer step {step}/{total}", flush=True)
-                last_progress = (phase, step)
+                    and (phase, arm, step) != last_progress):
+                print(f"Training progress: {phase}/{arm or 'unknown'} optimizer step {step}/{total}", flush=True)
+                last_progress = (phase, arm, step)
             if result.get("status") in {"accepted", "rejected", "partial"}:
                 # Worker returns only explicit evidence fields, never its environment.
                 save("result.json", result)
