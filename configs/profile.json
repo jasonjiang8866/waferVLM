@@ -4,13 +4,18 @@
   "parent_adapter_sha256": "8cda3bcfcacdb62a4f6649d17fa415749af01aedd663986322fa7550ed328c55",
   "parent_optimizer_sha256": "4429761bbe607c7fae356506487124679d29c0865718b056501649832f33cc6c",
   "steps_per_arm": 4,
-  "arms": ["unprofiled", "profiled"],
+  "arms": [
+    "unprofiled",
+    "profiled"
+  ],
   "workload_seconds": 1200,
   "seed": 17,
   "accumulation": 8,
   "rank": 8,
-  "learning_rate": 0.00005,
+  "learning_rate": 5e-05,
   "max_length": 1024,
   "training_purpose": "disposable performance diagnostics, not checkpoint selection",
-  "test_access": false
+  "test_access": false,
+  "full_determinism": true,
+  "control_mode": "strict deterministic retry after paired BF16 trajectory mismatch; unchanged tensor tolerance"
 }

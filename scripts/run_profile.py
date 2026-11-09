@@ -65,6 +65,7 @@ def main():
                   '--steps', str(cfg['parent_step']+cfg['steps_per_arm'])]
             for name in ('seed', 'accumulation', 'rank', 'learning_rate', 'max_length'):
                 args += ['--'+name.replace('_','-'), str(cfg[name])]
+            if cfg['full_determinism']: args.append('--full-determinism')
             if arm == 'profiled': args.append('--profile')
             begin=time.monotonic(); subprocess.run(args, check=True, timeout=remaining)
             durations[arm]=time.monotonic()-begin
@@ -79,10 +80,10 @@ def main():
             'instrumented_over_unprofiled_wall_ratio': durations['profiled']/durations['unprofiled'],
             'max_abs_adapter_difference': max_abs, 'adapter_allclose': close,
             'adapter_sha256': {arm:sha256_file(path) for arm,path in zip(cfg['arms'],paths)},
-            'atol':1e-6,'rtol':1e-5,
+            'atol':1e-6,'rtol':1e-5,'full_determinism':cfg['full_determinism'],
             'notes':'Same complete step-200 parent, seed and data position. Instrumentation overhead and cold-loading order are not speedup.'})
-        if not close: raise ValueError('Instrumentation changed short training trajectory')
         evaluation_probe(a.dataset, cp, root)
+        if not close: raise ValueError('Paired training trajectory tolerance exceeded')
         # Disposable diagnostic weights are not new usable/released checkpoints.
         for arm in cfg['arms']:
             shutil.rmtree(root/arm/'adapter'); shutil.rmtree(root/arm/'checkpoints')

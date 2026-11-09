@@ -53,7 +53,7 @@ def seal_output(output):
 
 def train(dataset, output, steps=100, seed=17, accumulation=8, rank=8, learning_rate=0.0002,
           revision=MODEL_REVISION, device="cuda", max_length=1024, resume_from=None,
-          lower_learning_rate=False, profile=False):
+          lower_learning_rate=False, profile=False, full_determinism=False):
     import torch
     from transformers import Trainer, TrainerCallback, TrainingArguments, set_seed
 
@@ -63,7 +63,8 @@ def train(dataset, output, steps=100, seed=17, accumulation=8, rank=8, learning_
         raise ValueError("LR intervention requires a complete resume checkpoint")
     rows = audit_dataset(dataset)
     config = dict(steps=steps, seed=seed, accumulation=accumulation, rank=rank,
-                  learning_rate=learning_rate, max_length=max_length, device=device)
+                  learning_rate=learning_rate, max_length=max_length, device=device,
+                  full_determinism=full_determinism)
     from .resume import check_resume, lower_constant_learning_rate
     resumed = check_resume(resume_from, dataset, revision, config,
                            lower_learning_rate=lower_learning_rate) if resume_from else None
@@ -71,7 +72,11 @@ def train(dataset, output, steps=100, seed=17, accumulation=8, rank=8, learning_
     output = new_output(output)
     from .profiling import PhaseRecorder, scope, timed_trainer_class
     recorder = PhaseRecorder(output, device) if profile else None
-    set_seed(seed)
+    if full_determinism:
+        from transformers.trainer_utils import enable_full_determinism
+        enable_full_determinism(seed)
+    else:
+        set_seed(seed)
     with scope(recorder, 'model_processor_load'):
         model, processor = load_model(revision, device)
         model, targets = add_lora(model, rank)
@@ -85,6 +90,7 @@ def train(dataset, output, steps=100, seed=17, accumulation=8, rank=8, learning_
             'torch_threads': torch.get_num_threads(),
             'torch_interop_threads': torch.get_num_interop_threads(),
             'dataloader_workers': 0, 'gradient_checkpointing': True,
+            'deterministic_algorithms': torch.are_deterministic_algorithms_enabled(),
             'fast_path_available': getattr(implementation, 'is_fast_path_available', None),
             'delta_functions': sorted({getattr(m.chunk_gated_delta_rule, '__name__', str(type(m.chunk_gated_delta_rule)))
                 for m in model.modules() if hasattr(m, 'chunk_gated_delta_rule')})})
@@ -147,7 +153,7 @@ def train(dataset, output, steps=100, seed=17, accumulation=8, rank=8, learning_
         output_dir=str(output / "checkpoints"), max_steps=steps,
         per_device_train_batch_size=1, gradient_accumulation_steps=accumulation,
         learning_rate=learning_rate, lr_scheduler_type="constant", warmup_steps=0,
-        weight_decay=0.0, max_grad_norm=1.0, seed=seed, data_seed=seed,
+        weight_decay=0.0, max_grad_norm=1.0, seed=seed, data_seed=seed, full_determinism=full_determinism,
         bf16=device == "cuda", use_cpu=device == "cpu", report_to="none",
         remove_unused_columns=False, dataloader_num_workers=0,
         save_strategy="steps", save_steps=max(1, steps - start_step) if resumed else max(1, steps // 2), save_total_limit=2,

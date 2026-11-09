@@ -125,7 +125,7 @@ def _verify_profile(read, files, controller_sha):
                 or run['resume']['adapter_sha256'] != cfg['parent_adapter_sha256']
                 or run['resume']['optimizer_sha256'] != cfg['parent_optimizer_sha256']):
             raise ValueError('Profile training/restore mismatch')
-        if any(run['config'].get(k) != cfg[k] for k in ('seed','accumulation','rank','learning_rate','max_length')):
+        if any(run['config'].get(k) != cfg[k] for k in ('seed','accumulation','rank','learning_rate','max_length','full_determinism')):
             raise ValueError('Profile hyperparameter mismatch')
         trace = tr['learning_rate_trace']
         if ([r['step'] for r in trace] != [201,202,203,204] or
@@ -134,7 +134,8 @@ def _verify_profile(read, files, controller_sha):
         if any(n.startswith(f'results/profile/{arm}/checkpoints/') for n in files):
             raise ValueError('Diagnostic weights must not be promoted as checkpoints')
     compare = read('profile/comparison.json')
-    if (compare['adapter_allclose'] is not True or not math.isfinite(compare['max_abs_adapter_difference'])
+    if (compare['adapter_allclose'] is not True or compare.get('full_determinism') is not True
+            or not math.isfinite(compare['max_abs_adapter_difference'])
             or any(not math.isfinite(v) or v <= 0 for v in compare['arm_wall_seconds'].values())):
         raise ValueError('Invalid profile comparison')
     timing = read('profile/profiled/timings.json')
@@ -145,7 +146,7 @@ def _verify_profile(read, files, controller_sha):
             any(not math.isfinite(x['wall_seconds']) or x['wall_seconds'] < 0 for x in timing['events'])):
         raise ValueError('Incomplete phase timings')
     execution = read('profile/profiled/execution.json')
-    if (not execution['parameter_devices'] or
+    if (execution.get('deterministic_algorithms') is not True or not execution['parameter_devices'] or
             any(not d.startswith('cuda:') for d in execution['parameter_devices']) or
             read('profile/profiled/operators.json')['cuda_event_count'] <= 0):
         raise ValueError('Missing actual CUDA execution evidence')

@@ -98,10 +98,11 @@ def main():
         print("PASS: real Trainer, official processor, answer mask, accumulation, gradient checkpointing, adapter/checkpoint export")
         with patch("wafervlm.experiment.load_model", side_effect=tiny_loader):
             train(root/"data",root/"profiled",steps=4,accumulation=2,rank=2,
-                  device="cpu",resume_from=root/"run/checkpoints/checkpoint-2",profile=True)
+                  device="cpu",resume_from=root/"run/checkpoints/checkpoint-2",profile=True,full_determinism=True)
         profiled=load_file(root/"profiled/adapter/adapter_model.safetensors")
         for name in continued:
             torch.testing.assert_close(profiled[name],continued[name],atol=1e-6,rtol=1e-5)
+        assert json.loads((root/'profiled/execution.json').read_text())['deterministic_algorithms'] is True
         phases=json.loads((root/"profiled/timings.json").read_text())['events']
         assert {'image_preprocess','tokenize','forward_and_loss','backward','optimizer_step','checkpoint_save'} <= {e['phase'] for e in phases}
         assert all(e['wall_seconds'] >= 0 and e['process_cpu_seconds'] >= 0 for e in phases)
