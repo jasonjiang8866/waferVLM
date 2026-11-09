@@ -61,5 +61,8 @@ prepare a separately validated speed change. Then size the planned 200→250→3
 validation-only continuation within the remaining US$30 / 1,100-minute allowance.
 No vision unfreezing, LR decay or larger model is bundled into this comparison.
 
-Until the new image is published and its immutable digest/source are pinned,
-the existing provenance check intentionally blocks paid launch of changed code.
+Published worker: `ghcr.io/jasonjiang8866/wafervlm@sha256:82c5e3a06de7f38d36a67f12d56cf2e21b1a3c615c0bf912ef42764b4fc62ab5`,
+built from source `4e0d4c7d59ae4a3b7e07553c60b36c0e640d39f5` by
+[image run 42652571130](https://github.com/jasonjiang8866/waferVLM/actions/runs/42652571130).
+The launch provenance check also requires the reviewed current main SHA and
+rejects any subsequent workload change not represented by this image.
