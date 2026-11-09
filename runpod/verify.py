@@ -134,7 +134,8 @@ def _verify_profile(read, files, controller_sha):
         if any(n.startswith(f'results/profile/{arm}/checkpoints/') for n in files):
             raise ValueError('Diagnostic weights must not be promoted as checkpoints')
     compare = read('profile/comparison.json')
-    if (compare['adapter_allclose'] is not True or not math.isfinite(compare['max_abs_adapter_difference'])
+    if (compare['adapter_allclose'] is not True or compare.get('all_pairs_allclose') is not True
+            or not math.isfinite(compare['max_abs_adapter_difference'])
             or any(not math.isfinite(v) or v <= 0 for v in compare['arm_wall_seconds'].values())):
         raise ValueError('Invalid profile comparison')
     timing = read('profile/profiled/timings.json')

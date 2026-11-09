@@ -49,13 +49,13 @@ DISK_HOURLY = DISK_GB * 0.10 / (28 * 24)
 CLEANUP_SECONDS = 600
 MAX_WORK_SECONDS = 45 * 60  # per attempt; below the Actions job limit
 APPROVED_TOTAL_SECONDS = 1100 * 60
-PRIOR_RUNTIME_RESERVE_SECONDS = 435 * 60  # four reconciled attempts; 433.211 min rounded up
+PRIOR_RUNTIME_RESERVE_SECONDS = 447 * 60  # five reconciled attempts; 446.513 min rounded up
 MAX_RATE = max(GPU_CAPS.values())
 MAX_ARCHIVE = 2 * 1024**3
 MARKER = "runpod-authorization-" + AUTHORIZATION
 RECONCILED_MARKERS = {"42346201550": 13564060530, "42385615853": 13579825671,
-                      "42431025521": 13597661487, "42502913001": 13626700093}
-PRIOR_SPEND_RESERVE = 5.10  # prior cumulative conservative estimate $5.051749
+                      "42431025521": 13597661487, "42502913001": 13626700093, "42655151230": 13690724238}
+PRIOR_SPEND_RESERVE = 5.24  # prior cumulative conservative estimate $5.234111
 APPROVED_USD = 30.0
 
 

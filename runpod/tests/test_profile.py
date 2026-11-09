@@ -17,7 +17,7 @@ class ProfileTests(unittest.TestCase):
             'acquisition.json':evidence, 'profile/workload.json':cfg,
             'profile/resume-origin.json':{'run_id':42502913001,'global_step':200,'adapter_sha256':cfg['parent_adapter_sha256']},
             'profile/status.json':{'status':'completed','diagnostic_only':True,'test_accessed':False,'elapsed_seconds':800},
-            'profile/comparison.json':{'adapter_allclose':True,'max_abs_adapter_difference':0,
+            'profile/comparison.json':{'adapter_allclose':True,'all_pairs_allclose':True,'max_abs_adapter_difference':0,
                 'arm_wall_seconds':{'unprofiled':200,'profiled':250}},
             'profile/profiled/timings.json':{'device':'cuda','synchronized':True,'events':[
                 {'phase':p,'wall_seconds':.1} for p in ('image_verify_decode','image_preprocess','tokenize',
@@ -50,6 +50,7 @@ class ProfileTests(unittest.TestCase):
             ('profile/profiled/execution.json','parameter_devices',['cpu']),
             ('profile/profiled/operators.json','cuda_event_count',0),
             ('profile/comparison.json','adapter_allclose',False),
+            ('profile/comparison.json','all_pairs_allclose',False),
             ('profile/evaluation-probe.json','split','test')]:
             with self.subTest(path=path,key=key):
                 values=copy.deepcopy(valid);values[path][key]=value
