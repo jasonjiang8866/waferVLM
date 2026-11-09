@@ -29,7 +29,6 @@ def main():
             p.add_argument("--resume-from")
             p.add_argument("--profile", action="store_true", help="Synchronized diagnostic timings and one-microbatch operator capture")
             p.add_argument("--lower-learning-rate", action="store_true")
-            p.add_argument("--full-determinism", action="store_true", help="Fail on nondeterministic kernels for controlled diagnostics")
             p.add_argument("--steps", type=int, default=100)
             p.add_argument("--seed", type=int, default=17)
             p.add_argument("--accumulation", type=int, default=8)

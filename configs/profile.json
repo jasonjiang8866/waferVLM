@@ -6,6 +6,7 @@
   "steps_per_arm": 4,
   "arms": [
     "unprofiled",
+    "unprofiled-repeat",
     "profiled"
   ],
   "workload_seconds": 1200,
@@ -16,6 +17,5 @@
   "max_length": 1024,
   "training_purpose": "disposable performance diagnostics, not checkpoint selection",
   "test_access": false,
-  "full_determinism": true,
-  "control_mode": "strict deterministic retry after paired BF16 trajectory mismatch; unchanged tensor tolerance"
+  "control_mode": "standard CUDA/BF16 repeatability control; original numerical acceptance tolerance retained"
 }

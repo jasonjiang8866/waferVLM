@@ -68,7 +68,7 @@ The launch provenance check also requires the reviewed current main SHA and
 rejects any subsequent workload change not represented by this image.
 
 
-## Strict-determinism retry after run 42655151230
+## Repeatability-control diagnostic after run 42655151230
 
 The first diagnostic is **rejected**, not an accepted performance comparison.
 Both arms restored Adam step 200, executed steps 201–204 with nonzero finite
@@ -84,15 +84,22 @@ steps (44.28 s/step); its whole subprocess took 192.660 seconds. This short
 measurement is exploratory, and profiler timings are nested and instrumented.
 The eight-image inference probe was not reached in that rejected run.
 
-A bounded retry enables Transformers/PyTorch full determinism **in both arms**,
-including deterministic algorithms, cuDNN settings, CUBLAS workspace and blocking
-CUDA launches. This is an explicit diagnostic execution-mode change: do not
-advertise its speed as unchanged production throughput. Unsupported deterministic
-kernels must raise; warn-only mode is not used. Keep the original adapter tensor
-tolerance and every resume/gradient/LR/CUDA verification gate. Record and require
-actual deterministic-algorithm status in the archive. Run the original step-200
-inference probe before the final comparison rejection so its timings survive a
-numerical failure. Do not promote either diagnostic adapter.
+A bounded retry adds a second **unprofiled** arm from the same complete parent,
+then runs the profiled arm: three independent four-step processes in the same
+20-minute workload /45+10-minute lifecycle bounds. Record all three pairwise
+adapter comparisons at the original atol1e-6/rtol1e-5. No tolerance is relaxed.
+The original checkpoint-200 eight-image validation timing probe runs before the
+final comparison gate, so useful inference measurements survive parity failure.
+A failed comparison remains a rejected experiment; do not promote those weights
+or call it a verified speed change. A single repeat measures observed baseline
+variation; it cannot establish statistical equivalence or prove its cause.
+
+Strict full determinism was considered but is not used: the pinned Transformers
+5.3.0 `torch_chunk_gated_delta_rule` calls floating-point `g.cumsum`, and the
+installed PyTorch2.10.0 `use_deterministic_algorithms` documentation lists CUDA
+floating-point cumsum among operations that raise in strict mode. Avoiding that
+operation would change the algorithm being diagnosed. This retry preserves the
+original standard CUDA/BF16 execution mode and records its repeatability limits.
 
 Run 42655151230 authorization marker 13690724238 has SHA256
 `a5732ce500f12391e281bffae6a2b1480c81862b2287b3003c49364ca9b76188`.

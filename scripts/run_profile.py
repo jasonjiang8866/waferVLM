@@ -65,23 +65,27 @@ def main():
                   '--steps', str(cfg['parent_step']+cfg['steps_per_arm'])]
             for name in ('seed', 'accumulation', 'rank', 'learning_rate', 'max_length'):
                 args += ['--'+name.replace('_','-'), str(cfg[name])]
-            if cfg['full_determinism']: args.append('--full-determinism')
             if arm == 'profiled': args.append('--profile')
             begin=time.monotonic(); subprocess.run(args, check=True, timeout=remaining)
             durations[arm]=time.monotonic()-begin
         import torch
         from safetensors.torch import load_file
-        paths=[root/arm/'adapter/adapter_model.safetensors' for arm in cfg['arms']]
-        states=[load_file(p) for p in paths]
-        if states[0].keys() != states[1].keys(): raise ValueError('Adapter keys changed')
-        max_abs=max(float((states[0][k]-states[1][k]).abs().max()) for k in states[0])
-        close=all(torch.allclose(states[0][k], states[1][k], atol=1e-6, rtol=1e-5) for k in states[0])
+        paths={arm:root/arm/'adapter/adapter_model.safetensors' for arm in cfg['arms']}
+        states={arm:load_file(path) for arm,path in paths.items()}
+        def compare_arms(left,right):
+            if states[left].keys() != states[right].keys(): raise ValueError('Adapter keys changed')
+            return {'max_abs_adapter_difference':max(float((states[left][k]-states[right][k]).abs().max()) for k in states[left]),
+                'adapter_allclose':all(torch.allclose(states[left][k],states[right][k],atol=1e-6,rtol=1e-5) for k in states[left])}
+        paired=compare_arms('unprofiled','profiled')
+        repeat=compare_arms('unprofiled','unprofiled-repeat')
+        second=compare_arms('unprofiled-repeat','profiled')
+        close=paired['adapter_allclose'] and repeat['adapter_allclose'] and second['adapter_allclose']
         write_json(root/'comparison.json', {'arm_wall_seconds': durations,
             'instrumented_over_unprofiled_wall_ratio': durations['profiled']/durations['unprofiled'],
-            'max_abs_adapter_difference': max_abs, 'adapter_allclose': close,
-            'adapter_sha256': {arm:sha256_file(path) for arm,path in zip(cfg['arms'],paths)},
-            'atol':1e-6,'rtol':1e-5,'full_determinism':cfg['full_determinism'],
-            'notes':'Same complete step-200 parent, seed and data position. Instrumentation overhead and cold-loading order are not speedup.'})
+            **paired,'repeat_control':repeat,'profiled_vs_repeat':second,'all_pairs_allclose':close,
+            'adapter_sha256': {arm:sha256_file(path) for arm,path in paths.items()},
+            'atol':1e-6,'rtol':1e-5,
+            'notes':'Same complete step-200 parent, seed and data position. One unprofiled repeat diagnoses baseline variation; it does not prove statistical equivalence. Instrumentation overhead and cold-loading order are not speedup.'})
         evaluation_probe(a.dataset, cp, root)
         if not close: raise ValueError('Paired training trajectory tolerance exceeded')
         # Disposable diagnostic weights are not new usable/released checkpoints.

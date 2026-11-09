@@ -17,12 +17,12 @@ class ProfileTests(unittest.TestCase):
             'acquisition.json':evidence, 'profile/workload.json':cfg,
             'profile/resume-origin.json':{'run_id':42502913001,'global_step':200,'adapter_sha256':cfg['parent_adapter_sha256']},
             'profile/status.json':{'status':'completed','diagnostic_only':True,'test_accessed':False,'elapsed_seconds':800},
-            'profile/comparison.json':{'adapter_allclose':True,'full_determinism':True,'max_abs_adapter_difference':0,
+            'profile/comparison.json':{'adapter_allclose':True,'all_pairs_allclose':True,'max_abs_adapter_difference':0,
                 'arm_wall_seconds':{'unprofiled':200,'profiled':250}},
             'profile/profiled/timings.json':{'device':'cuda','synchronized':True,'events':[
                 {'phase':p,'wall_seconds':.1} for p in ('image_verify_decode','image_preprocess','tokenize',
                 'host_to_device','forward_and_loss','backward','optimizer_step','gradient_check','checkpoint_save','adapter_export')]},
-            'profile/profiled/execution.json':{'parameter_devices':['cuda:0'],'deterministic_algorithms':True},
+            'profile/profiled/execution.json':{'parameter_devices':['cuda:0']},
             'profile/profiled/operators.json':{'cuda_event_count':10},
             'profile/evaluation-probe.json':{'split':'validation','n':8,'samples':[{}]*8},
             'validation-analysis/metrics.json':{'split':'validation','checkpoints':{str(s):{'n':160} for s in (100,150,200)}}}
@@ -33,7 +33,7 @@ class ProfileTests(unittest.TestCase):
                 'learning_rate_trace':[{'step':s,'rates':[cfg['learning_rate']]} for s in range(201,205)]}
             values[f'profile/{arm}/run.json']={'source_sha':SOURCE,'image_digest':IMAGE.split('@')[1],
                 'dataset_sha256':evidence['dataset_sha256'],'model_revision':'2fc06364715b967f1860aea9cf38778875588b17',
-                'config':{'device':'cuda',**{k:cfg[k] for k in ('seed','accumulation','rank','learning_rate','max_length','full_determinism')}},
+                'config':{'device':'cuda',**{k:cfg[k] for k in ('seed','accumulation','rank','learning_rate','max_length')}},
                 'resume':{'adapter_sha256':cfg['parent_adapter_sha256'],'optimizer_sha256':cfg['parent_optimizer_sha256']}}
         return values
 
@@ -48,9 +48,9 @@ class ProfileTests(unittest.TestCase):
             ('profile/profiled/training.json','train_loss',float('nan')),
             ('profile/profiled/timings.json','events',[]),
             ('profile/profiled/execution.json','parameter_devices',['cpu']),
-            ('profile/profiled/execution.json','deterministic_algorithms',False),
             ('profile/profiled/operators.json','cuda_event_count',0),
             ('profile/comparison.json','adapter_allclose',False),
+            ('profile/comparison.json','all_pairs_allclose',False),
             ('profile/evaluation-probe.json','split','test')]:
             with self.subTest(path=path,key=key):
                 values=copy.deepcopy(valid);values[path][key]=value
