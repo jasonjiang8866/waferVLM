@@ -8,6 +8,8 @@ waferVLM starts with [`Qwen/Qwen3.5-0.8B`](https://huggingface.co/Qwen/Qwen3.5-0
 
 **Download:** [checkpoint-200-v1 Release](https://github.com/jasonjiang8866/waferVLM/releases/tag/checkpoint-200-v1) — inference adapter, complete resumable checkpoints, raw predictions, logs and SHA256 checks. See [results, provenance and recovery instructions](docs/checkpoint-200-release.md).
 
+**Next steps:** [TODO](TODO.md) — profile the CPU/GPU bottleneck, inspect validation errors, plan a controlled 200→300 continuation, and reserve an untouched lot-level final evaluation.
+
 | Test metric | Original model | Step 100 | Step 200 (lower LR) |
 |---|---:|---:|---:|
 | Accuracy | 11.88% | 53.13% | **64.38%** |
