@@ -1,9 +1,12 @@
 # Bounded RunPod GPU experiment
 
 **Current authorization:** the user added US$10 / 600 minutes on 2026-11-09
-(SGT), raising the cumulative cap to **US$30 / 1,100 minutes**. The next run is
-the [bounded checkpoint-200 diagnostic](../docs/profile-checkpoint200-plan.md),
-with US$5.10 / 435 minutes reserved for four reconciled attempts. GPU price caps
+(SGT), raising the cumulative cap to **US$30 / 1,100 minutes**. Two bounded checkpoint-200 diagnostics have now run; see
+[measured results and pending recovery](../docs/checkpoint-200-diagnostics.md).
+The first failed numerical parity, and the repeat's internal results/final cost
+remain uninspected after the execution workspace became unavailable. Both
+independent cleanup workflows passed. The repeat reserved US$5.24 /447 minutes
+for history; reconcile its actual ledger before another paid launch. GPU price caps
 and CUDA >=12.8 remain unchanged. Historical launch records follow below.
 
 User authorization (2026-11-07): **US$20 total**, including compute, retries,

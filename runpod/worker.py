@@ -45,6 +45,12 @@ def progress_snapshot():
             log.seek(0, 2)
             log.seek(max(0, log.tell() - 65536))
             tail = log.read(65536).decode('utf-8', errors='replace')
+        if phase == 'profile':
+            markers = list(re.finditer(r'(?:^|\n)DIAGNOSTIC_ARM_START=(unprofiled-repeat|unprofiled|profiled)(?:\n|$)', tail))
+            if markers:
+                marker = markers[-1]
+                snapshot['diagnostic_arm'] = marker.group(1)
+                tail = tail[marker.end():]
         for total in reversed(totals):
             matches = re.findall(r'(?<![0-9])([0-9]+)/' + str(total) + r'(?=\s|\[)', tail)
             steps = [int(x) for x in matches if 0 <= int(x) <= total]

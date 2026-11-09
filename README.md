@@ -8,6 +8,8 @@ waferVLM starts with [`Qwen/Qwen3.5-0.8B`](https://huggingface.co/Qwen/Qwen3.5-0
 
 **Download:** [checkpoint-200-v1 Release](https://github.com/jasonjiang8866/waferVLM/releases/tag/checkpoint-200-v1) — inference adapter, complete resumable checkpoints, raw predictions, logs and SHA256 checks. See [results, provenance and recovery instructions](docs/checkpoint-200-release.md).
 
+**Diagnostics:** [performance evidence and recovery status](docs/checkpoint-200-diagnostics.md) — CUDA execution confirmed; the first four-step probe averaged 44.28 seconds per new optimizer step. Numerical-parity acceptance failed, and the repeat-control artifact still needs inspection after an execution-workspace outage. Both independent cleanup workflows passed; the official model remains checkpoint-200.
+
 **Next steps:** [TODO](TODO.md) — profile the CPU/GPU bottleneck, inspect validation errors, plan a controlled 200→300 continuation, and reserve an untouched lot-level final evaluation.
 
 | Test metric | Original model | Step 100 | Step 200 (lower LR) |
@@ -105,7 +107,7 @@ Individual stages are available through `wafervlm evaluate`, `train` and `compar
 
 ## RunPod
 
-See [runpod/README.md](runpod/README.md) for the US$20 total experiment authorization, per-GPU price caps, pinned published image, data verification and cleanup design. `RUNPOD_API_KEY` stays in the Actions controller; neither the training code nor the worker receives it. Host filtering uses `minCudaVersion=12.8`, never an exact 12.8 requirement. The Broker remains GET-only; the separate waferVLM controller implements the paid lifecycle. Merging code does not launch compute: the GPU workflow requires a manual dispatch, exact main SHA and an unused authorization marker. The lower-LR continuation completed step 200 and its temporary Pod deletion was independently verified. Results and full recovery files are preserved in the [checkpoint-200 Release](https://github.com/jasonjiang8866/waferVLM/releases/tag/checkpoint-200-v1). Cumulative conservative usage is approximately US$5.05 / 433.21 minutes, including prior reserves; a later paid dispatch still requires ledger reconciliation. See the [completed-run report](docs/checkpoint-200-release.md).
+See [runpod/README.md](runpod/README.md) for the extended US$30 /1,100-minute total experiment authorization, per-GPU price caps, pinned published image, data verification and cleanup design. `RUNPOD_API_KEY` stays in the Actions controller; neither the training code nor the worker receives it. Host filtering uses `minCudaVersion=12.8`, never an exact 12.8 requirement. The Broker remains GET-only; the separate waferVLM controller implements the paid lifecycle. Merging code does not launch compute: the GPU workflow requires a manual dispatch, exact main SHA and an unused authorization marker. The lower-LR continuation completed step 200 and its temporary Pod deletion was independently verified. Results and full recovery files are preserved in the [checkpoint-200 Release](https://github.com/jasonjiang8866/waferVLM/releases/tag/checkpoint-200-v1). The first diagnostic raised the conservative ledger to US$5.234111 /446.513 minutes; the repeat-control cost still needs extraction. Later paid execution requires reconciliation of that repeat. See [diagnostic evidence and outstanding recovery](docs/checkpoint-200-diagnostics.md). See the [completed-run report](docs/checkpoint-200-release.md).
 
 ## References and scope
 

@@ -58,6 +58,7 @@ def main():
     start=time.monotonic(); durations={}
     try:
         for arm in cfg['arms']:
+            print(f'DIAGNOSTIC_ARM_START={arm}', flush=True)
             remaining=cfg['workload_seconds']-(time.monotonic()-start)
             if remaining < 30: raise TimeoutError('Diagnostic deadline')
             args=[sys.executable, '-m', 'wafervlm.cli', 'train', '--dataset', a.dataset,
