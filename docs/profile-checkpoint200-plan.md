@@ -114,3 +114,7 @@ The unchanged 45+10-minute launch cap yields a maximum planned cumulative estima
 below **US$6.35 / 502 minutes** at the highest allowed hourly price, within the
 existing US$30 /1,100-minute authorization. A newly published and pinned worker
 image is required before this changed workload can launch.
+
+Repeat-control worker published by [run 42659522956](https://github.com/jasonjiang8866/waferVLM/actions/runs/42659522956):
+`ghcr.io/jasonjiang8866/wafervlm@sha256:b8b9f2998c571b13f471c229ac2451f31a9dd977bd25367da48a9b841df3dd93`,
+source `1243e899dca62f607b770cac27818fe7655a399e`. This pin supersedes the first-attempt image above.
