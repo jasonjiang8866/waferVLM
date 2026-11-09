@@ -1,4 +1,4 @@
-"""One bounded $20 waferVLM authorization. Only Actions has account credentials."""
+"""Bounded waferVLM authorization, extended to $30 / 1100 minutes. Only Actions has account credentials."""
 
 import argparse
 import base64
@@ -32,7 +32,7 @@ from runpod.provider import (
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "runpod-results"
-# User authorization 2026-11-07: $20 TOTAL, the four individually quoted rates.
+# Original GPU/rate authorization retained; user added $10 / 600 minutes on 2026-11-09.
 GPU_CAPS = {
     MIG: 0.69,
     "NVIDIA GeForce RTX 4090": 0.89,
@@ -47,16 +47,16 @@ AUTHORIZATION_EXPIRES = 1794614400  # 2026-11-14 00:00 UTC; before ledger expiry
 DISK_GB = 60
 DISK_HOURLY = DISK_GB * 0.10 / (28 * 24)
 CLEANUP_SECONDS = 600
-MAX_WORK_SECONDS = 180 * 60  # per attempt; below the Actions job limit
-APPROVED_TOTAL_SECONDS = 500 * 60
-PRIOR_RUNTIME_RESERVE_SECONDS = 300 * 60  # three reconciled attempts; rounded up
+MAX_WORK_SECONDS = 45 * 60  # per attempt; below the Actions job limit
+APPROVED_TOTAL_SECONDS = 1100 * 60
+PRIOR_RUNTIME_RESERVE_SECONDS = 435 * 60  # four reconciled attempts; 433.211 min rounded up
 MAX_RATE = max(GPU_CAPS.values())
 MAX_ARCHIVE = 2 * 1024**3
 MARKER = "runpod-authorization-" + AUTHORIZATION
 RECONCILED_MARKERS = {"42346201550": 13564060530, "42385615853": 13579825671,
-                      "42431025521": 13597661487}
-PRIOR_SPEND_RESERVE = 3.50  # prior cumulative conservative estimate $3.485102
-APPROVED_USD = 20.0
+                      "42431025521": 13597661487, "42502913001": 13626700093}
+PRIOR_SPEND_RESERVE = 5.10  # prior cumulative conservative estimate $5.051749
+APPROVED_USD = 30.0
 
 
 def save(name, value):
@@ -134,9 +134,9 @@ def provenance():
         "image_source_sha": SOURCE,
         "image": IMAGE,
         "anonymous_manifest_verified": verify_image_manifest(),
-        "suite": "resume100-to200-lr5e-5-constant",
+        "suite": "checkpoint200-paired-performance-diagnostic",
         "config_sha256": hashlib.sha256(
-            (ROOT / "configs/continuation.json").read_bytes()
+            (ROOT / "configs/profile.json").read_bytes()
         ).hexdigest(),
         "worker_sha256": hashlib.sha256((ROOT / "runpod/worker.py").read_bytes()).hexdigest(),
     }
@@ -518,13 +518,13 @@ def launch(api):
                 continue
             worker_seen = True
             phase = result.get("phase")
-            if phase != last_phase and phase in {"starting", "data", "smoke", "baseline", "continuation"}:
+            if phase != last_phase and phase in {"starting", "data", "analysis", "profile"}:
                 print("Worker phase: " + phase, flush=True)
                 last_phase = phase
             progress = result.get("progress", {})
             step, total = progress.get("optimizer_step"), progress.get("optimizer_steps")
-            if (phase in {"smoke", "baseline", "continuation"} and type(step) is int and type(total) is int
-                    and total in ({8} if phase == "smoke" else {100} if phase == "baseline" else {150, 200}) and 0 <= step <= total
+            if (phase == "profile" and type(step) is int and type(total) is int
+                    and total == 204 and 0 <= step <= total
                     and (phase, step) != last_progress):
                 print(f"Training progress: {phase} optimizer step {step}/{total}", flush=True)
                 last_progress = (phase, step)
@@ -544,13 +544,13 @@ def launch(api):
                     result.get("source_sha") != SOURCE
                     or result.get("config_sha256") != evidence["config_sha256"]
                     or result.get("controller_sha") != evidence["controller_sha"]
-                    or result.get("profiles") != ["continuation"]
+                    or result.get("profiles") != ["profile"]
                     or not (OUT / "experiment.tar.gz").is_file()
                 ):
                     raise RuntimeError("Result provenance/completeness mismatch")
                 from runpod.verify import verify_archive
 
-                verify_archive(OUT / "experiment.tar.gz", evidence["controller_sha"], continuation=True)
+                verify_archive(OUT / "experiment.tar.gz", evidence["controller_sha"], profile=True)
                 save("acceptance.json", {"status": "accepted", "archive_verified": True})
                 return
             time.sleep(10)

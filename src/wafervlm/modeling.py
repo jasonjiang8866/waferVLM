@@ -43,17 +43,22 @@ def mask_answer(full_ids, prompt_ids):
 class AnswerCollator:
     """One image per microbatch; reject truncation instead of damaging vision tokens."""
 
-    def __init__(self, processor, root, max_length=1024):
+    def __init__(self, processor, root, max_length=1024, recorder=None):
         self.processor, self.root, self.max_length = processor, root, max_length
+        self.recorder = recorder
 
     def __call__(self, rows):
         if len(rows) != 1:
             raise ValueError("This baseline requires microbatch size 1; use gradient accumulation")
         row = rows[0]
-        with Image.open(checked_image(self.root, row)) as source:
-            image = source.convert("RGB")
-        prompt = encode(self.processor, image)
-        full = encode(self.processor, image, row["label"])
+        from .profiling import scope
+        with scope(self.recorder, 'image_verify_decode'):
+            with Image.open(checked_image(self.root, row)) as source:
+                image = source.convert("RGB")
+        with scope(self.recorder, 'prompt_encode'):
+            prompt = encode(self.processor, image)
+        with scope(self.recorder, 'answer_encode'):
+            full = encode(self.processor, image, row["label"])
         if full["input_ids"].shape[-1] > self.max_length:
             raise ValueError("Example exceeds max_length; lower image resolution or raise the explicit limit")
         full["labels"] = mask_answer(full["input_ids"], prompt["input_ids"])

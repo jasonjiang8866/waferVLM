@@ -11,15 +11,15 @@ class RetryTests(unittest.TestCase):
         for rate in c.GPU_CAPS.values():
             quote = c.quote(rate)
             self.assertEqual(quote['planned_total_seconds'], 490 * 60)
-            self.assertLessEqual(quote['planned_total_seconds'], 500 * 60)
-            self.assertGreater(quote['planned_total_usd'], 3.50)
-            self.assertLessEqual(quote['planned_total_usd'], 20)
-        with patch.object(c, 'PRIOR_RUNTIME_RESERVE_SECONDS', 480 * 60):
+            self.assertLessEqual(quote['planned_total_seconds'], 1100 * 60)
+            self.assertGreater(quote['planned_total_usd'], 5.10)
+            self.assertLessEqual(quote['planned_total_usd'], 30)
+        with patch.object(c, 'PRIOR_RUNTIME_RESERVE_SECONDS', 1080 * 60):
             self.assertEqual(c.quote(.69)['work_seconds'], 600)
-        with patch.object(c, 'PRIOR_RUNTIME_RESERVE_SECONDS', 481 * 60):
+        with patch.object(c, 'PRIOR_RUNTIME_RESERVE_SECONDS', 1081 * 60):
             with self.assertRaises(ValueError):
                 c.quote(.69)
-        with patch.object(c, 'PRIOR_SPEND_RESERVE', 19.9):
+        with patch.object(c, 'PRIOR_SPEND_RESERVE', 29.9):
             with self.assertRaises(ValueError):
                 c.quote(.69)
 
@@ -54,7 +54,5 @@ class RetryTests(unittest.TestCase):
             self.assertNotIn('progress', w.progress_snapshot())
 
     def test_stage_budget_fits_existing_image_cli(self):
-        self.assertEqual(w.PROFILE_LIMITS[-1], ('baseline', 100, 7200))
-        self.assertTrue(all(60 <= seconds <= 7200 for _, _, seconds in w.PROFILE_LIMITS))
-        # Startup, data, maximum profiles, retrieval can be bounded by controller.
-        self.assertGreater(c.MAX_WORK_SECONDS, sum(x[2] for x in w.PROFILE_LIMITS) + 1200 + 210)
+        self.assertEqual(w.PROFILE_WORK_SECONDS, 1200)
+        self.assertGreater(c.MAX_WORK_SECONDS, w.PROFILE_WORK_SECONDS + 1200 + 120 + 120)

@@ -53,7 +53,7 @@ def seal_output(output):
 
 def train(dataset, output, steps=100, seed=17, accumulation=8, rank=8, learning_rate=0.0002,
           revision=MODEL_REVISION, device="cuda", max_length=1024, resume_from=None,
-          lower_learning_rate=False):
+          lower_learning_rate=False, profile=False):
     import torch
     from transformers import Trainer, TrainerCallback, TrainingArguments, set_seed
 
@@ -69,9 +69,25 @@ def train(dataset, output, steps=100, seed=17, accumulation=8, rank=8, learning_
                            lower_learning_rate=lower_learning_rate) if resume_from else None
     start_step = resumed["global_step"] if resumed else 0
     output = new_output(output)
+    from .profiling import PhaseRecorder, scope, timed_trainer_class
+    recorder = PhaseRecorder(output, device) if profile else None
     set_seed(seed)
-    model, processor = load_model(revision, device)
-    model, targets = add_lora(model, rank)
+    with scope(recorder, 'model_processor_load'):
+        model, processor = load_model(revision, device)
+        model, targets = add_lora(model, rank)
+    if recorder:
+        recorder.wrap(processor.image_processor, 'preprocess', 'image_preprocess')
+        recorder.wrap(processor.tokenizer, '_encode_plus', 'tokenize')
+        import transformers.models.qwen3_5.modeling_qwen3_5 as implementation
+        write_json(output / 'execution.json', {
+            'parameter_devices': sorted({str(p.device) for p in model.parameters()}),
+            'trainable_parameter_devices': sorted({str(p.device) for p in model.parameters() if p.requires_grad}),
+            'torch_threads': torch.get_num_threads(),
+            'torch_interop_threads': torch.get_num_interop_threads(),
+            'dataloader_workers': 0, 'gradient_checkpointing': True,
+            'fast_path_available': getattr(implementation, 'is_fast_path_available', None),
+            'delta_functions': sorted({getattr(m.chunk_gated_delta_rule, '__name__', str(type(m.chunk_gated_delta_rule)))
+                for m in model.modules() if hasattr(m, 'chunk_gated_delta_rule')})})
     model.config.use_cache = False
     model.config.text_config.use_cache = False
     diagnostics = {"lora_targets": targets, "gradient_checks": 0, "nonzero_gradient_checks": 0,
@@ -98,6 +114,21 @@ def train(dataset, output, steps=100, seed=17, accumulation=8, rank=8, learning_
                 logged_losses.append(float(logs["loss"]))
 
         def on_pre_optimizer_step(self, args, state, control, **kwargs):
+            with scope(recorder, 'gradient_check'):
+                self.check_gradients(state, kwargs)
+            if recorder:
+                self.optimizer_timer = recorder.scope('optimizer_step')
+                self.optimizer_timer.__enter__()
+
+        def on_optimizer_step(self, args, state, control, **kwargs):
+            if recorder:
+                self.optimizer_timer.__exit__(None, None, None)
+
+        def on_step_end(self, args, state, control, **kwargs):
+            if recorder:
+                recorder.save()
+
+        def check_gradients(self, state, kwargs):
             rates = [float(g['lr']) for g in kwargs['optimizer'].param_groups]
             if not rates or any(not math.isclose(lr, learning_rate, rel_tol=1e-12) for lr in rates):
                 raise ValueError("Effective optimizer LR differs from requested constant LR")
@@ -126,10 +157,15 @@ def train(dataset, output, steps=100, seed=17, accumulation=8, rank=8, learning_
     if device == "cuda":
         torch.cuda.reset_peak_memory_stats()
     start = time.perf_counter()
-    trainer = Trainer(model=model, args=args, train_dataset=rows["train"],
-                      data_collator=AnswerCollator(processor, dataset, max_length),
+    trainer_type = timed_trainer_class(recorder, accumulation) if recorder else Trainer
+    trainer = trainer_type(model=model, args=args, train_dataset=rows["train"],
+                      data_collator=AnswerCollator(processor, dataset, max_length, recorder),
                       callbacks=[GradientCheck()])
-    result = trainer.train(resume_from_checkpoint=str(resume_from) if resumed else None)
+    try:
+        result = trainer.train(resume_from_checkpoint=str(resume_from) if resumed else None)
+    finally:
+        if recorder:
+            recorder.restore()
     if trainer.state.global_step != steps or diagnostics["gradient_checks"] != steps - start_step:
         raise ValueError("Unexpected optimizer-step count after resume")
     if not math.isfinite(result.training_loss):
@@ -137,8 +173,11 @@ def train(dataset, output, steps=100, seed=17, accumulation=8, rank=8, learning_
     if not diagnostics["nonzero_gradient_checks"]:
         raise ValueError("No nonzero adapter gradient observed")
     adapter = output / "adapter"
-    model.save_pretrained(adapter, safe_serialization=True)
-    processor.save_pretrained(adapter)
+    with scope(recorder, 'adapter_export'):
+        model.save_pretrained(adapter, safe_serialization=True)
+        processor.save_pretrained(adapter)
+    if recorder:
+        recorder.save()
     write_json(output / "training.json", {
         **result.metrics, **diagnostics,
         "trainer_reported_train_loss": result.training_loss,

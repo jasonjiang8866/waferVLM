@@ -1,5 +1,11 @@
 # Bounded RunPod GPU experiment
 
+**Current authorization:** the user added US$10 / 600 minutes on 2026-11-09
+(SGT), raising the cumulative cap to **US$30 / 1,100 minutes**. The next run is
+the [bounded checkpoint-200 diagnostic](../docs/profile-checkpoint200-plan.md),
+with US$5.10 / 435 minutes reserved for four reconciled attempts. GPU price caps
+and CUDA >=12.8 remain unchanged. Historical launch records follow below.
+
 User authorization (2026-11-07): **US$20 total**, including compute, retries,
 temporary disk, transfer and cleanup. This replaces the earlier observation-only
 budget state. The first attempt passed the 8-step smoke but timed out at
@@ -18,8 +24,8 @@ and [preserved Release](https://github.com/jasonjiang8866/waferVLM/releases/tag/
 The temporary Pod is verified absent by the controller and independent cleanup.
 Cumulative conservative usage is **US$5.051749 / 433.21 minutes**, including
 prior reserves, within the US$20 / 500-minute cap. No persistent volume was
-created. The fourth attempt's marker remains unreconciled in the controller;
-subsequent paid dispatches remain blocked. The specification below records the
+created. The fourth attempt's marker is reconciled for the bounded diagnostic;
+any new run must still pass the ledger and pinned-image checks. The specification below records the
 completed run and is not an instruction to launch it again.
 
 ## Historical launch specification: lower LR from checkpoint 100
