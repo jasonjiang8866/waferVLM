@@ -4,7 +4,17 @@
 
 waferVLM starts with [`Qwen/Qwen3.5-0.8B`](https://huggingface.co/Qwen/Qwen3.5-0.8B), comparing its original weights with a BF16, language-only LoRA adapter on the **same held-out wafer maps**. Images and a fixed classification question are the inputs; the target is a single defect label.
 
-**Status:** real WM-811K data audited: **790 training / 160 validation / 160 test images**, with all eight classes and disjoint lots. Three maps with contradictory target labels (six rows) are quarantined. The verified 100-step CUDA adapter reached **53.13% test accuracy / 0.5217 macro-F1**. A 200-step constant-LR continuation did not improve validation macro-F1; the next arm isolates a lower learning rate. See [continuation results](docs/continuation-control-42431025521.md). See [data evidence](docs/data-audit.md), [validation](docs/validation.md) and the [experiment protocol](docs/protocol.md).
+**Latest result:** checkpoint-200 reached **64.38% test accuracy / 0.6361 macro-F1**, with **0/160 invalid outputs**. Lowering the continuation learning rate to 5e-5 improved accuracy by **11.25 percentage points** over step 100 on the same 160 test images. Checkpoint selection used validation macro-F1. This is a single-seed development result, not a production benchmark.
+
+**Download:** [checkpoint-200-v1 Release](https://github.com/jasonjiang8866/waferVLM/releases/tag/checkpoint-200-v1) — inference adapter, complete resumable checkpoints, raw predictions, logs and SHA256 checks. See [results, provenance and recovery instructions](docs/checkpoint-200-release.md).
+
+| Test metric | Original model | Step 100 | Step 200 (lower LR) |
+|---|---:|---:|---:|
+| Accuracy | 11.88% | 53.13% | **64.38%** |
+| Macro-F1 | 0.0281 | 0.5217 | **0.6361** |
+| Invalid output rate | 6.88% | 0% | **0%** |
+
+**Data:** real WM-811K, **790 training / 160 validation / 160 test images**, all eight classes, disjoint lots. Three maps with contradictory labels (six rows) are quarantined. See [data evidence](docs/data-audit.md), [validation](docs/validation.md), the [experiment protocol](docs/protocol.md) and the earlier [constant-LR control](docs/continuation-control-42431025521.md).
 
 ## What is included
 
@@ -13,7 +23,7 @@ waferVLM starts with [`Qwen/Qwen3.5-0.8B`](https://huggingface.co/Qwen/Qwen3.5-0
 - Zero-shot evaluation, fixed-budget SFT, adapted-model evaluation, and paired accuracy / macro-F1 comparison.
 - Strict output parsing: explanations, unknown labels and truncated responses count as failures.
 - Training checkpoints, adapter export, gradient diagnostics, predictions, dependency/GPU metadata and checksums.
-- CPU/data/container CI, a containerized worker, and pinned RunPod Broker read-only preflight with **CUDA >= 12.8** host selection. Higher host versions are allowed. A separate manually authorized GPU workflow runs smoke → baseline with bounded runtime, verified artifacts and independent cleanup.
+- CPU/data/container CI, a containerized worker, and pinned RunPod Broker read-only preflight with **CUDA >= 12.8** host selection. Higher host versions are allowed. A separate manually authorized GPU workflow supports baseline and checkpoint continuation with bounded runtime, verified artifacts and independent cleanup.
 
 ```mermaid
 flowchart TD
@@ -87,13 +97,13 @@ uv run --frozen --extra train python scripts/run_experiment.py \
   --timeout-seconds 3600 --output outputs/baseline-17
 ```
 
-Individual stages are available through `wafervlm evaluate`, `train` and `compare`; use `--help`. The `--device cpu` option is for compatibility/debugging, not a throughput baseline. Outputs must use a new directory to prevent accidental overwrites. Saved Trainer checkpoints include optimizer state for inspection/recovery, but this first CLI does not yet expose resume. Never use an incomplete adapter export as a completed result.
+Individual stages are available through `wafervlm evaluate`, `train` and `compare`; use `--help`. The `--device cpu` option is for compatibility/debugging, not a throughput baseline. Outputs must use a new directory to prevent accidental overwrites. Saved Trainer checkpoints include optimizer, scheduler and RNG state; `train --resume-from` restores the full state. See the [released checkpoint recovery example](docs/checkpoint-200-release.md#recover-the-full-training-state). Never use an incomplete adapter export as a completed result.
 
 `comparison/comparison.json` contains paired scores. `base/` and `tuned/` include raw responses and per-example generation times; `train/` contains adapter weights and gradient diagnostics. Latencies include the first generation and exclude model loading and image preprocessing. A completed worker is **not** a quality acceptance decision. Test-set results must not drive hyperparameter tuning.
 
 ## RunPod
 
-See [runpod/README.md](runpod/README.md) for the US$20 total experiment authorization, per-GPU price caps, pinned published image, data verification and cleanup design. `RUNPOD_API_KEY` stays in the Actions controller; neither the training code nor the worker receives it. Host filtering uses `minCudaVersion=12.8`, never an exact 12.8 requirement. The Broker remains GET-only; the separate waferVLM controller implements the paid lifecycle. Merging code does not launch compute: the GPU workflow requires a manual dispatch, exact main SHA and an unused authorization marker. The second run completed 100 steps: test accuracy 53.125%, macro-F1 0.521659, invalid outputs 0/160; validation accuracy 64.375%, macro-F1 0.640676. Both prior Pods are verified deleted. The next authorized experiment restores checkpoint-100 for 100 additional steps, validates at 100/150/200 and selects before final test evaluation; see [continuation protocol](runpod/README.md).
+See [runpod/README.md](runpod/README.md) for the US$20 total experiment authorization, per-GPU price caps, pinned published image, data verification and cleanup design. `RUNPOD_API_KEY` stays in the Actions controller; neither the training code nor the worker receives it. Host filtering uses `minCudaVersion=12.8`, never an exact 12.8 requirement. The Broker remains GET-only; the separate waferVLM controller implements the paid lifecycle. Merging code does not launch compute: the GPU workflow requires a manual dispatch, exact main SHA and an unused authorization marker. The lower-LR continuation completed step 200 and its temporary Pod deletion was independently verified. Results and full recovery files are preserved in the [checkpoint-200 Release](https://github.com/jasonjiang8866/waferVLM/releases/tag/checkpoint-200-v1). Cumulative conservative usage is approximately US$5.05 / 433.21 minutes, including prior reserves; a later paid dispatch still requires ledger reconciliation. See the [completed-run report](docs/checkpoint-200-release.md).
 
 ## References and scope
 
