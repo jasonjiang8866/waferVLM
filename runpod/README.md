@@ -7,11 +7,26 @@ budget state. The first attempt passed the 8-step smoke but timed out at
 The user subsequently raised the aggregate runtime ceiling to **500 minutes**;
 the total US$20 cap and per-GPU price caps remain unchanged.
 
-## Current experiment: lower LR from checkpoint 100
+## Latest completed result
+
+[Run 42502913001](https://github.com/jasonjiang8866/waferVLM/actions/runs/42502913001)
+completed the lower-LR continuation on 2026-11-09 at 03:16 SGT. Validation selected
+checkpoint-200; test accuracy is **64.375%**, macro-F1 **0.636059**, invalid output
+**0/160**. See the [full report and recovery guide](../docs/checkpoint-200-release.md)
+and [preserved Release](https://github.com/jasonjiang8866/waferVLM/releases/tag/checkpoint-200-v1).
+
+The temporary Pod is verified absent by the controller and independent cleanup.
+Cumulative conservative usage is **US$5.051749 / 433.21 minutes**, including
+prior reserves, within the US$20 / 500-minute cap. No persistent volume was
+created. The fourth attempt's marker remains unreconciled in the controller;
+subsequent paid dispatches remain blocked. The specification below records the
+completed run and is not an instruction to launch it again.
+
+## Historical launch specification: lower LR from checkpoint 100
 
 The constant-2e-4 continuation completed at step 200. Checkpoint-100 remained best
 by validation macro-F1. See [verified control results](../docs/continuation-control-42431025521.md).
-The user approved the next experiment on 2026-11-09 (SGT). Run the same 100 new
+The user approved this experiment on 2026-11-09 (SGT). It ran the same 100 new
 steps, from the same checkpoint-100, at **constant LR 5e-5**. Learning-rate decay
 is deferred to a separate experiment so this comparison changes one variable.
 
@@ -41,9 +56,9 @@ has a 160-minute stage deadline. Later dispatches remain blocked until this
 attempt's ledger, spend and cleanup are reconciled; this is not a retry loop.
 
 The lower-LR image has passed its build and embedded-checkpoint checks and is
-pinned below. Launch `gpu.yml` on main with `confirm_paid=true` and the exact
-reviewed main SHA. Preflight verifies anonymous manifest access and rejects
-any workload drift from this image's source.
+pinned below. The completed run used `gpu.yml` on main with `confirm_paid=true`
+and controller SHA `4ff0fb4c878decb0afaec0d433215bb7e0ead274`. Preflight verified
+anonymous manifest access and rejected workload drift from this image's source.
 
 - Worker image: `ghcr.io/jasonjiang8866/wafervlm@sha256:84c6d4a5734421ecfc2cfc7c1b2d9bce5d855edda7b925e73238009825b34b6e`.
 - Worker image source: `ef254921225ded9bbb3aec818de177c9d718db73`.
