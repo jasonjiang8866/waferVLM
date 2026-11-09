@@ -1,0 +1,16 @@
+{
+  "status": "rejected",
+  "evidence_recovery": "complete",
+  "repeat_run_id": 42661065788,
+  "zip_sha256": "3aa535a29c9647f547bfe3ecca5ec1a592bf032655be2170c58fd0ab9c834a32",
+  "inner_sha256": "a7c5faa09b12a4792f511281fbbdc57755193e0e499e2bc8cc3bb3c43825483d",
+  "independent_cleanup_run_id": 42662666105,
+  "gpu": "NVIDIA GeForce RTX 4090",
+  "region": "US-IL-1",
+  "gpu_hourly_usd": 0.89,
+  "estimated_cumulative_usd": 5.377862940052791,
+  "estimated_cumulative_minutes": 456.201817214489,
+  "cleanup_verified": true,
+  "validation_only": true,
+  "model_promoted": false
+}

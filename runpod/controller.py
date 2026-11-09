@@ -40,22 +40,22 @@ GPU_CAPS = {
     "NVIDIA GeForce RTX 5090": 1.19,
 }
 MIN_CUDA_BY_GPU = {name: "12.8" for name in GPU_CAPS}
-GPUS = tuple(GPU_CAPS)
+GPUS = ("NVIDIA GeForce RTX 4090", MIG, "NVIDIA GeForce RTX 3090", "NVIDIA GeForce RTX 5090")
 OWNER = "WAFER_MANAGED_BY"
 AUTHORIZATION = "wafer-20261107-usd20"
 AUTHORIZATION_EXPIRES = 1794614400  # 2026-11-14 00:00 UTC; before ledger expiry
 DISK_GB = 60
 DISK_HOURLY = DISK_GB * 0.10 / (28 * 24)
 CLEANUP_SECONDS = 600
-MAX_WORK_SECONDS = 45 * 60  # per attempt; below the Actions job limit
+MAX_WORK_SECONDS = 185 * 60  # per attempt; below the Actions job limit
 APPROVED_TOTAL_SECONDS = 1100 * 60
-PRIOR_RUNTIME_RESERVE_SECONDS = 447 * 60  # five reconciled attempts; 446.513 min rounded up
+PRIOR_RUNTIME_RESERVE_SECONDS = 457 * 60  # six reconciled attempts; 456.202 min rounded up
 MAX_RATE = max(GPU_CAPS.values())
 MAX_ARCHIVE = 2 * 1024**3
 MARKER = "runpod-authorization-" + AUTHORIZATION
 RECONCILED_MARKERS = {"42346201550": 13564060530, "42385615853": 13579825671,
-                      "42431025521": 13597661487, "42502913001": 13626700093, "42655151230": 13690724238}
-PRIOR_SPEND_RESERVE = 5.24  # prior cumulative conservative estimate $5.234111
+                      "42431025521": 13597661487, "42502913001": 13626700093, "42655151230": 13690724238, "42661065788": 13694661007}
+PRIOR_SPEND_RESERVE = 5.38  # cumulative conservative estimate $5.377863
 APPROVED_USD = 30.0
 
 
@@ -129,14 +129,22 @@ def provenance():
     )
     if changed:
         raise RuntimeError("Current workload differs from pinned image; review image/source pin")
+    config = json.loads((ROOT / "configs/extension.json").read_text())
+    holdout = ROOT / "docs/evidence/final-holdout-v1"
+    reservation = json.loads((holdout / "reservation.json").read_text())
+    if (hashlib.sha256((holdout / "manifest.jsonl").read_bytes()).hexdigest()
+            != config["reserved_holdout_manifest_sha256"]
+            or reservation["manifest_sha256"] != config["reserved_holdout_manifest_sha256"]
+            or reservation["evaluated"] is not False):
+        raise RuntimeError("Unseen holdout reservation is missing or changed")
     return {
         "controller_sha": head,
         "image_source_sha": SOURCE,
         "image": IMAGE,
         "anonymous_manifest_verified": verify_image_manifest(),
-        "suite": "checkpoint200-paired-performance-diagnostic",
+        "suite": "checkpoint200-to300-validation-only",
         "config_sha256": hashlib.sha256(
-            (ROOT / "configs/profile.json").read_bytes()
+            (ROOT / "configs/extension.json").read_bytes()
         ).hexdigest(),
         "worker_sha256": hashlib.sha256((ROOT / "runpod/worker.py").read_bytes()).hexdigest(),
     }
@@ -518,18 +526,21 @@ def launch(api):
                 continue
             worker_seen = True
             phase = result.get("phase")
-            if phase != last_phase and phase in {"starting", "data", "analysis", "profile"}:
+            if phase != last_phase and phase in {"starting", "data", "extension"}:
                 print("Worker phase: " + phase, flush=True)
                 last_phase = phase
             progress = result.get("progress", {})
             step, total = progress.get("optimizer_step"), progress.get("optimizer_steps")
-            arm = result.get("diagnostic_arm")
-            arm = arm if arm in {"unprofiled", "unprofiled-repeat", "profiled"} else None
-            if (phase == "profile" and type(step) is int and type(total) is int
-                    and total == 204 and 0 <= step <= total
-                    and (phase, arm, step) != last_progress):
-                print(f"Training progress: {phase}/{arm or 'unknown'} optimizer step {step}/{total}", flush=True)
-                last_progress = (phase, arm, step)
+            stage = result.get("extension_stage")
+            stage = stage if stage in {"train-250", "train-300", "validation-200", "validation-250", "validation-300"} else None
+            if (phase == "extension" and type(step) is int and type(total) is int
+                    and total in {250, 300} and 200 <= step <= total
+                    and (phase, stage, step) != last_progress):
+                print(f"Training progress: {phase}/{stage or 'unknown'} optimizer step {step}/{total}", flush=True)
+                last_progress = (phase, stage, step)
+            elif stage and stage.startswith("validation-") and (phase, stage, None) != last_progress:
+                print("Worker validation: " + stage, flush=True)
+                last_progress = (phase, stage, None)
             if result.get("status") in {"accepted", "rejected", "partial"}:
                 # Worker returns only explicit evidence fields, never its environment.
                 save("result.json", result)
@@ -546,13 +557,13 @@ def launch(api):
                     result.get("source_sha") != SOURCE
                     or result.get("config_sha256") != evidence["config_sha256"]
                     or result.get("controller_sha") != evidence["controller_sha"]
-                    or result.get("profiles") != ["profile"]
+                    or result.get("profiles") != ["extension"]
                     or not (OUT / "experiment.tar.gz").is_file()
                 ):
                     raise RuntimeError("Result provenance/completeness mismatch")
                 from runpod.verify import verify_archive
 
-                verify_archive(OUT / "experiment.tar.gz", evidence["controller_sha"], profile=True)
+                verify_archive(OUT / "experiment.tar.gz", evidence["controller_sha"], extension=True)
                 save("acceptance.json", {"status": "accepted", "archive_verified": True})
                 return
             time.sleep(10)

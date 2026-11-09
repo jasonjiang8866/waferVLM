@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       confirm_paid:
-        description: 'Use the extended US$30 / 1100-minute total authorization for this diagnostic'
+        description: 'Use the extended US$30 / 1100-minute total authorization for validation-only 200-to-300 continuation'
         type: boolean
         required: true
         default: false
@@ -21,7 +21,7 @@ jobs:
   experiment:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
-    timeout-minutes: 65
+    timeout-minutes: 205
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -48,7 +48,7 @@ jobs:
           path: runpod-authorization/
           retention-days: 90
           if-no-files-found: error
-      - name: Profile checkpoint 200, retrieve validated evidence, delete Pod
+      - name: Continue checkpoint 200 to 300, validate, retrieve evidence, delete Pod
         if: inputs.confirm_paid
         env:
           RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY }}
