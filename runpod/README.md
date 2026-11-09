@@ -11,8 +11,14 @@ US$9.276518 cumulative at the highest approved rate including disk).
 Prefer the already-authorized RTX 4090 after its measured 12.8–13.0s/step probe;
 MIG 24GB, 3090 and 5090 remain within their existing price caps. Fresh preflight
 must still establish price/capacity and owned-Pod absence. CUDA >=12.8 remains
-unchanged. The new workload requires a published/pinned image before manual
-launch; historical image pins below are not permission to run stale code.
+unchanged. The extension image is now published and pinned for manual launch;
+historical image pins below do not describe this new workload.
+Published extension image: `ghcr.io/jasonjiang8866/wafervlm@sha256:b13a9807ae05698f0813e0d1ab7f25548e782f65729d2b2aec5e66de6de24cd1`.
+Image source: `064a37fa828ca0fa4ce106bfce46db3da48d8e5b`.
+Publication: [42680747996](https://github.com/jasonjiang8866/waferVLM/actions/runs/42680747996), successful.
+The controller pins these values and rejects workload drift; GPU execution still
+requires manual main dispatch and the exact reviewed current SHA.
+
 
 User authorization (2026-11-07): **US$20 total**, including compute, retries,
 temporary disk, transfer and cleanup. This replaces the earlier observation-only

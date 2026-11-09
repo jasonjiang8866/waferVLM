@@ -1,7 +1,7 @@
 # Validation-only continuation from checkpoint 200
 
 Prepared 2026-11-10 SGT. Code/configuration preparation is complete; execution
-requires a new published/pinned worker image and an exact-main-SHA manual
+uses the published/pinned worker image below and requires an exact-main-SHA manual
 dispatch. A completed run is distinct from a quality gain.
 
 ## Why proceed
@@ -87,6 +87,13 @@ not end-to-end guarantees. Loading, data preparation, all three full validation
 passes, export/download and cleanup are included in the separate lifecycle cap.
 Per-run quotes, capacity, account guards and owned-Pod inventory are refreshed
 before the single create attempt. Unknown creates are reconciled, not retried.
+
+
+Published extension image: `ghcr.io/jasonjiang8866/wafervlm@sha256:b13a9807ae05698f0813e0d1ab7f25548e782f65729d2b2aec5e66de6de24cd1`.
+Image source: `064a37fa828ca0fa4ce106bfce46db3da48d8e5b`.
+Publication: [42680747996](https://github.com/jasonjiang8866/waferVLM/actions/runs/42680747996), successful.
+The controller pins these values and rejects workload drift; GPU execution still
+requires manual main dispatch and the exact reviewed current SHA.
 
 ## Acceptance and recovery
 
