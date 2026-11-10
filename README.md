@@ -1,8 +1,34 @@
 # waferVLM
 
-**How much wafer-map classification can a 0.8B vision-language model learn from a small labeled dataset?**
+**Turn wafer test maps into defect-pattern labels with a small vision-language model.**
 
-waferVLM starts with [`Qwen/Qwen3.5-0.8B`](https://huggingface.co/Qwen/Qwen3.5-0.8B), comparing its original weights with a BF16, language-only LoRA adapter on the **same held-out wafer maps**. Images and a fixed classification question are the inputs; the target is a single defect label.
+A semiconductor wafer contains many individual chips, called **dies**. A **wafer map** records their test results at each location: **yellow = defective, blue = good, black = outside the wafer**. Failed dies can form recognizable spatial patterns, such as a ring, a local patch, or a scratch-like trace.
+
+waferVLM gives [`Qwen/Qwen3.5-0.8B`](https://huggingface.co/Qwen/Qwen3.5-0.8B) a map and a fixed classification question, then returns one of eight pattern labels. A small LoRA adapter teaches the model this task. The current experiment classifies appearance; it does not establish the manufacturing root cause.
+
+![Checkpoint-250 inference examples: one real scratch map correctly labeled scratch, and another misclassified as loc.](docs/showcase/checkpoint-250/inference.png)
+
+These are **recorded checkpoint-250 validation predictions**, including a mistake. [Inspect the full prompt, sample IDs, original predictions and reproduction steps](docs/showcase/checkpoint-250/README.md).
+
+## Eight defect-pattern labels
+
+![Eight real WM-811K wafer maps explaining center, donut, edge-loc, edge-ring, loc, near-full, random and scratch.](docs/showcase/checkpoint-250/label-atlas.png)
+
+The labels above are **dataset annotations**. These examples were selected for visible morphology, not prediction success. Normal (`none`) and unknown defects are outside this eight-class experiment.
+
+## Where does the model get confused?
+
+**125 of 160 validation maps classified correctly · 78.125% accuracy · 0.773992 macro-F1 · 0 invalid outputs.**
+
+Read **columns as true labels** and **rows as predicted labels**. Every column contains 20 maps. Each non-empty cell shows one actual input, its full sample count and its share of that true class. The teal diagonal is correct; orange cells show mistakes. For example, **3/20 true `loc` maps were predicted `scratch`**, while **1/20 true `scratch` maps was predicted `loc`**.
+
+[![Checkpoint-250 image confusion matrix with true labels on the horizontal axis and predicted labels on the vertical axis.](docs/showcase/checkpoint-250/image-confusion-matrix.png)](docs/showcase/checkpoint-250/image-confusion-matrix.png)
+
+[Open the full-size matrix](docs/showcase/checkpoint-250/image-confusion-matrix.png) · [Accessible count table and selection rules](docs/showcase/checkpoint-250/README.md#accessible-count-table) · [All 160 recorded predictions](docs/showcase/checkpoint-250/predictions.jsonl)
+
+Counts cover the **entire validation split**, not just the displayed thumbnails. Each matrix thumbnail is the lowest sample ID in its cell. Validation was used to select this checkpoint; this showcase is **not a test or final-holdout evaluation**.
+
+## Results and model download
 
 **Latest development result:** validation selected **checkpoint-250** after continuing the released full checkpoint 200 to 300 at constant LR 5e-5. On the same 160 validation maps, step 250 reached **78.125% accuracy / 0.773992 macro-F1**, with **0 invalid outputs**. No new test or final-holdout inference ran. This is a single-seed development result requiring confirmation.
 
@@ -72,7 +98,7 @@ The baseline pins Torch 2.10.0, torchvision 0.25.0, Transformers 5.3.0, PEFT 0.1
 
 ## Prepare WM-811K
 
-The reproducible recipe uses the public [qingyi WM-811K Kaggle mirror](https://www.kaggle.com/datasets/qingyi/wm811k-wafer-map), with archive and `LSWMD.pkl` SHA256 checks pinned in source. NVIDIA points to [MIR Lab](https://mirlab.org/dataSet/public/); that endpoint was unavailable, so this mirror is explicitly recorded as the source. The Kaggle listing labels the mirror CC0; that does not independently establish the original dataset's rights. See [provenance and exact hashes](docs/data-audit.md). Raw data and images are not committed to Git.
+The reproducible recipe uses the public [qingyi WM-811K Kaggle mirror](https://www.kaggle.com/datasets/qingyi/wm811k-wafer-map), with archive and `LSWMD.pkl` SHA256 checks pinned in source. NVIDIA points to [MIR Lab](https://mirlab.org/dataSet/public/); that endpoint was unavailable, so this mirror is explicitly recorded as the source. The Kaggle listing labels the mirror CC0; that does not independently establish the original dataset's rights. See [provenance and exact hashes](docs/data-audit.md). The full raw dataset and per-sample image directories are not committed; the showcase includes selected visual excerpts and the released validation predictions.
 
 **Pickle loading can execute code.** Verify the file's provenance before explicitly opting in. A checksum identifies the bytes; computing your own checksum does not establish trust.
 

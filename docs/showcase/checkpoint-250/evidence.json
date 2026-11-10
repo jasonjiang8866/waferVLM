@@ -1,0 +1,1413 @@
+{
+  "atlas_ids": {
+    "center": "4c0cb116592b2babf3807229",
+    "donut": "32f11e5f884139a8eb1a749a",
+    "edge-loc": "5e90d1e702ea245b652ba450",
+    "edge-ring": "0ad3c35371e7fe06efb357a2",
+    "loc": "dd855c3b619057c30af18ade",
+    "near-full": "8e56c17bd8a8ad08868d3973",
+    "random": "8507bcec612300fe21c3be98",
+    "scratch": "5f0dc094af5b30aae2baddf1"
+  },
+  "atlas_selection": "editorial morphology examples, not filtered by correctness",
+  "cells": [
+    {
+      "count": 17,
+      "fraction_of_true_class": 0.85,
+      "predicted_label": "center",
+      "sample_ids": [
+        "18799fdad53b29b4db557d05",
+        "28b4edcb25c53ba36c1fbb1a",
+        "441350051202cdee7379ccdc",
+        "4b8de0b48ef8b6dd18697d47",
+        "4c0cb116592b2babf3807229",
+        "5bdadca8d5b04ac7ff3e5a0f",
+        "5f04a81f82673da8230e9044",
+        "5f63ffb717f4ef91b1dcab10",
+        "6b68940bca8fb303de1d0ee8",
+        "6cfdedd39dd16fefb44eeb3c",
+        "8295378fe94bedba967cc97f",
+        "941ed2be9ca352a669459c08",
+        "94cf421acdbb53aa849404a0",
+        "b6a8a3d143eb5f5cd1695791",
+        "c42454a26c271408eda9e69d",
+        "ca67d9630f5703388db8cd72",
+        "dda4d71153749a28082f48c7"
+      ],
+      "thumbnail_id": "18799fdad53b29b4db557d05",
+      "true_class_total": 20,
+      "true_label": "center"
+    },
+    {
+      "count": 1,
+      "fraction_of_true_class": 0.05,
+      "predicted_label": "center",
+      "sample_ids": [
+        "0ae15163863765ba0c40815d"
+      ],
+      "thumbnail_id": "0ae15163863765ba0c40815d",
+      "true_class_total": 20,
+      "true_label": "donut"
+    },
+    {
+      "count": 0,
+      "fraction_of_true_class": 0.0,
+      "predicted_label": "center",
+      "sample_ids": [],
+      "thumbnail_id": null,
+      "true_class_total": 20,
+      "true_label": "edge-loc"
+    },
+    {
+      "count": 0,
+      "fraction_of_true_class": 0.0,
+      "predicted_label": "center",
+      "sample_ids": [],
+      "thumbnail_id": null,
+      "true_class_total": 20,
+      "true_label": "edge-ring"
+    },
+    {
+      "count": 3,
+      "fraction_of_true_class": 0.15,
+      "predicted_label": "center",
+      "sample_ids": [
+        "0dba1dc3f2c5cf63eda306ba",
+        "25655dcf08e945365c42b097",
+        "9fabe2d02816a95875a4036d"
+      ],
+      "thumbnail_id": "0dba1dc3f2c5cf63eda306ba",
+      "true_class_total": 20,
+      "true_label": "loc"
+    },
+    {
+      "count": 0,
+      "fraction_of_true_class": 0.0,
+      "predicted_label": "center",
+      "sample_ids": [],
+      "thumbnail_id": null,
+      "true_class_total": 20,
+      "true_label": "near-full"
+    },
+    {
+      "count": 1,
+      "fraction_of_true_class": 0.05,
+      "predicted_label": "center",
+      "sample_ids": [
+        "271da89a6371a73b975a6035"
+      ],
+      "thumbnail_id": "271da89a6371a73b975a6035",
+      "true_class_total": 20,
+      "true_label": "random"
+    },
+    {
+      "count": 1,
+      "fraction_of_true_class": 0.05,
+      "predicted_label": "center",
+      "sample_ids": [
+        "a75aab12686afecc8b9a8cae"
+      ],
+      "thumbnail_id": "a75aab12686afecc8b9a8cae",
+      "true_class_total": 20,
+      "true_label": "scratch"
+    },
+    {
+      "count": 2,
+      "fraction_of_true_class": 0.1,
+      "predicted_label": "donut",
+      "sample_ids": [
+        "3d0f3c97b77fd687704cb68a",
+        "8e1f4a9bca7854dc617ccc52"
+      ],
+      "thumbnail_id": "3d0f3c97b77fd687704cb68a",
+      "true_class_total": 20,
+      "true_label": "center"
+    },
+    {
+      "count": 17,
+      "fraction_of_true_class": 0.85,
+      "predicted_label": "donut",
+      "sample_ids": [
+        "24ddd29977dd60c0558df748",
+        "32f11e5f884139a8eb1a749a",
+        "38c4f53c11d2269017a3ab3f",
+        "3b411d904327528fd932c819",
+        "447594769ac07a9b6724bccc",
+        "5c3f5bb533f0ede413e26480",
+        "5d3c67444b2299905fc309d8",
+        "92ab9b109c6676f9ed4cba59",
+        "95e2898c2bd7fe4487f95b2a",
+        "aeb7ca012cfd98af8d2b0a0a",
+        "be9d7d27ea29a920e92a733e",
+        "c0e256374c6def1b5f9bb6f7",
+        "c527696b3c7e3e4e8a5ed013",
+        "da0cd197660b413ed8fe6b09",
+        "dc463125b0dd7d524233a932",
+        "e209262be6acc78aa3d9a837",
+        "fd7886117461a6c56a919c37"
+      ],
+      "thumbnail_id": "24ddd29977dd60c0558df748",
+      "true_class_total": 20,
+      "true_label": "donut"
+    },
+    {
+      "count": 1,
+      "fraction_of_true_class": 0.05,
+      "predicted_label": "donut",
+      "sample_ids": [
+        "a4678b19a25a6ddb0b423fd9"
+      ],
+      "thumbnail_id": "a4678b19a25a6ddb0b423fd9",
+      "true_class_total": 20,
+      "true_label": "edge-loc"
+    },
+    {
+      "count": 0,
+      "fraction_of_true_class": 0.0,
+      "predicted_label": "donut",
+      "sample_ids": [],
+      "thumbnail_id": null,
+      "true_class_total": 20,
+      "true_label": "edge-ring"
+    },
+    {
+      "count": 2,
+      "fraction_of_true_class": 0.1,
+      "predicted_label": "donut",
+      "sample_ids": [
+        "aac6e9a0b3b5aa660ce62121",
+        "dd855c3b619057c30af18ade"
+      ],
+      "thumbnail_id": "aac6e9a0b3b5aa660ce62121",
+      "true_class_total": 20,
+      "true_label": "loc"
+    },
+    {
+      "count": 0,
+      "fraction_of_true_class": 0.0,
+      "predicted_label": "donut",
+      "sample_ids": [],
+      "thumbnail_id": null,
+      "true_class_total": 20,
+      "true_label": "near-full"
+    },
+    {
+      "count": 1,
+      "fraction_of_true_class": 0.05,
+      "predicted_label": "donut",
+      "sample_ids": [
+        "d24d0acacc4355251d927a30"
+      ],
+      "thumbnail_id": "d24d0acacc4355251d927a30",
+      "true_class_total": 20,
+      "true_label": "random"
+    },
+    {
+      "count": 1,
+      "fraction_of_true_class": 0.05,
+      "predicted_label": "donut",
+      "sample_ids": [
+        "625616319fe4ef10abe36968"
+      ],
+      "thumbnail_id": "625616319fe4ef10abe36968",
+      "true_class_total": 20,
+      "true_label": "scratch"
+    },
+    {
+      "count": 0,
+      "fraction_of_true_class": 0.0,
+      "predicted_label": "edge-loc",
+      "sample_ids": [],
+      "thumbnail_id": null,
+      "true_class_total": 20,
+      "true_label": "center"
+    },
+    {
+      "count": 0,
+      "fraction_of_true_class": 0.0,
+      "predicted_label": "edge-loc",
+      "sample_ids": [],
+      "thumbnail_id": null,
+      "true_class_total": 20,
+      "true_label": "donut"
+    },
+    {
+      "count": 13,
+      "fraction_of_true_class": 0.65,
+      "predicted_label": "edge-loc",
+      "sample_ids": [
+        "23b08cc830c3ddbda7d6c74a",
+        "31bbd4814d1a62f6c4f6cd98",
+        "40d957ff9b1eae44083d2dec",
+        "4216bb301de405eb44bfe1db",
+        "59752fa0836137f3c60d78a2",
+        "5b0003ea2b192f861cd2f0c7",
+        "5e90d1e702ea245b652ba450",
+        "76f1ab8ebf1977772e1d7b1b",
+        "839ba748a3cd94642b271645",
+        "a691384d48d63d9c2ee6ed02",
+        "aa3b11c043f9b79049004bf8",
+        "af4cc8c6898a9eaf8653e93f",
+        "f7636a22628ef34c4eac3ad6"
+      ],
+      "thumbnail_id": "23b08cc830c3ddbda7d6c74a",
+      "true_class_total": 20,
+      "true_label": "edge-loc"
+    },
+    {
+      "count": 1,
+      "fraction_of_true_class": 0.05,
+      "predicted_label": "edge-loc",
+      "sample_ids": [
+        "f5ca2de48af4e569a3ce1c2b"
+      ],
+      "thumbnail_id": "f5ca2de48af4e569a3ce1c2b",
+      "true_class_total": 20,
+      "true_label": "edge-ring"
+    },
+    {
+      "count": 2,
+      "fraction_of_true_class": 0.1,
+      "predicted_label": "edge-loc",
+      "sample_ids": [
+        "38dd30111d9a15f20ad272cc",
+        "c882bea412b6513af0935266"
+      ],
+      "thumbnail_id": "38dd30111d9a15f20ad272cc",
+      "true_class_total": 20,
+      "true_label": "loc"
+    },
+    {
+      "count": 0,
+      "fraction_of_true_class": 0.0,
+      "predicted_label": "edge-loc",
+      "sample_ids": [],
+      "thumbnail_id": null,
+      "true_class_total": 20,
+      "true_label": "near-full"
+    },
+    {
+      "count": 1,
+      "fraction_of_true_class": 0.05,
+      "predicted_label": "edge-loc",
+      "sample_ids": [
+        "bbfa935f39ecd52476d83827"
+      ],
+      "thumbnail_id": "bbfa935f39ecd52476d83827",
+      "true_class_total": 20,
+      "true_label": "random"
+    },
+    {
+      "count": 0,
+      "fraction_of_true_class": 0.0,
+      "predicted_label": "edge-loc",
+      "sample_ids": [],
+      "thumbnail_id": null,
+      "true_class_total": 20,
+      "true_label": "scratch"
+    },
+    {
+      "count": 0,
+      "fraction_of_true_class": 0.0,
+      "predicted_label": "edge-ring",
+      "sample_ids": [],
+      "thumbnail_id": null,
+      "true_class_total": 20,
+      "true_label": "center"
+    },
+    {
+      "count": 0,
+      "fraction_of_true_class": 0.0,
+      "predicted_label": "edge-ring",
+      "sample_ids": [],
+      "thumbnail_id": null,
+      "true_class_total": 20,
+      "true_label": "donut"
+    },
+    {
+      "count": 1,
+      "fraction_of_true_class": 0.05,
+      "predicted_label": "edge-ring",
+      "sample_ids": [
+        "3f641dabb01031a89e49d9a5"
+      ],
+      "thumbnail_id": "3f641dabb01031a89e49d9a5",
+      "true_class_total": 20,
+      "true_label": "edge-loc"
+    },
+    {
+      "count": 19,
+      "fraction_of_true_class": 0.95,
+      "predicted_label": "edge-ring",
+      "sample_ids": [
+        "039ef90a9b4a006ac75ac744",
+        "08dbe1a4774fd27be84c0727",
+        "0ad3c35371e7fe06efb357a2",
+        "12b610f9842c59b1498489c9",
+        "145bfd1fc5dbafc197913755",
+        "1feaad9a1144c20e7f35aa6d",
+        "3346836525584dc326cb40bf",
+        "4e534c8fa03e2c19a87f071a",
+        "58ba1a7d625685a2d281c380",
+        "66cda00dacd029b3d5943bac",
+        "67f522dd1c85b05b4ac9b4ca",
+        "883e6bd6d2c2b39a4376f1e1",
+        "8bd4e3ff230258dd0850afdc",
+        "9eee4705cd45921a6637ea53",
+        "c99b54321bd807c0b76150c2",
+        "cb7beda4fcff89dd77e00089",
+        "ecb624e02c4baead8437e161",
+        "f76d504915f015989ecd6f15",
+        "fc48c16e61f37e0637bad418"
+      ],
+      "thumbnail_id": "039ef90a9b4a006ac75ac744",
+      "true_class_total": 20,
+      "true_label": "edge-ring"
+    },
+    {
+      "count": 0,
+      "fraction_of_true_class": 0.0,
+      "predicted_label": "edge-ring",
+      "sample_ids": [],
+      "thumbnail_id": null,
+      "true_class_total": 20,
+      "true_label": "loc"
+    },
+    {
+      "count": 0,
+      "fraction_of_true_class": 0.0,
+      "predicted_label": "edge-ring",
+      "sample_ids": [],
+      "thumbnail_id": null,
+      "true_class_total": 20,
+      "true_label": "near-full"
+    },
+    {
+      "count": 0,
+      "fraction_of_true_class": 0.0,
+      "predicted_label": "edge-ring",
+      "sample_ids": [],
+      "thumbnail_id": null,
+      "true_class_total": 20,
+      "true_label": "random"
+    },
+    {
+      "count": 1,
+      "fraction_of_true_class": 0.05,
+      "predicted_label": "edge-ring",
+      "sample_ids": [
+        "f264a16b3d257d6d4c731ed3"
+      ],
+      "thumbnail_id": "f264a16b3d257d6d4c731ed3",
+      "true_class_total": 20,
+      "true_label": "scratch"
+    },
+    {
+      "count": 0,
+      "fraction_of_true_class": 0.0,
+      "predicted_label": "loc",
+      "sample_ids": [],
+      "thumbnail_id": null,
+      "true_class_total": 20,
+      "true_label": "center"
+    },
+    {
+      "count": 2,
+      "fraction_of_true_class": 0.1,
+      "predicted_label": "loc",
+      "sample_ids": [
+        "7e4d61222d4d7f3843b23c3f",
+        "ddc10f023d1480284b53af51"
+      ],
+      "thumbnail_id": "7e4d61222d4d7f3843b23c3f",
+      "true_class_total": 20,
+      "true_label": "donut"
+    },
+    {
+      "count": 2,
+      "fraction_of_true_class": 0.1,
+      "predicted_label": "loc",
+      "sample_ids": [
+        "1ea19173d0a5b7b1bdac770c",
+        "c2f25e94909a48c9ba5042ef"
+      ],
+      "thumbnail_id": "1ea19173d0a5b7b1bdac770c",
+      "true_class_total": 20,
+      "true_label": "edge-loc"
+    },
+    {
+      "count": 0,
+      "fraction_of_true_class": 0.0,
+      "predicted_label": "loc",
+      "sample_ids": [],
+      "thumbnail_id": null,
+      "true_class_total": 20,
+      "true_label": "edge-ring"
+    },
+    {
+      "count": 9,
+      "fraction_of_true_class": 0.45,
+      "predicted_label": "loc",
+      "sample_ids": [
+        "133ed6fd171c0141464c2f2e",
+        "1c18eef61ba0d63614e7f7b4",
+        "4000f35bad1dc0340fe42ced",
+        "439662b4cf1c523674b765e1",
+        "6b50767f9fb76204a06fd462",
+        "7ea7a57ace4f459d5885ad76",
+        "919d270be3fcd213ba2ae0e2",
+        "9fd0eaca7163dcfd46964053",
+        "bee16b8535d4cbba5c5f1955"
+      ],
+      "thumbnail_id": "133ed6fd171c0141464c2f2e",
+      "true_class_total": 20,
+      "true_label": "loc"
+    },
+    {
+      "count": 0,
+      "fraction_of_true_class": 0.0,
+      "predicted_label": "loc",
+      "sample_ids": [],
+      "thumbnail_id": null,
+      "true_class_total": 20,
+      "true_label": "near-full"
+    },
+    {
+      "count": 0,
+      "fraction_of_true_class": 0.0,
+      "predicted_label": "loc",
+      "sample_ids": [],
+      "thumbnail_id": null,
+      "true_class_total": 20,
+      "true_label": "random"
+    },
+    {
+      "count": 1,
+      "fraction_of_true_class": 0.05,
+      "predicted_label": "loc",
+      "sample_ids": [
+        "27eadb2b864e3ee3edfdda41"
+      ],
+      "thumbnail_id": "27eadb2b864e3ee3edfdda41",
+      "true_class_total": 20,
+      "true_label": "scratch"
+    },
+    {
+      "count": 1,
+      "fraction_of_true_class": 0.05,
+      "predicted_label": "near-full",
+      "sample_ids": [
+        "642e22bf368a2c29385b9a83"
+      ],
+      "thumbnail_id": "642e22bf368a2c29385b9a83",
+      "true_class_total": 20,
+      "true_label": "center"
+    },
+    {
+      "count": 0,
+      "fraction_of_true_class": 0.0,
+      "predicted_label": "near-full",
+      "sample_ids": [],
+      "thumbnail_id": null,
+      "true_class_total": 20,
+      "true_label": "donut"
+    },
+    {
+      "count": 1,
+      "fraction_of_true_class": 0.05,
+      "predicted_label": "near-full",
+      "sample_ids": [
+        "bf21211701b00bf2d683bacb"
+      ],
+      "thumbnail_id": "bf21211701b00bf2d683bacb",
+      "true_class_total": 20,
+      "true_label": "edge-loc"
+    },
+    {
+      "count": 0,
+      "fraction_of_true_class": 0.0,
+      "predicted_label": "near-full",
+      "sample_ids": [],
+      "thumbnail_id": null,
+      "true_class_total": 20,
+      "true_label": "edge-ring"
+    },
+    {
+      "count": 1,
+      "fraction_of_true_class": 0.05,
+      "predicted_label": "near-full",
+      "sample_ids": [
+        "50773a965c423a8290e617f2"
+      ],
+      "thumbnail_id": "50773a965c423a8290e617f2",
+      "true_class_total": 20,
+      "true_label": "loc"
+    },
+    {
+      "count": 20,
+      "fraction_of_true_class": 1.0,
+      "predicted_label": "near-full",
+      "sample_ids": [
+        "020e26489d5b308aa2721ac3",
+        "2315702a7301767bab992edd",
+        "2596e165599c89473d4922cf",
+        "2df98d21567bad916ae27db5",
+        "3ed324251b2a5d8556ac34af",
+        "51f4bb36a1720227fbd881f3",
+        "5edb6f51cc53f9d348477f34",
+        "6e04ca2ce753c1f79b7a0044",
+        "72af9220c20e6c496671df2a",
+        "76c60f23d279735f0e08bddb",
+        "89d2e8e5a31c98a1f4a47ed2",
+        "8e56c17bd8a8ad08868d3973",
+        "974d1e61b07d7aa780c69cda",
+        "995cf1130204a3a10b746279",
+        "a9f33fef33ac8f541af44e1c",
+        "c05635b7928baa7976c1cbec",
+        "c6b3329610063b3e216109ac",
+        "ea25eba1700acd93286a8a8c",
+        "f2d544aa2fe681e0ab7e4a8b",
+        "f486a3af59f33923a533a050"
+      ],
+      "thumbnail_id": "020e26489d5b308aa2721ac3",
+      "true_class_total": 20,
+      "true_label": "near-full"
+    },
+    {
+      "count": 3,
+      "fraction_of_true_class": 0.15,
+      "predicted_label": "near-full",
+      "sample_ids": [
+        "22c61f53f1f5786e9fb394b8",
+        "23becdeae3468d719b69f4f7",
+        "8126cc45d2504bbeb48c6878"
+      ],
+      "thumbnail_id": "22c61f53f1f5786e9fb394b8",
+      "true_class_total": 20,
+      "true_label": "random"
+    },
+    {
+      "count": 0,
+      "fraction_of_true_class": 0.0,
+      "predicted_label": "near-full",
+      "sample_ids": [],
+      "thumbnail_id": null,
+      "true_class_total": 20,
+      "true_label": "scratch"
+    },
+    {
+      "count": 0,
+      "fraction_of_true_class": 0.0,
+      "predicted_label": "random",
+      "sample_ids": [],
+      "thumbnail_id": null,
+      "true_class_total": 20,
+      "true_label": "center"
+    },
+    {
+      "count": 0,
+      "fraction_of_true_class": 0.0,
+      "predicted_label": "random",
+      "sample_ids": [],
+      "thumbnail_id": null,
+      "true_class_total": 20,
+      "true_label": "donut"
+    },
+    {
+      "count": 1,
+      "fraction_of_true_class": 0.05,
+      "predicted_label": "random",
+      "sample_ids": [
+        "6e01f1a6b19206bd38e3ea8b"
+      ],
+      "thumbnail_id": "6e01f1a6b19206bd38e3ea8b",
+      "true_class_total": 20,
+      "true_label": "edge-loc"
+    },
+    {
+      "count": 0,
+      "fraction_of_true_class": 0.0,
+      "predicted_label": "random",
+      "sample_ids": [],
+      "thumbnail_id": null,
+      "true_class_total": 20,
+      "true_label": "edge-ring"
+    },
+    {
+      "count": 0,
+      "fraction_of_true_class": 0.0,
+      "predicted_label": "random",
+      "sample_ids": [],
+      "thumbnail_id": null,
+      "true_class_total": 20,
+      "true_label": "loc"
+    },
+    {
+      "count": 0,
+      "fraction_of_true_class": 0.0,
+      "predicted_label": "random",
+      "sample_ids": [],
+      "thumbnail_id": null,
+      "true_class_total": 20,
+      "true_label": "near-full"
+    },
+    {
+      "count": 14,
+      "fraction_of_true_class": 0.7,
+      "predicted_label": "random",
+      "sample_ids": [
+        "29f1249e0f103191dbf75dbd",
+        "31be28d87b209c05ad92acbf",
+        "3864cf5527066c8b984967fa",
+        "39cf1cfc7a8138d06dbba0bd",
+        "3cc068a32117bc889e8301d4",
+        "4fccce5af6372def98337c44",
+        "6e82f334201eacbfd2a48b07",
+        "763e8d1d1cf1a6670201f373",
+        "8507bcec612300fe21c3be98",
+        "8f3f4b12ae0fb43a46eb0f87",
+        "a8a491e41cd22ad4dab20ea5",
+        "acdc5d2d691b0a2976f73af6",
+        "b18893d3147303a9db15be3b",
+        "b9caddcea0a7b36a0de1b4b2"
+      ],
+      "thumbnail_id": "29f1249e0f103191dbf75dbd",
+      "true_class_total": 20,
+      "true_label": "random"
+    },
+    {
+      "count": 0,
+      "fraction_of_true_class": 0.0,
+      "predicted_label": "random",
+      "sample_ids": [],
+      "thumbnail_id": null,
+      "true_class_total": 20,
+      "true_label": "scratch"
+    },
+    {
+      "count": 0,
+      "fraction_of_true_class": 0.0,
+      "predicted_label": "scratch",
+      "sample_ids": [],
+      "thumbnail_id": null,
+      "true_class_total": 20,
+      "true_label": "center"
+    },
+    {
+      "count": 0,
+      "fraction_of_true_class": 0.0,
+      "predicted_label": "scratch",
+      "sample_ids": [],
+      "thumbnail_id": null,
+      "true_class_total": 20,
+      "true_label": "donut"
+    },
+    {
+      "count": 1,
+      "fraction_of_true_class": 0.05,
+      "predicted_label": "scratch",
+      "sample_ids": [
+        "7bebf453b7584da401389f10"
+      ],
+      "thumbnail_id": "7bebf453b7584da401389f10",
+      "true_class_total": 20,
+      "true_label": "edge-loc"
+    },
+    {
+      "count": 0,
+      "fraction_of_true_class": 0.0,
+      "predicted_label": "scratch",
+      "sample_ids": [],
+      "thumbnail_id": null,
+      "true_class_total": 20,
+      "true_label": "edge-ring"
+    },
+    {
+      "count": 3,
+      "fraction_of_true_class": 0.15,
+      "predicted_label": "scratch",
+      "sample_ids": [
+        "144b823715cf1e23c92ad201",
+        "a0e728f5e17ab47d730338ad",
+        "be8bdd8417b86a07da6a61f2"
+      ],
+      "thumbnail_id": "144b823715cf1e23c92ad201",
+      "true_class_total": 20,
+      "true_label": "loc"
+    },
+    {
+      "count": 0,
+      "fraction_of_true_class": 0.0,
+      "predicted_label": "scratch",
+      "sample_ids": [],
+      "thumbnail_id": null,
+      "true_class_total": 20,
+      "true_label": "near-full"
+    },
+    {
+      "count": 0,
+      "fraction_of_true_class": 0.0,
+      "predicted_label": "scratch",
+      "sample_ids": [],
+      "thumbnail_id": null,
+      "true_class_total": 20,
+      "true_label": "random"
+    },
+    {
+      "count": 16,
+      "fraction_of_true_class": 0.8,
+      "predicted_label": "scratch",
+      "sample_ids": [
+        "07043e71b777425892b86174",
+        "17bc35029b4c03e79cba8672",
+        "17cba894caa1ff276e11a15b",
+        "47925984eb3a46ed303958a3",
+        "5f0dc094af5b30aae2baddf1",
+        "778cf4c380f06c432925379f",
+        "947827570cb9c63db5dbbc9d",
+        "a2b25f2a9667ad51e551e732",
+        "a3a4a40b976aa1a1b00e3c50",
+        "ae8247a079fdea11649f1322",
+        "c432ca3a7212596cf5768124",
+        "cc4f161b829e9349637bfea2",
+        "cc60f491a08afa2ea0e81805",
+        "db4d1b3461cdb6d0dfa2faf0",
+        "db793757b592bd3347fa57ab",
+        "e400f55a09848e7ba9bed36c"
+      ],
+      "thumbnail_id": "07043e71b777425892b86174",
+      "true_class_total": 20,
+      "true_label": "scratch"
+    }
+  ],
+  "checkpoint": 250,
+  "dataset_sha256": "c588b3ef59d9dba57cfc745ec20db903e6ff2dcc75504112348f8b9f1ad3ab68",
+  "displayed_samples": [
+    {
+      "generated_tokens": 3,
+      "id": "020e26489d5b308aa2721ac3",
+      "image_sha256": "2a2ad0234fdd74e8e60bb99137db5a9ea3ef63baeeeed841ed979c2d66d16032",
+      "label": "near-full",
+      "prediction": "near-full",
+      "response": "near-full",
+      "seconds": 0.4817100688815117,
+      "source_row": 699383,
+      "truncated": false
+    },
+    {
+      "generated_tokens": 3,
+      "id": "039ef90a9b4a006ac75ac744",
+      "image_sha256": "8162a0cc0797ff288be497baa28582e7e8ba72e8307067170ee91a4722f766a8",
+      "label": "edge-ring",
+      "prediction": "edge-ring",
+      "response": "edge-ring",
+      "seconds": 0.44089144584722817,
+      "source_row": 329465,
+      "truncated": false
+    },
+    {
+      "generated_tokens": 2,
+      "id": "07043e71b777425892b86174",
+      "image_sha256": "ea3b708d67d71a949c5a2b8d9ca40e027364fa5e7327da1701033daf1c01a89d",
+      "label": "scratch",
+      "prediction": "scratch",
+      "response": "scratch",
+      "seconds": 0.3712527621537447,
+      "source_row": 809635,
+      "truncated": false
+    },
+    {
+      "generated_tokens": 3,
+      "id": "0ad3c35371e7fe06efb357a2",
+      "image_sha256": "934fdfa8e906ed9bb10eac3cd9f06bf2599f6a467ecd82929a6f599bebf4cd49",
+      "label": "edge-ring",
+      "prediction": "edge-ring",
+      "response": "edge-ring",
+      "seconds": 0.41426485893316567,
+      "source_row": 141355,
+      "truncated": false
+    },
+    {
+      "generated_tokens": 2,
+      "id": "0ae15163863765ba0c40815d",
+      "image_sha256": "1206d710ee220d676590897b154ce325dcb5446228fe51163d7ef5cd1ae891ee",
+      "label": "donut",
+      "prediction": "center",
+      "response": "center",
+      "seconds": 0.4081842158921063,
+      "source_row": 728967,
+      "truncated": false
+    },
+    {
+      "generated_tokens": 2,
+      "id": "0dba1dc3f2c5cf63eda306ba",
+      "image_sha256": "5b3f9ecc7c9a81f56d27c4033efaf384464074872fa1dbddd448bd1ad55f8455",
+      "label": "loc",
+      "prediction": "center",
+      "response": "center",
+      "seconds": 0.3658380010165274,
+      "source_row": 702993,
+      "truncated": false
+    },
+    {
+      "generated_tokens": 2,
+      "id": "133ed6fd171c0141464c2f2e",
+      "image_sha256": "865dfb21205665e1b1b61b6f5066b6a57cf71b97258c2053de24a8d543d2cd57",
+      "label": "loc",
+      "prediction": "loc",
+      "response": "loc",
+      "seconds": 0.35977094201371074,
+      "source_row": 806798,
+      "truncated": false
+    },
+    {
+      "generated_tokens": 2,
+      "id": "144b823715cf1e23c92ad201",
+      "image_sha256": "042b77325ba58b2d7e9021e301293d06bb16618630816816569a66e02fda7a0c",
+      "label": "loc",
+      "prediction": "scratch",
+      "response": "scratch",
+      "seconds": 0.3554290379397571,
+      "source_row": 764501,
+      "truncated": false
+    },
+    {
+      "generated_tokens": 2,
+      "id": "18799fdad53b29b4db557d05",
+      "image_sha256": "a1820458f3c49aad5558fa5c6d7fed22e07fd8e75d84482afe204bb08c22f5aa",
+      "label": "center",
+      "prediction": "center",
+      "response": "center",
+      "seconds": 0.42344186501577497,
+      "source_row": 574685,
+      "truncated": false
+    },
+    {
+      "generated_tokens": 2,
+      "id": "1ea19173d0a5b7b1bdac770c",
+      "image_sha256": "5aeafa42d351902559007c4edd3048a11ebcb1e604ee3f97b571b4abe321896a",
+      "label": "edge-loc",
+      "prediction": "loc",
+      "response": "loc",
+      "seconds": 0.35523811914026737,
+      "source_row": 809702,
+      "truncated": false
+    },
+    {
+      "generated_tokens": 3,
+      "id": "22c61f53f1f5786e9fb394b8",
+      "image_sha256": "b7cf9719adc1a171af632bc79bc8cc1dce6e227103bc8155a85a0da0d53f7844",
+      "label": "random",
+      "prediction": "near-full",
+      "response": "near-full",
+      "seconds": 0.4918353089597076,
+      "source_row": 755325,
+      "truncated": false
+    },
+    {
+      "generated_tokens": 4,
+      "id": "23b08cc830c3ddbda7d6c74a",
+      "image_sha256": "33a175d4fd425be08f51b7bd3736031ab09c0fc58b784bcea7ab7b8a40c81f98",
+      "label": "edge-loc",
+      "prediction": "edge-loc",
+      "response": "edge-loc",
+      "seconds": 0.4772374490275979,
+      "source_row": 683885,
+      "truncated": false
+    },
+    {
+      "generated_tokens": 3,
+      "id": "24ddd29977dd60c0558df748",
+      "image_sha256": "087529ffc621a362833e4a8aa779f192c999f1a7fbca1453706d5475050d4df8",
+      "label": "donut",
+      "prediction": "donut",
+      "response": "donut",
+      "seconds": 0.47800131514668465,
+      "source_row": 680684,
+      "truncated": false
+    },
+    {
+      "generated_tokens": 2,
+      "id": "271da89a6371a73b975a6035",
+      "image_sha256": "558ab725d9b341857a8c3a31f733c50a6939f522d78c38e8d9c8c1597de4d564",
+      "label": "random",
+      "prediction": "center",
+      "response": "center",
+      "seconds": 0.34699453809298575,
+      "source_row": 124729,
+      "truncated": false
+    },
+    {
+      "generated_tokens": 2,
+      "id": "27eadb2b864e3ee3edfdda41",
+      "image_sha256": "67f75d3059295160fbf495a8c346c9d67b4665bc784bd57fb15e3e5b30a4c783",
+      "label": "scratch",
+      "prediction": "loc",
+      "response": "loc",
+      "seconds": 0.4193391108419746,
+      "source_row": 796118,
+      "truncated": false
+    },
+    {
+      "generated_tokens": 2,
+      "id": "29f1249e0f103191dbf75dbd",
+      "image_sha256": "b062156ac6fb0b6896957cb465001533c727fc31f828bcb15701103fc56cc814",
+      "label": "random",
+      "prediction": "random",
+      "response": "random",
+      "seconds": 0.38392209401354194,
+      "source_row": 278544,
+      "truncated": false
+    },
+    {
+      "generated_tokens": 3,
+      "id": "32f11e5f884139a8eb1a749a",
+      "image_sha256": "de5e4c0fe3b5c82a4cd1acb7a1f33495bf6ef0daf4fe8e4e1a553659aa8adb04",
+      "label": "donut",
+      "prediction": "donut",
+      "response": "donut",
+      "seconds": 0.41609793598763645,
+      "source_row": 639391,
+      "truncated": false
+    },
+    {
+      "generated_tokens": 4,
+      "id": "38dd30111d9a15f20ad272cc",
+      "image_sha256": "5e62ee85dde127aadbbc8eebfac6b20a39cf6c49f47b58534857300c7788431b",
+      "label": "loc",
+      "prediction": "edge-loc",
+      "response": "edge-loc",
+      "seconds": 0.5221521740313619,
+      "source_row": 757435,
+      "truncated": false
+    },
+    {
+      "generated_tokens": 3,
+      "id": "3d0f3c97b77fd687704cb68a",
+      "image_sha256": "934b76446a6e0b6a38225971394c1b0df8614d7b347a15363740c7a8ec7f663b",
+      "label": "center",
+      "prediction": "donut",
+      "response": "donut",
+      "seconds": 0.41289825993590057,
+      "source_row": 278552,
+      "truncated": false
+    },
+    {
+      "generated_tokens": 3,
+      "id": "3f641dabb01031a89e49d9a5",
+      "image_sha256": "9e2853eb49f9a6539e3e2f0feb6455d6463f9844e73eb3ee483284c6f3123a58",
+      "label": "edge-loc",
+      "prediction": "edge-ring",
+      "response": "edge-ring",
+      "seconds": 0.4072615399491042,
+      "source_row": 76332,
+      "truncated": false
+    },
+    {
+      "generated_tokens": 2,
+      "id": "4c0cb116592b2babf3807229",
+      "image_sha256": "c87a7433298e1f3a19b2f6d64dcd6a0e12dcbcd443eb484eccc1983c94cf7251",
+      "label": "center",
+      "prediction": "center",
+      "response": "center",
+      "seconds": 0.3544002331327647,
+      "source_row": 294288,
+      "truncated": false
+    },
+    {
+      "generated_tokens": 3,
+      "id": "50773a965c423a8290e617f2",
+      "image_sha256": "d2b93a55b5252c477a0828d0b8f0deec50802a2b68cc2e27aa7e272bae52d708",
+      "label": "loc",
+      "prediction": "near-full",
+      "response": "near-full",
+      "seconds": 0.42020647204481065,
+      "source_row": 732013,
+      "truncated": false
+    },
+    {
+      "generated_tokens": 4,
+      "id": "5e90d1e702ea245b652ba450",
+      "image_sha256": "19edd7ca8353cd1eedabd20b636eea0758c281843715b890be394c870619f591",
+      "label": "edge-loc",
+      "prediction": "edge-loc",
+      "response": "edge-loc",
+      "seconds": 0.47436089999973774,
+      "source_row": 810875,
+      "truncated": false
+    },
+    {
+      "generated_tokens": 2,
+      "id": "5f0dc094af5b30aae2baddf1",
+      "image_sha256": "41a399becd84ce5ec3efe1ee94b9b67bba67307544fe140773f27038df08cf20",
+      "label": "scratch",
+      "prediction": "scratch",
+      "response": "scratch",
+      "seconds": 0.35907960194163024,
+      "source_row": 800474,
+      "truncated": false
+    },
+    {
+      "generated_tokens": 3,
+      "id": "625616319fe4ef10abe36968",
+      "image_sha256": "d259c7dd6b3eac8663298f4ddd56680652037d89f09426a09273526b664a9cdf",
+      "label": "scratch",
+      "prediction": "donut",
+      "response": "donut",
+      "seconds": 0.4099175750743598,
+      "source_row": 654816,
+      "truncated": false
+    },
+    {
+      "generated_tokens": 3,
+      "id": "642e22bf368a2c29385b9a83",
+      "image_sha256": "714b463914aeae76285c53d6012774f771f9dd0ce58da4e33db10f83f3ff39ef",
+      "label": "center",
+      "prediction": "near-full",
+      "response": "near-full",
+      "seconds": 0.41774001298472285,
+      "source_row": 280041,
+      "truncated": false
+    },
+    {
+      "generated_tokens": 2,
+      "id": "6e01f1a6b19206bd38e3ea8b",
+      "image_sha256": "73d9fa1c3c01ab45c763f5a85bd53d43df0c4b774904af9c718312cc4b797aff",
+      "label": "edge-loc",
+      "prediction": "random",
+      "response": "random",
+      "seconds": 0.3715241418685764,
+      "source_row": 701828,
+      "truncated": false
+    },
+    {
+      "generated_tokens": 2,
+      "id": "7bebf453b7584da401389f10",
+      "image_sha256": "f388d87e891e42ab1f5c0d885e10eaa14f740238da1c8eea8f5c4337786d7247",
+      "label": "edge-loc",
+      "prediction": "scratch",
+      "response": "scratch",
+      "seconds": 0.4266086998395622,
+      "source_row": 730327,
+      "truncated": false
+    },
+    {
+      "generated_tokens": 2,
+      "id": "7e4d61222d4d7f3843b23c3f",
+      "image_sha256": "0066be56a0cc3aa5c61c03f047a9be2fcb72d436771e780b5990b6532c73a56a",
+      "label": "donut",
+      "prediction": "loc",
+      "response": "loc",
+      "seconds": 0.34857075195759535,
+      "source_row": 398081,
+      "truncated": false
+    },
+    {
+      "generated_tokens": 2,
+      "id": "8507bcec612300fe21c3be98",
+      "image_sha256": "85fdffc4c82aa13c79a2de1833d85c9e648dabc86553b50093154a4f875a5fbc",
+      "label": "random",
+      "prediction": "random",
+      "response": "random",
+      "seconds": 0.3658782560378313,
+      "source_row": 765855,
+      "truncated": false
+    },
+    {
+      "generated_tokens": 3,
+      "id": "8e56c17bd8a8ad08868d3973",
+      "image_sha256": "0717d9ddc1bdbed4398131285d57999ccea98fd134ba4eada3c2ccd234b0c413",
+      "label": "near-full",
+      "prediction": "near-full",
+      "response": "near-full",
+      "seconds": 0.472084220033139,
+      "source_row": 694592,
+      "truncated": false
+    },
+    {
+      "generated_tokens": 3,
+      "id": "a4678b19a25a6ddb0b423fd9",
+      "image_sha256": "d4956f3daef68bed4c126c13ea231b7f321bc001f47bf92c0518652332fbd5a2",
+      "label": "edge-loc",
+      "prediction": "donut",
+      "response": "donut",
+      "seconds": 0.4286618810147047,
+      "source_row": 757358,
+      "truncated": false
+    },
+    {
+      "generated_tokens": 2,
+      "id": "a75aab12686afecc8b9a8cae",
+      "image_sha256": "9c8eaf3765ff3c9daf596ddeb3069d7af757aff83129a53ae0577967288480c6",
+      "label": "scratch",
+      "prediction": "center",
+      "response": "center",
+      "seconds": 0.35246651782654226,
+      "source_row": 733675,
+      "truncated": false
+    },
+    {
+      "generated_tokens": 3,
+      "id": "aac6e9a0b3b5aa660ce62121",
+      "image_sha256": "438f8e5f6a109f9c44463f19b2758365d98f190ea7f8f6f23d10cb8e30263965",
+      "label": "loc",
+      "prediction": "donut",
+      "response": "donut",
+      "seconds": 0.42607739102095366,
+      "source_row": 272334,
+      "truncated": false
+    },
+    {
+      "generated_tokens": 4,
+      "id": "bbfa935f39ecd52476d83827",
+      "image_sha256": "d27af0f50e85b430d786fab446fdfa66e3fb60a1c091580720b20a1d99af0fd1",
+      "label": "random",
+      "prediction": "edge-loc",
+      "response": "edge-loc",
+      "seconds": 0.4792488911189139,
+      "source_row": 645245,
+      "truncated": false
+    },
+    {
+      "generated_tokens": 3,
+      "id": "bf21211701b00bf2d683bacb",
+      "image_sha256": "e349926c0e7c66560204c6125207329226d548c9e62cf06cec819ebd9cf824f5",
+      "label": "edge-loc",
+      "prediction": "near-full",
+      "response": "near-full",
+      "seconds": 0.4059442130383104,
+      "source_row": 654293,
+      "truncated": false
+    },
+    {
+      "generated_tokens": 3,
+      "id": "d24d0acacc4355251d927a30",
+      "image_sha256": "d07623c5ac32f036b99e8dd5be7165eb96ce4534ad45412b182edc0b2c111dc8",
+      "label": "random",
+      "prediction": "donut",
+      "response": "donut",
+      "seconds": 0.4143572929315269,
+      "source_row": 764588,
+      "truncated": false
+    },
+    {
+      "generated_tokens": 3,
+      "id": "dd855c3b619057c30af18ade",
+      "image_sha256": "00c79e18e2812c2cd46134b68037a1b4dc172f65a8c2944a722fd074ea6f5c09",
+      "label": "loc",
+      "prediction": "donut",
+      "response": "donut",
+      "seconds": 0.4249109679367393,
+      "source_row": 316219,
+      "truncated": false
+    },
+    {
+      "generated_tokens": 3,
+      "id": "f264a16b3d257d6d4c731ed3",
+      "image_sha256": "baf648abce2f89d96d1979a3e2a48d0be91e582fab19cd268a3c09b3a9c42a01",
+      "label": "scratch",
+      "prediction": "edge-ring",
+      "response": "edge-ring",
+      "seconds": 0.4040572950616479,
+      "source_row": 364805,
+      "truncated": false
+    },
+    {
+      "generated_tokens": 4,
+      "id": "f5ca2de48af4e569a3ce1c2b",
+      "image_sha256": "e93dac68255f566c7e1de8a5f68e08f483272d2a0fd1a862d0bac8e4f2f779ba",
+      "label": "edge-ring",
+      "prediction": "edge-loc",
+      "response": "edge-loc",
+      "seconds": 0.48296762397512794,
+      "source_row": 724486,
+      "truncated": false
+    }
+  ],
+  "final_holdout_evaluated": false,
+  "hero_ids": [
+    "5f0dc094af5b30aae2baddf1",
+    "27eadb2b864e3ee3edfdda41"
+  ],
+  "image_digest": "sha256:b13a9807ae05698f0813e0d1ab7f25548e782f65729d2b2aec5e66de6de24cd1",
+  "inference_executed": false,
+  "matrix_axes": {
+    "x": "true_label",
+    "y": "predicted_label"
+  },
+  "matrix_thumbnail_rule": "lowest lexicographic sample ID in each non-empty cell",
+  "metrics": {
+    "accuracy": 0.78125,
+    "confusion_matrix": {
+      "center": {
+        "center": 17,
+        "donut": 2,
+        "edge-loc": 0,
+        "edge-ring": 0,
+        "invalid": 0,
+        "loc": 0,
+        "near-full": 1,
+        "random": 0,
+        "scratch": 0
+      },
+      "donut": {
+        "center": 1,
+        "donut": 17,
+        "edge-loc": 0,
+        "edge-ring": 0,
+        "invalid": 0,
+        "loc": 2,
+        "near-full": 0,
+        "random": 0,
+        "scratch": 0
+      },
+      "edge-loc": {
+        "center": 0,
+        "donut": 1,
+        "edge-loc": 13,
+        "edge-ring": 1,
+        "invalid": 0,
+        "loc": 2,
+        "near-full": 1,
+        "random": 1,
+        "scratch": 1
+      },
+      "edge-ring": {
+        "center": 0,
+        "donut": 0,
+        "edge-loc": 1,
+        "edge-ring": 19,
+        "invalid": 0,
+        "loc": 0,
+        "near-full": 0,
+        "random": 0,
+        "scratch": 0
+      },
+      "loc": {
+        "center": 3,
+        "donut": 2,
+        "edge-loc": 2,
+        "edge-ring": 0,
+        "invalid": 0,
+        "loc": 9,
+        "near-full": 1,
+        "random": 0,
+        "scratch": 3
+      },
+      "near-full": {
+        "center": 0,
+        "donut": 0,
+        "edge-loc": 0,
+        "edge-ring": 0,
+        "invalid": 0,
+        "loc": 0,
+        "near-full": 20,
+        "random": 0,
+        "scratch": 0
+      },
+      "random": {
+        "center": 1,
+        "donut": 1,
+        "edge-loc": 1,
+        "edge-ring": 0,
+        "invalid": 0,
+        "loc": 0,
+        "near-full": 3,
+        "random": 14,
+        "scratch": 0
+      },
+      "scratch": {
+        "center": 1,
+        "donut": 1,
+        "edge-loc": 0,
+        "edge-ring": 1,
+        "invalid": 0,
+        "loc": 1,
+        "near-full": 0,
+        "random": 0,
+        "scratch": 16
+      }
+    },
+    "invalid_rate": 0.0,
+    "macro_f1": 0.7739917375298062,
+    "n": 160,
+    "per_class": {
+      "center": {
+        "f1": 0.7906976744186046,
+        "precision": 0.7391304347826086,
+        "recall": 0.85,
+        "support": 20
+      },
+      "donut": {
+        "f1": 0.7727272727272727,
+        "precision": 0.7083333333333334,
+        "recall": 0.85,
+        "support": 20
+      },
+      "edge-loc": {
+        "f1": 0.7027027027027027,
+        "precision": 0.7647058823529411,
+        "recall": 0.65,
+        "support": 20
+      },
+      "edge-ring": {
+        "f1": 0.9268292682926829,
+        "precision": 0.9047619047619048,
+        "recall": 0.95,
+        "support": 20
+      },
+      "loc": {
+        "f1": 0.5294117647058824,
+        "precision": 0.6428571428571429,
+        "recall": 0.45,
+        "support": 20
+      },
+      "near-full": {
+        "f1": 0.8695652173913044,
+        "precision": 0.7692307692307693,
+        "recall": 1.0,
+        "support": 20
+      },
+      "random": {
+        "f1": 0.8,
+        "precision": 0.9333333333333333,
+        "recall": 0.7,
+        "support": 20
+      },
+      "scratch": {
+        "f1": 0.8000000000000002,
+        "precision": 0.8,
+        "recall": 0.8,
+        "support": 20
+      }
+    }
+  },
+  "model_id": "Qwen/Qwen3.5-0.8B",
+  "model_revision": "2fc06364715b967f1860aea9cf38778875588b17",
+  "outputs": {
+    "README.md": "41e9c300981d0d93fcbb903099ab49dfe88b70914837424760ac3d6b7f597cc6",
+    "image-confusion-matrix.png": "9a349e7c607794e4b071542323e6eddf57a938b3fe0ef4ad5bf13678cc21543c",
+    "inference.png": "3e02d55e2fe66a0177ce9e667bc83c5abf44d6877a78f0bfafaa9c16c11c891f",
+    "label-atlas.png": "94eeffbbf86d06590d442949930d5dac089d6ebcc8b94b0fe73276e1d0f359e4",
+    "predictions.jsonl": "3f220cdf1a5e29e93ea5203d0471dd3d9db7fd337aca90c8bc3e3168d7caf9ec"
+  },
+  "percentage_denominator": "all validation samples with this true label (column)",
+  "prediction_sha256": "3f220cdf1a5e29e93ea5203d0471dd3d9db7fd337aca90c8bc3e3168d7caf9ec",
+  "release_zip_sha256": "32024461ade6dcd34398e96a78b537c5a274e9da636ebda9a655b6618e32a250",
+  "renderer": {
+    "fonts": {
+      "DejaVuSans-Bold.ttf": "a4c5bc453ca281d90ea079e596da7ae0dfeb5777497c29ec254e76d97ff6f890",
+      "DejaVuSans.ttf": "57f73e11f51999432bf7ab22ce55b6f945d5eca1bf824404cfa9ec2e3718c84e"
+    },
+    "input_palette": "0:black, 1:blue, 2:yellow",
+    "interpolation": "nearest",
+    "pillow": "12.3.0"
+  },
+  "schema_version": 1,
+  "source_release": "https://github.com/jasonjiang8866/waferVLM/releases/tag/continuation-300-v1",
+  "source_run_id": 42682266526,
+  "source_sha": "064a37fa828ca0fa4ce106bfce46db3da48d8e5b",
+  "split": "validation",
+  "test_evaluated": false,
+  "validation_manifest_sha256": "3243e450163721eecac5ce5f4667f9a93599674337fed46e5e40ddeb940ab54f"
+}
