@@ -1,0 +1,507 @@
+{
+  "allocation": {
+    "data_center": "EUR-IS-1",
+    "gpu": "NVIDIA GeForce RTX 4090",
+    "id": "43bhfd177zngmx",
+    "observed_hourly_usd": 0.89
+  },
+  "assets": {
+    "wafervlm-qwen3.5-0.8b-step250-adapter.tar.gz": {
+      "bytes": 23849653,
+      "sha256": "43c93ac4a5148292e1b3070f9fa652962429663366c050bbae0be136733bfe70"
+    },
+    "wafervlm-run-42682266526.zip": {
+      "bytes": 188418651,
+      "sha256": "32024461ade6dcd34398e96a78b537c5a274e9da636ebda9a655b6618e32a250"
+    },
+    "wafervlm-validation-evidence.tar.gz": {
+      "bytes": 429112,
+      "sha256": "0c61f2eb3a5715a47a7d505ccd5ed8e746283460c88844669c323f29039747d0"
+    }
+  },
+  "best_step": 250,
+  "cleanup": {
+    "checked_epoch": 1794254089.0046291,
+    "consecutive_absent_checks": 3,
+    "cost_basis": "conservative_intent_to_absence_estimate_not_invoice",
+    "creation_confirmed": true,
+    "elapsed_billing_bound_s": 2094.6479301452637,
+    "estimated_total_seconds": 29514.647930145264,
+    "estimated_total_usd": 5.903038575414249,
+    "name": "wafer-20261107-usd20-42682266526",
+    "persistent_volumes_created": false,
+    "status": "verified_absent",
+    "within_budget": true,
+    "within_runtime": true
+  },
+  "controller_sha": "eee786b1c1609a6a7498c4c43e66e29ab260143b",
+  "final_holdout_manifest_sha256": "f08050ef4fcaca3b9c35ad29905a63957a375af7a024b69e0281968d06f4564f",
+  "holdout_evaluated": false,
+  "image": "ghcr.io/jasonjiang8866/wafervlm@sha256:b13a9807ae05698f0813e0d1ab7f25548e782f65729d2b2aec5e66de6de24cd1",
+  "inner_sha256": "79aa2a1cca663e3023ef40f1b20592f52de80529b589e71dbb3ec301614bec93",
+  "publication_recovery": {
+    "date": "2026-11-11 SGT",
+    "plots_and_evidence_regenerated_from_original_artifacts": true,
+    "raw_results_and_adapter_unchanged": true
+  },
+  "run_id": 42682266526,
+  "run_url": "https://github.com/jasonjiang8866/waferVLM/actions/runs/42682266526",
+  "schema_version": 1,
+  "scope": "Experimental single-seed validation selection; no new test or holdout score.",
+  "selection": "Highest validation macro-F1 among 200/250/300; ties to earlier step.",
+  "source_sha": "064a37fa828ca0fa4ce106bfce46db3da48d8e5b",
+  "test_evaluated": false,
+  "validation": {
+    "200": {
+      "accuracy": 0.75,
+      "answer_token_loss": 0.21061934688236916,
+      "answer_tokens": 580,
+      "confusion_matrix": {
+        "center": {
+          "center": 13,
+          "donut": 2,
+          "edge-loc": 1,
+          "edge-ring": 0,
+          "invalid": 0,
+          "loc": 2,
+          "near-full": 1,
+          "random": 1,
+          "scratch": 0
+        },
+        "donut": {
+          "center": 1,
+          "donut": 13,
+          "edge-loc": 0,
+          "edge-ring": 0,
+          "invalid": 0,
+          "loc": 2,
+          "near-full": 0,
+          "random": 3,
+          "scratch": 1
+        },
+        "edge-loc": {
+          "center": 0,
+          "donut": 0,
+          "edge-loc": 17,
+          "edge-ring": 0,
+          "invalid": 0,
+          "loc": 1,
+          "near-full": 1,
+          "random": 1,
+          "scratch": 0
+        },
+        "edge-ring": {
+          "center": 0,
+          "donut": 0,
+          "edge-loc": 1,
+          "edge-ring": 19,
+          "invalid": 0,
+          "loc": 0,
+          "near-full": 0,
+          "random": 0,
+          "scratch": 0
+        },
+        "loc": {
+          "center": 3,
+          "donut": 0,
+          "edge-loc": 3,
+          "edge-ring": 0,
+          "invalid": 0,
+          "loc": 8,
+          "near-full": 1,
+          "random": 3,
+          "scratch": 2
+        },
+        "near-full": {
+          "center": 0,
+          "donut": 0,
+          "edge-loc": 0,
+          "edge-ring": 0,
+          "invalid": 0,
+          "loc": 0,
+          "near-full": 20,
+          "random": 0,
+          "scratch": 0
+        },
+        "random": {
+          "center": 0,
+          "donut": 0,
+          "edge-loc": 0,
+          "edge-ring": 0,
+          "invalid": 0,
+          "loc": 0,
+          "near-full": 3,
+          "random": 17,
+          "scratch": 0
+        },
+        "scratch": {
+          "center": 2,
+          "donut": 0,
+          "edge-loc": 1,
+          "edge-ring": 0,
+          "invalid": 0,
+          "loc": 4,
+          "near-full": 0,
+          "random": 0,
+          "scratch": 13
+        }
+      },
+      "invalid_rate": 0.0,
+      "macro_f1": 0.7442944857378629,
+      "mean_generation_seconds": 0.41926098488620483,
+      "n": 160,
+      "peak_allocated_bytes": 2129835008,
+      "per_class": {
+        "center": {
+          "f1": 0.6666666666666667,
+          "precision": 0.6842105263157895,
+          "recall": 0.65,
+          "support": 20
+        },
+        "donut": {
+          "f1": 0.7428571428571429,
+          "precision": 0.8666666666666667,
+          "recall": 0.65,
+          "support": 20
+        },
+        "edge-loc": {
+          "f1": 0.7906976744186046,
+          "precision": 0.7391304347826086,
+          "recall": 0.85,
+          "support": 20
+        },
+        "edge-ring": {
+          "f1": 0.9743589743589743,
+          "precision": 1.0,
+          "recall": 0.95,
+          "support": 20
+        },
+        "loc": {
+          "f1": 0.4324324324324324,
+          "precision": 0.47058823529411764,
+          "recall": 0.4,
+          "support": 20
+        },
+        "near-full": {
+          "f1": 0.8695652173913044,
+          "precision": 0.7692307692307693,
+          "recall": 1.0,
+          "support": 20
+        },
+        "random": {
+          "f1": 0.7555555555555556,
+          "precision": 0.68,
+          "recall": 0.85,
+          "support": 20
+        },
+        "scratch": {
+          "f1": 0.7222222222222223,
+          "precision": 0.8125,
+          "recall": 0.65,
+          "support": 20
+        }
+      }
+    },
+    "250": {
+      "accuracy": 0.78125,
+      "answer_token_loss": 0.16530917464915545,
+      "answer_tokens": 580,
+      "confusion_matrix": {
+        "center": {
+          "center": 17,
+          "donut": 2,
+          "edge-loc": 0,
+          "edge-ring": 0,
+          "invalid": 0,
+          "loc": 0,
+          "near-full": 1,
+          "random": 0,
+          "scratch": 0
+        },
+        "donut": {
+          "center": 1,
+          "donut": 17,
+          "edge-loc": 0,
+          "edge-ring": 0,
+          "invalid": 0,
+          "loc": 2,
+          "near-full": 0,
+          "random": 0,
+          "scratch": 0
+        },
+        "edge-loc": {
+          "center": 0,
+          "donut": 1,
+          "edge-loc": 13,
+          "edge-ring": 1,
+          "invalid": 0,
+          "loc": 2,
+          "near-full": 1,
+          "random": 1,
+          "scratch": 1
+        },
+        "edge-ring": {
+          "center": 0,
+          "donut": 0,
+          "edge-loc": 1,
+          "edge-ring": 19,
+          "invalid": 0,
+          "loc": 0,
+          "near-full": 0,
+          "random": 0,
+          "scratch": 0
+        },
+        "loc": {
+          "center": 3,
+          "donut": 2,
+          "edge-loc": 2,
+          "edge-ring": 0,
+          "invalid": 0,
+          "loc": 9,
+          "near-full": 1,
+          "random": 0,
+          "scratch": 3
+        },
+        "near-full": {
+          "center": 0,
+          "donut": 0,
+          "edge-loc": 0,
+          "edge-ring": 0,
+          "invalid": 0,
+          "loc": 0,
+          "near-full": 20,
+          "random": 0,
+          "scratch": 0
+        },
+        "random": {
+          "center": 1,
+          "donut": 1,
+          "edge-loc": 1,
+          "edge-ring": 0,
+          "invalid": 0,
+          "loc": 0,
+          "near-full": 3,
+          "random": 14,
+          "scratch": 0
+        },
+        "scratch": {
+          "center": 1,
+          "donut": 1,
+          "edge-loc": 0,
+          "edge-ring": 1,
+          "invalid": 0,
+          "loc": 1,
+          "near-full": 0,
+          "random": 0,
+          "scratch": 16
+        }
+      },
+      "invalid_rate": 0.0,
+      "macro_f1": 0.7739917375298062,
+      "mean_generation_seconds": 0.41264850964362265,
+      "n": 160,
+      "peak_allocated_bytes": 2129835008,
+      "per_class": {
+        "center": {
+          "f1": 0.7906976744186046,
+          "precision": 0.7391304347826086,
+          "recall": 0.85,
+          "support": 20
+        },
+        "donut": {
+          "f1": 0.7727272727272727,
+          "precision": 0.7083333333333334,
+          "recall": 0.85,
+          "support": 20
+        },
+        "edge-loc": {
+          "f1": 0.7027027027027027,
+          "precision": 0.7647058823529411,
+          "recall": 0.65,
+          "support": 20
+        },
+        "edge-ring": {
+          "f1": 0.9268292682926829,
+          "precision": 0.9047619047619048,
+          "recall": 0.95,
+          "support": 20
+        },
+        "loc": {
+          "f1": 0.5294117647058824,
+          "precision": 0.6428571428571429,
+          "recall": 0.45,
+          "support": 20
+        },
+        "near-full": {
+          "f1": 0.8695652173913044,
+          "precision": 0.7692307692307693,
+          "recall": 1.0,
+          "support": 20
+        },
+        "random": {
+          "f1": 0.8,
+          "precision": 0.9333333333333333,
+          "recall": 0.7,
+          "support": 20
+        },
+        "scratch": {
+          "f1": 0.8000000000000002,
+          "precision": 0.8,
+          "recall": 0.8,
+          "support": 20
+        }
+      }
+    },
+    "300": {
+      "accuracy": 0.7875,
+      "answer_token_loss": 0.16986713258746272,
+      "answer_tokens": 580,
+      "confusion_matrix": {
+        "center": {
+          "center": 16,
+          "donut": 3,
+          "edge-loc": 0,
+          "edge-ring": 0,
+          "invalid": 0,
+          "loc": 0,
+          "near-full": 0,
+          "random": 1,
+          "scratch": 0
+        },
+        "donut": {
+          "center": 1,
+          "donut": 18,
+          "edge-loc": 0,
+          "edge-ring": 0,
+          "invalid": 0,
+          "loc": 0,
+          "near-full": 0,
+          "random": 1,
+          "scratch": 0
+        },
+        "edge-loc": {
+          "center": 0,
+          "donut": 0,
+          "edge-loc": 10,
+          "edge-ring": 0,
+          "invalid": 0,
+          "loc": 2,
+          "near-full": 0,
+          "random": 2,
+          "scratch": 6
+        },
+        "edge-ring": {
+          "center": 0,
+          "donut": 0,
+          "edge-loc": 2,
+          "edge-ring": 18,
+          "invalid": 0,
+          "loc": 0,
+          "near-full": 0,
+          "random": 0,
+          "scratch": 0
+        },
+        "loc": {
+          "center": 3,
+          "donut": 3,
+          "edge-loc": 2,
+          "edge-ring": 0,
+          "invalid": 0,
+          "loc": 5,
+          "near-full": 0,
+          "random": 0,
+          "scratch": 7
+        },
+        "near-full": {
+          "center": 0,
+          "donut": 0,
+          "edge-loc": 0,
+          "edge-ring": 0,
+          "invalid": 0,
+          "loc": 0,
+          "near-full": 19,
+          "random": 1,
+          "scratch": 0
+        },
+        "random": {
+          "center": 0,
+          "donut": 0,
+          "edge-loc": 0,
+          "edge-ring": 0,
+          "invalid": 0,
+          "loc": 0,
+          "near-full": 0,
+          "random": 20,
+          "scratch": 0
+        },
+        "scratch": {
+          "center": 0,
+          "donut": 0,
+          "edge-loc": 0,
+          "edge-ring": 0,
+          "invalid": 0,
+          "loc": 0,
+          "near-full": 0,
+          "random": 0,
+          "scratch": 20
+        }
+      },
+      "invalid_rate": 0.0,
+      "macro_f1": 0.7677650935128008,
+      "mean_generation_seconds": 0.42654220022232037,
+      "n": 160,
+      "peak_allocated_bytes": 2129835008,
+      "per_class": {
+        "center": {
+          "f1": 0.8000000000000002,
+          "precision": 0.8,
+          "recall": 0.8,
+          "support": 20
+        },
+        "donut": {
+          "f1": 0.8181818181818182,
+          "precision": 0.75,
+          "recall": 0.9,
+          "support": 20
+        },
+        "edge-loc": {
+          "f1": 0.588235294117647,
+          "precision": 0.7142857142857143,
+          "recall": 0.5,
+          "support": 20
+        },
+        "edge-ring": {
+          "f1": 0.9473684210526316,
+          "precision": 1.0,
+          "recall": 0.9,
+          "support": 20
+        },
+        "loc": {
+          "f1": 0.37037037037037035,
+          "precision": 0.7142857142857143,
+          "recall": 0.25,
+          "support": 20
+        },
+        "near-full": {
+          "f1": 0.9743589743589743,
+          "precision": 1.0,
+          "recall": 0.95,
+          "support": 20
+        },
+        "random": {
+          "f1": 0.888888888888889,
+          "precision": 0.8,
+          "recall": 1.0,
+          "support": 20
+        },
+        "scratch": {
+          "f1": 0.7547169811320755,
+          "precision": 0.6060606060606061,
+          "recall": 1.0,
+          "support": 20
+        }
+      }
+    }
+  },
+  "zip_sha256": "32024461ade6dcd34398e96a78b537c5a274e9da636ebda9a655b6618e32a250"
+}

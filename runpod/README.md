@@ -1,18 +1,12 @@
 # Bounded RunPod GPU experiment
 
-**Current authorization:** US$30 /1,100 minutes cumulative. Both checkpoint-200
-diagnostics are [recovered and archived](../docs/checkpoint-200-diagnostics.md),
-with their numerical-parity failures preserved and both temporary Pods verified
-absent. Reconciled reserves are **US$5.38 /457 minutes**. The next workload is a
-[validation-only 200→300 continuation](../docs/continuation-300-plan.md), capped
-at 185 minutes work +10 minutes cleanup (652 minutes cumulative; at most
-US$9.276518 cumulative at the highest approved rate including disk).
+**Current authorization:** US$30 / 1,100 minutes cumulative. The [validation-only 200→300 continuation](../docs/continuation-300-results.md) completed; checkpoint 250 was selected. Conservative cumulative usage is **US$5.903039 / 491.911 minutes**. Its Pod was verified absent by primary and independent cleanup; no persistent volume was created. Full states and predictions are preserved in [continuation-300-v1](https://github.com/jasonjiang8866/waferVLM/releases/tag/continuation-300-v1). Earlier diagnostic parity failures remain rejected. The [next seed-confirmation workload](../docs/seed-confirmation-plan.md) is planned but not executed. The current authorization marker remains consumed until reconciled with reviewed next-stage code.
 
 Prefer the already-authorized RTX 4090 after its measured 12.8–13.0s/step probe;
 MIG 24GB, 3090 and 5090 remain within their existing price caps. Fresh preflight
 must still establish price/capacity and owned-Pod absence. CUDA >=12.8 remains
-unchanged. The extension image is now published and pinned for manual launch;
-historical image pins below do not describe this new workload.
+unchanged. The published extension image below produced the completed run;
+historical image pins below describe earlier workloads.
 Published extension image: `ghcr.io/jasonjiang8866/wafervlm@sha256:b13a9807ae05698f0813e0d1ab7f25548e782f65729d2b2aec5e66de6de24cd1`.
 Image source: `064a37fa828ca0fa4ce106bfce46db3da48d8e5b`.
 Publication: [42680747996](https://github.com/jasonjiang8866/waferVLM/actions/runs/42680747996), successful.
@@ -28,6 +22,10 @@ The user subsequently raised the aggregate runtime ceiling to **500 minutes**;
 the total US$20 cap and per-GPU price caps remain unchanged.
 
 ## Latest completed result
+
+[Run 42682266526](https://github.com/jasonjiang8866/waferVLM/actions/runs/42682266526) completed 200→250→300 at constant LR 5e-5. Step 250 validation accuracy was **78.125%**, macro-F1 **0.773992**, invalid outputs **0/160**. No new test or holdout inference ran. Incremental conservative cost was **US$0.523039 / 34.911 minutes** on RTX 4090. See [results, hashes and recovery](../docs/continuation-300-results.md).
+
+## Historical completed result: checkpoint 200
 
 [Run 42502913001](https://github.com/jasonjiang8866/waferVLM/actions/runs/42502913001)
 completed the lower-LR continuation on 2026-11-09 at 03:16 SGT. Validation selected
@@ -180,3 +178,4 @@ not claimed to implement live lifecycle management.
 
 Published image evidence: [42342921932](https://github.com/jasonjiang8866/waferVLM/actions/runs/42342921932).
 Earlier inventory evidence: [42342948679](https://github.com/jasonjiang8866/waferVLM/actions/runs/42342948679).
+

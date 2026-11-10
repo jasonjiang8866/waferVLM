@@ -1,8 +1,6 @@
 # Validation-only continuation from checkpoint 200
 
-Prepared 2026-11-10 SGT. Code/configuration preparation is complete; execution
-uses the published/pinned worker image below and requires an exact-main-SHA manual
-dispatch. A completed run is distinct from a quality gain.
+Prepared 2026-11-10 SGT; **completed** in [run 42682266526](https://github.com/jasonjiang8866/waferVLM/actions/runs/42682266526). Validation selected checkpoint 250; no new test or holdout inference ran. The [results and recovery report](continuation-300-results.md) records full states, metrics, hashes, cost and verified cleanup. The specification below is retained as the historical predeclared protocol, not an instruction to dispatch again.
 
 ## Why proceed
 
@@ -109,3 +107,4 @@ Before relying on a result, retrieve/hash the archive, inspect validation and
 training curves, reconcile its authorization marker/spend/runtime, verify both
 cleanup paths and preserve full evidence in a Release. Retain checkpoint-200 if
 quality does not improve. No automatic retry or unbounded tuning loop is enabled.
+

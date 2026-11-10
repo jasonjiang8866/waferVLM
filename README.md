@@ -4,13 +4,26 @@
 
 waferVLM starts with [`Qwen/Qwen3.5-0.8B`](https://huggingface.co/Qwen/Qwen3.5-0.8B), comparing its original weights with a BF16, language-only LoRA adapter on the **same held-out wafer maps**. Images and a fixed classification question are the inputs; the target is a single defect label.
 
-**Latest result:** checkpoint-200 reached **64.38% test accuracy / 0.6361 macro-F1**, with **0/160 invalid outputs**. Lowering the continuation learning rate to 5e-5 improved accuracy by **11.25 percentage points** over step 100 on the same 160 test images. Checkpoint selection used validation macro-F1. This is a single-seed development result, not a production benchmark.
+**Latest development result:** validation selected **checkpoint-250** after continuing the released full checkpoint 200 to 300 at constant LR 5e-5. On the same 160 validation maps, step 250 reached **78.125% accuracy / 0.773992 macro-F1**, with **0 invalid outputs**. No new test or final-holdout inference ran. This is a single-seed development result requiring confirmation.
 
-**Download:** [checkpoint-200-v1 Release](https://github.com/jasonjiang8866/waferVLM/releases/tag/checkpoint-200-v1) — inference adapter, complete resumable checkpoints, raw predictions, logs and SHA256 checks. See [results, provenance and recovery instructions](docs/checkpoint-200-release.md).
+**Download:** [continuation-300-v1 Release](https://github.com/jasonjiang8866/waferVLM/releases/tag/continuation-300-v1) — selected inference adapter, full resumable 250/300 checkpoints, raw predictions, reports and SHA256 checks. See [results and recovery instructions](docs/continuation-300-results.md). The earlier [checkpoint-200 Release](https://github.com/jasonjiang8866/waferVLM/releases/tag/checkpoint-200-v1) remains available.
+
+| Same 160 validation maps | Step 200 re-evaluated | Step 250 selected | Step 300 |
+|---|---:|---:|---:|
+| Accuracy | 75.000% | 78.125% | 78.750% |
+| Macro-F1 | 0.744294 | **0.773992** | 0.767765 |
+| Answer-token loss | 0.210619 | **0.165309** | 0.169867 |
+| Invalid outputs | 0/160 | 0/160 | 0/160 |
+
+![Continuation learning curves](docs/figures/continuation-300-learning-curves.png)
+
+The unchanged step-200 adapter changed five predictions relative to its historical GPU/host run. That cross-run macro-F1 difference (0.026833) is similar to the continuation gain (0.029697); this does not yet establish a robust improvement. The historical **64.375% test accuracy / 0.636059 macro-F1** belongs to checkpoint 200 only, not checkpoint 250 or 300.
 
 **Diagnostics:** [recovered performance evidence](docs/checkpoint-200-diagnostics.md) and [preserved diagnostic Release](https://github.com/jasonjiang8866/waferVLM/releases/tag/checkpoint-200-diagnostics-v1). CUDA execution is confirmed. Two unprofiled four-step probes on RTX 4090 averaged 12.82/12.98 seconds per new optimizer step; both diagnostic runs remain rejected under the original numerical-parity gate. Repeated unprofiled runs also vary. No diagnostic weights are promoted.
 
-**Next steps:** [TODO](TODO.md) — execute a [validation-only 200→300 continuation](docs/continuation-300-plan.md), then assess the frozen 148-image unseen-lot holdout only after the recipe is fixed.
+**Next steps:** [TODO](TODO.md) and the [seed confirmation plan](docs/seed-confirmation-plan.md) — compare fixed steps 200/250 across independent seeds and repeated fixed-weight evaluation, then assess the frozen 148-image unseen-lot holdout once the models are fixed. These next experiments have not run.
+
+**Historical test results (through checkpoint 200):**
 
 | Test metric | Original model | Step 100 | Step 200 (lower LR) |
 |---|---:|---:|---:|
@@ -107,7 +120,7 @@ Individual stages are available through `wafervlm evaluate`, `train` and `compar
 
 ## RunPod
 
-See [runpod/README.md](runpod/README.md) for the extended US$30 /1,100-minute total experiment authorization, per-GPU price caps, pinned published image, data verification and cleanup design. `RUNPOD_API_KEY` stays in the Actions controller; neither the training code nor the worker receives it. Host filtering uses `minCudaVersion=12.8`, never an exact 12.8 requirement. The Broker remains GET-only; the separate waferVLM controller implements the paid lifecycle. Merging code does not launch compute: the GPU workflow requires a manual dispatch, exact main SHA and an unused authorization marker. The lower-LR continuation completed step 200 and its temporary Pod deletion was independently verified. Results and full recovery files are preserved in the [checkpoint-200 Release](https://github.com/jasonjiang8866/waferVLM/releases/tag/checkpoint-200-v1). The first diagnostic raised the conservative ledger to US$5.234111 /446.513 minutes; the repeat-control cost still needs extraction. Later paid execution requires reconciliation of that repeat. See [diagnostic evidence and outstanding recovery](docs/checkpoint-200-diagnostics.md). See the [completed-run report](docs/checkpoint-200-release.md).
+See [runpod/README.md](runpod/README.md) for the extended US$30 /1,100-minute total experiment authorization, per-GPU price caps, pinned published image, data verification and cleanup design. `RUNPOD_API_KEY` stays in the Actions controller; neither the training code nor the worker receives it. Host filtering uses `minCudaVersion=12.8`, never an exact 12.8 requirement. The Broker remains GET-only; the separate waferVLM controller implements the paid lifecycle. Merging code does not launch compute: the GPU workflow requires a manual dispatch, exact main SHA and an unused authorization marker. The lower-LR continuation completed step 200 and its temporary Pod deletion was independently verified. Results and full recovery files are preserved in the [checkpoint-200 Release](https://github.com/jasonjiang8866/waferVLM/releases/tag/checkpoint-200-v1). After both diagnostics and the completed 200→300 continuation, conservative cumulative usage is **US$5.903039 / 491.911 minutes** within **US$30 / 1,100 minutes**. The continuation Pod is verified absent by primary and independent cleanup. See the [latest cost and cleanup evidence](docs/continuation-300-results.md#cleanup-and-cost-ledger). The consumed authorization marker remains guarded; publishing results does not launch compute.
 
 ## References and scope
 
@@ -118,3 +131,4 @@ See [runpod/README.md](runpod/README.md) for the extended US$30 /1,100-minute to
 Wafer failure maps are not SEM photographs or automatically equivalent to inspection-coordinate scatter plots. Classification labels provide no verified process root-cause supervision. This repository trains labels, not invented contamination or equipment diagnoses.
 
 Code: [MIT](LICENSE). Qwen weights have their own Apache-2.0 license; WM-811K retains its own data terms. The repository code license does not relicense either upstream data or model artifacts.
+

@@ -1,6 +1,6 @@
-# waferVLM TODO — after checkpoint 200
+# waferVLM TODO — after validation-selected checkpoint 250
 
-Updated 2026-11-10 (Singapore time). This is the next-stage plan; unchecked items
+Updated 2026-11-11 (Singapore time). This is the next-stage plan; unchecked items
 are not completed experiments or new paid-launch authorization.
 
 ## Completed baseline
@@ -17,7 +17,7 @@ are not completed experiments or new paid-launch authorization.
 - [x] Update README/results/recovery instructions and verify temporary Pod
   deletion. See [the completed-run report](docs/checkpoint-200-release.md).
 
-**Current status:** both diagnostics are recovered and [permanently archived](https://github.com/jasonjiang8866/waferVLM/releases/tag/checkpoint-200-diagnostics-v1); their numerical-parity results remain rejected. [Measured results](docs/checkpoint-200-diagnostics.md) support retaining the original unprofiled implementation. The 148-image final holdout is frozen and unevaluated. [200→300 continuation](docs/continuation-300-plan.md) is implemented, with GPU execution pending the new image/pin and manual launch. No new quality-training checkpoint has been promoted.
+**Current status:** the [200→300 continuation](docs/continuation-300-results.md) completed and validation selected checkpoint 250 (78.125% accuracy / 0.773992 macro-F1 / 0 invalid outputs). Full checkpoints, raw predictions and evidence are preserved in [continuation-300-v1](https://github.com/jasonjiang8866/waferVLM/releases/tag/continuation-300-v1). Both cleanup paths verified Pod absence. No new test or holdout inference ran. The earlier diagnostic parity failures remain rejected; the unchanged unprofiled implementation was retained. The [seed confirmation plan](docs/seed-confirmation-plan.md) is prepared; its new training and holdout evaluation are not executed.
 
 ## P1 — diagnose performance before more training
 
@@ -81,33 +81,29 @@ hypothesis and a separate experiment specification.
 
 ## P2 — controlled continuation from 200 to 300
 
-Start only after performance diagnosis, checkpoint recovery verification and a
-revised lifecycle estimate. Keep the current 0.8B generative VLM, frozen vision
-tower and language-only LoRA as the experimental baseline.
+Completed in [run 42682266526](https://github.com/jasonjiang8866/waferVLM/actions/runs/42682266526), retaining the 0.8B generative VLM, frozen vision and language-only LoRA.
 
 - [x] Prepare a new continuation configuration using the released complete
   checkpoint-200; remove dependence on the expiring Actions download URL.
   Verify the release digest, dataset/model identity and checkpoint global step.
-- [ ] Restore adapter, AdamW moments/step counts, scheduler, RNG and data
+- [x] Restore adapter, AdamW moments/step counts, scheduler, RNG and data
   position. Keep **constant LR 5e-5**, seed17, rank8, accumulation8, prompt,
   answer mask, data split and rendering fixed. Do not add LR decay or unfreeze
   vision in this same comparison.
-- [ ] Validate checkpoint-200 as the starting reference, then execute **50 + 50
+- [x] Validate checkpoint-200 as the starting reference, then execute **50 + 50
   new optimizer steps** and validate at **250 and 300**. Check every actual LR
   and gradient trace; verify the second resume retains the intended state.
-- [ ] Select the highest **validation macro-F1** among 200/250/300; break ties
+- [x] Select the highest **validation macro-F1** among 200/250/300; break ties
   in favor of the earlier checkpoint. Record validation accuracy, answer-token
   loss and invalid rate alongside it. If neither new checkpoint improves,
   retain checkpoint-200 and report the negative result.
-- [ ] Keep this development run validation-only. Do not repeatedly rerun the
+- [x] Keep this development run validation-only. Do not repeatedly rerun the
   existing test split to choose steps, learning rates, prompts or kernels.
-- [ ] Export full resumable states, predictions, timings and provenance;
+- [x] Export full resumable states, predictions, timings and provenance;
   validate hashes, independently verify cleanup, and preserve the run in a
   Release before relying on it for subsequent work.
 
-**Done when:** the run has a complete resume chain and reproducible selection
-record, and the report states whether the additional 100 steps improved
-validation quality enough to justify their measured cost.
+**Outcome:** checkpoint 250 won validation macro-F1. Step 300 slightly improved accuracy but reduced macro-F1 and raised validation loss. The unchanged step-200 adapter also showed a five-prediction cross-run difference, so the single-seed gain requires confirmation. See the [complete results](docs/continuation-300-results.md).
 
 ## P3 — reserve an untouched lot-level final evaluation
 
@@ -119,9 +115,8 @@ validation quality enough to justify their measured cost.
 - [ ] Keep the new holdout out of profiling, error-driven tuning and checkpoint
   selection. Do not treat a new split seed over previously seen images as an
   untouched test set. Record any limits in available lot/metadata coverage.
-- [ ] Once the training recipe is fixed, plan paired independent-seed runs with
-  the same data protocol and comparable optimizer-step budgets; estimate their
-  compute separately. Existing single-seed gains remain exploratory meanwhile.
+- [x] Prepare a [paired independent-seed plan](docs/seed-confirmation-plan.md), fixed steps 200/250, repeated fixed-weight evaluation and a separate compute estimate.
+- [ ] Implement and run the two new seeds (42/123), preserving the data protocol, resume states, full evidence and cleanup. Existing single-seed gains remain exploratory.
 - [ ] Freeze the final models/comparisons, then evaluate the new holdout once
   per predeclared model/seed. Report accuracy, macro-F1, per-class recall,
   invalid rate, uncertainty across lots/seeds, inference time and peak memory.
@@ -134,20 +129,9 @@ outside this eight-label experiment.
 ## Budget and execution boundaries
 
 User extension on 2026-11-09 (SGT): **+US$10 / +600 minutes**.
-Reconciled history after both diagnostics: **US$5.377863 /456.201817 minutes**,
-including earlier conservative reserves. For the next run round upward to
-**US$5.38 /457 minutes**. Its 185-minute work +10-minute cleanup cap yields
-**652 cumulative minutes**, and at most **US$9.276518 cumulative** at the highest
-approved GPU rate including ephemeral disk. These are bounds based on successful
-cleanup, not a provider-enforced cap or invoice. No new paid run is implied by
-this plan. See the [launch specification](docs/continuation-300-plan.md).
+After the completed continuation, conservative cumulative usage is **US$5.903039 / 491.911 minutes**, including prior upward-rounded reserves. The continuation added **US$0.523039 / 34.911 lifecycle minutes**. Total authorization remains **US$30 / 1,100 minutes**; estimates include ephemeral disk and are not provider invoices or a hard cap. Both cleanup paths verified the owned Pod absent.
 
-The previous 100-step continuation took about 129.55 minutes of workload / 133.21
-minutes of Pod lifecycle. The extension provides room for diagnostics and a
-controlled continuation; re-estimate from observed profiling results before the
-next paid run. Include startup, data, retries, retrieval and cleanup in the same
-aggregate ledger. These are conservative estimates, not provider invoices or
-new allowances for each dispatch.
+The [seed confirmation plan](docs/seed-confirmation-plan.md) allocates at most **460 additional minutes**, giving **951.911 cumulative minutes** and approximately **US$15.095 cumulative** at the highest previously approved rate including disk. This is a plan, not an executed experiment or a fresh allowance per dispatch. Reconcile the current consumed marker only together with reviewed next-stage implementation, pinned images and current price/capacity evidence.
 
 - Keep GPU choices and price ceilings within existing authorization; obtain
   fresh capacity/price evidence at launch. Prefer the previously used MIG 24GB
@@ -158,8 +142,8 @@ new allowances for each dispatch.
   worker image and model revision, and preserve independent cleanup.
 - A TODO, documentation merge or successful CI run does not launch compute.
 
-Recommended order: **performance + validation diagnostics → revised runtime
-plan → controlled 200→300 continuation → untouched-lot/seed confirmation**.
+Recommended order: **preserved continuation results → independent-seed and repeatability confirmation → one predeclared untouched-lot evaluation**.
 Reserve the new holdout before further tuning, even though its evaluation comes
 last. Larger models, vision adaptation and changed data/prompt recipes remain
 separate later experiments rather than additions to the immediate continuation.
+
