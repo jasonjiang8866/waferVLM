@@ -1,0 +1,28 @@
+{
+  "protocol": "docs/seed-confirmation-plan.md",
+  "new_seeds": [42, 123],
+  "seeds": [17, 42, 123],
+  "endpoints": [200, 250],
+  "stages": [100, 150, 200, 250],
+  "repeats": 3,
+  "evaluation_seed": 17,
+  "split_seed": 17,
+  "accumulation": 8,
+  "rank": 8,
+  "max_length": 1024,
+  "initial_learning_rate": 0.0002,
+  "continuation_learning_rate": 0.00005,
+  "max_new_tokens": 16,
+  "split": "validation",
+  "test_access": false,
+  "holdout_access": false,
+  "dataset_sha256": "c588b3ef59d9dba57cfc745ec20db903e6ff2dcc75504112348f8b9f1ad3ab68",
+  "validation_sha256": "3243e450163721eecac5ce5f4667f9a93599674337fed46e5e40ddeb940ab54f",
+  "seed17_adapter_sha256": {
+    "200": "8cda3bcfcacdb62a4f6649d17fa415749af01aedd663986322fa7550ed328c55",
+    "250": "393cf3d37544d37df03549826dab4a782d396fcc9f039dc5db954fb377c50161"
+  },
+  "train_work_seconds": 11100,
+  "evaluation_work_seconds": 3600,
+  "cleanup_seconds": 600
+}

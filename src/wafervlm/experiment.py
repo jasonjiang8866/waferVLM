@@ -1,12 +1,14 @@
 """Training, evaluation and provenance. No RunPod account access in the worker."""
 
 import importlib.metadata
+import hashlib
 import json
 import math
 import os
 import platform
 import subprocess
 import time
+import uuid
 from pathlib import Path
 
 from .core import LABELS, PROMPT, audit_dataset, metrics, parse_label, sha256_file, write_json, write_jsonl
@@ -105,6 +107,10 @@ def train(dataset, output, steps=100, seed=17, accumulation=8, rank=8, learning_
                 if state_steps != [float(start_step)]:
                     raise ValueError("Adam optimizer state was not restored at the expected step")
                 diagnostics['optimizer_steps_at_resume'] = state_steps
+                scheduler = getattr(kwargs['lr_scheduler'], 'scheduler', kwargs['lr_scheduler'])
+                if scheduler.last_epoch != start_step:
+                    raise ValueError('Scheduler position was not restored at the expected step')
+                diagnostics['scheduler_step_at_resume'] = scheduler.last_epoch
                 if lower_learning_rate:
                     diagnostics['learning_rate_intervention'] = lower_constant_learning_rate(
                         optimizer, kwargs['lr_scheduler'], resumed['parent_learning_rate'], learning_rate)
@@ -172,6 +178,11 @@ def train(dataset, output, steps=100, seed=17, accumulation=8, rank=8, learning_
         raise ValueError("Non-finite training loss")
     if not diagnostics["nonzero_gradient_checks"]:
         raise ValueError("No nonzero adapter gradient observed")
+    from .modeling import assert_frozen_vision
+    assert_frozen_vision(model)
+    if any(p.grad is not None for p in model.parameters() if not p.requires_grad):
+        raise ValueError("Frozen parameters received gradients")
+    diagnostics['frozen_parameters_verified'] = True
     adapter = output / "adapter"
     with scope(recorder, 'adapter_export'):
         model.save_pretrained(adapter, safe_serialization=True)
@@ -193,7 +204,7 @@ def train(dataset, output, steps=100, seed=17, accumulation=8, rank=8, learning_
 
 
 def evaluate(dataset, output, split="test", adapter=None, revision=MODEL_REVISION,
-             device="cuda", max_new_tokens=16, include_loss=False):
+             device="cuda", max_new_tokens=16, include_loss=False, seed=17):
     import torch
     from peft import PeftModel
     from PIL import Image
@@ -218,7 +229,7 @@ def evaluate(dataset, output, split="test", adapter=None, revision=MODEL_REVISIO
             if not p.is_relative_to(adapter.parent.resolve()) or sha256_file(p) != digest:
                 raise ValueError("Adapter artifact checksum mismatch")
     output = new_output(output)
-    set_seed(17)
+    set_seed(seed)
     model, processor = load_model(revision, device)
     if adapter:
         model = PeftModel.from_pretrained(model, adapter, is_trainable=False)
@@ -229,11 +240,39 @@ def evaluate(dataset, output, split="test", adapter=None, revision=MODEL_REVISIO
                                   eos_token_id=eos, pad_token_id=processor.tokenizer.pad_token_id or eos,
                                   use_cache=True)
     config = dict(split=split, adapter=bool(adapter), device=device, max_new_tokens=max_new_tokens,
-                  include_loss=include_loss,
+                  include_loss=include_loss, seed=seed,
                   do_sample=False, enable_thinking=False)
     info = provenance(dataset, revision, config)
     if adapter:
         info["adapter_checksums_sha256"] = sha256_file(adapter.parent / "checksums.json")
+        info['adapter_sha256'] = sha256_file(adapter / 'adapter_model.safetensors')
+    info['process_instance'] = uuid.uuid4().hex
+    info['process_id'] = os.getpid()
+    info['host'] = platform.node()
+    info['validation_sha256'] = sha256_file(Path(dataset) / 'validation.jsonl')
+    info['processor_identity'] = {
+        'revision': revision,
+        'tokenizer_sha256': hashlib.sha256(processor.tokenizer.backend_tokenizer.to_str().encode()).hexdigest(),
+        'processor_sha256': hashlib.sha256(processor.to_json_string().encode()).hexdigest(),
+        'chat_template_sha256': hashlib.sha256(json.dumps(processor.chat_template, sort_keys=True).encode()).hexdigest(),
+    }
+    info['driver'] = None
+    if device == 'cuda':
+        from huggingface_hub import try_to_load_from_cache
+        index = try_to_load_from_cache(MODEL_ID, 'model.safetensors.index.json', revision=revision)
+        names = (sorted(set(json.loads(Path(index).read_text())['weight_map'].values()))
+                 if isinstance(index, str) else ['model.safetensors'])
+        base_hashes = {}
+        for name in names:
+            cached = try_to_load_from_cache(MODEL_ID, name, revision=revision)
+            if not isinstance(cached, str):
+                raise ValueError('Cannot fingerprint the actual cached base-model weights')
+            base_hashes[name] = sha256_file(cached)
+        info['base_weights_sha256'] = base_hashes
+        driver = subprocess.run(['nvidia-smi', '--query-gpu=driver_version', '--format=csv,noheader'],
+                                capture_output=True, text=True, check=True, timeout=10)
+        info['driver'] = driver.stdout.strip()
+    info['generation'] = generation.to_dict()
     write_json(output / "run.json", info)
     predictions = []
     loss_sum, answer_tokens = 0.0, 0

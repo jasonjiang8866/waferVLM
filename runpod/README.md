@@ -1,5 +1,7 @@
 # Bounded RunPod GPU experiment
 
+Seed-confirmation implementation and approval handoff: [fixed training/repeat runners](../docs/seed-confirmation-implementation.md). No new paid workflow has been activated.
+
 **Current authorization:** US$30 / 1,100 minutes cumulative. The [validation-only 200→300 continuation](../docs/continuation-300-results.md) completed; checkpoint 250 was selected. Conservative cumulative usage is **US$5.903039 / 491.911 minutes**. Its Pod was verified absent by primary and independent cleanup; no persistent volume was created. Full states and predictions are preserved in [continuation-300-v1](https://github.com/jasonjiang8866/waferVLM/releases/tag/continuation-300-v1). Earlier diagnostic parity failures remain rejected. The [next seed-confirmation workload](../docs/seed-confirmation-plan.md) is planned but not executed. The current authorization marker remains consumed until reconciled with reviewed next-stage code.
 
 Prefer the already-authorized RTX 4090 after its measured 12.8–13.0s/step probe;
