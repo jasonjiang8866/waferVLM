@@ -36,6 +36,7 @@ def main():
             p.add_argument("--learning-rate", type=float, default=0.0002)
             p.add_argument("--max-length", type=int, default=1024)
         else:
+            p.add_argument("--seed", type=int, default=17)
             p.add_argument("--include-loss", action="store_true")
             p.add_argument("--split", choices=("validation", "test"), default="test")
             p.add_argument("--adapter")
