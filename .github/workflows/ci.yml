@@ -23,6 +23,7 @@ jobs:
       - run: uv run --frozen python -m unittest discover -s tests -p test_protocol.py -v
       - run: uv run --frozen python -m unittest discover -s tests -p test_showcase.py -v
       - run: uv run --frozen python -m unittest discover -s tests -p test_confirmation.py -v
+      - run: uv run --frozen python -m unittest discover -s tests -p test_confirmation_archive.py -v
       - run: uv run --frozen wafervlm --help
       - run: python -m unittest discover -s runpod/tests -v
   model-compatibility:
