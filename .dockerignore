@@ -16,3 +16,15 @@
 
 !profile-input/
 !profile-input/**
+
+# Confirmation archive verification modules and their synthetic test helpers.
+!runpod/
+!runpod/*.py
+!runpod/tests/
+!runpod/tests/*.py
+
+# Only public development acquisition metadata; final holdout stays excluded.
+!docs/
+!docs/evidence/
+!docs/evidence/wm811k-lot17.json
+**/__pycache__/
