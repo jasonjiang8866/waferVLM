@@ -61,6 +61,7 @@ The unchanged step-200 adapter changed five predictions relative to its historic
 
 ## What is included
 
+- [DINOv3 visual comparison](docs/dinov3-baseline.md): frozen linear probe and vision LoRA, fixed-data validation, three-seed summaries, and paired wafer-map visualizations. Implementation available; pretrained DINOv3/GPU results are **not run**.
 - WM-811K import with source checksum verification, deterministic rendering, whole-lot splitting, duplicate-map isolation, and artifact auditing.
 - Qwen3.5's pinned processor and model revision; answer-only loss; vision tower frozen; LoRA on language projections including Gated DeltaNet layers.
 - Zero-shot evaluation, fixed-budget SFT, adapted-model evaluation, and paired accuracy / macro-F1 comparison.

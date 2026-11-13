@@ -128,14 +128,23 @@ outside this eight-label experiment.
 
 ## Budget and execution boundaries
 
+### DINOv3 comparison track
+
+- [x] Implement pinned ViT-S/16 linear-probe and attention-LoRA training, selected-weight reload, audited validation joins, paired wafer visualizations and three-seed summaries. See [protocol and commands](docs/dinov3-baseline.md).
+- [ ] Verify access to official gated weights before paid compute; publish and pin the tested DINOv3 worker image.
+- [ ] Integrate the workload with reviewed RunPod lifecycle/accounting, reconcile budget and current RTX 4090 availability (host CUDA >=12.8), then run the seed-17 pilot/LR sweep.
+- [ ] Freeze per-arm learning rates, run seeds 42/123, and publish all results. Predeclare any extension of the final holdout study before opening it.
+
+### Existing Qwen authorization record
+
 User extension on 2026-11-09 (SGT): **+US$10 / +600 minutes**.
 After the completed continuation, conservative cumulative usage is **US$5.903039 / 491.911 minutes**, including prior upward-rounded reserves. The continuation added **US$0.523039 / 34.911 lifecycle minutes**. Total authorization remains **US$30 / 1,100 minutes**; estimates include ephemeral disk and are not provider invoices or a hard cap. Both cleanup paths verified the owned Pod absent.
 
 The [seed confirmation plan](docs/seed-confirmation-plan.md) allocates at most **460 additional minutes**, giving **951.911 cumulative minutes** and approximately **US$15.095 cumulative** at the highest previously approved rate including disk. This is a plan, not an executed experiment or a fresh allowance per dispatch. Reconcile the current consumed marker only together with reviewed next-stage implementation, pinned images and current price/capacity evidence.
 
 - Keep GPU choices and price ceilings within existing authorization; obtain
-  fresh capacity/price evidence at launch. Prefer the previously used MIG 24GB
-  when available and appropriate.
+  fresh capacity/price evidence at launch. Prefer RTX 4090 when it fits;
+  use other previously authorized GPUs only within the existing price/budget limits.
 - Keep the host requirement **CUDA >= 12.8**, accepting higher supported
   versions rather than demanding exact equality.
 - Use GitHub Actions and the repository secret `RUNPOD_API_KEY`; pin source,
