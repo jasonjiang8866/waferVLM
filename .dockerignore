@@ -16,3 +16,14 @@
 
 !profile-input/
 !profile-input/**
+
+# Python lifecycle modules and the public Qwen comparison evidence only.
+!runpod/
+!runpod/*.py
+!runpod/tests/
+!runpod/tests/*.py
+!docs/
+!docs/showcase/
+!docs/showcase/checkpoint-250/
+!docs/showcase/checkpoint-250/**
+**/__pycache__/

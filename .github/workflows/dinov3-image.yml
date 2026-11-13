@@ -2,6 +2,7 @@ name: Build DINOv3 comparison image
 on:
   pull_request:
     paths:
+      - .dockerignore
       - runpod/Dockerfile.dinov3
       - .github/workflows/dinov3-image.yml
       - src/**
