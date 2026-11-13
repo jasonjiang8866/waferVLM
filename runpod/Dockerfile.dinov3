@@ -1,0 +1,13 @@
+# Reuse the pinned, tested CUDA/Transformers environment without dependency changes.
+FROM ghcr.io/jasonjiang8866/wafervlm@sha256:b13a9807ae05698f0813e0d1ab7f25548e782f65729d2b2aec5e66de6de24cd1
+ARG SOURCE_SHA
+ENV WAFERVLM_SOURCE_SHA=${SOURCE_SHA}
+WORKDIR /app
+COPY src ./src
+COPY configs ./configs
+COPY scripts ./scripts
+COPY tests ./tests
+COPY runpod ./runpod
+COPY docs/showcase/checkpoint-250 ./docs/showcase/checkpoint-250
+RUN python -m unittest discover -s tests -p 'test_dinov3*.py' -v
+ENTRYPOINT ["python", "scripts/run_dinov3.py"]
