@@ -78,6 +78,8 @@ Batch-size-one timing includes image verification/decode/preprocessing/transfer 
 
 ## GPU execution boundary
 
+For a GitHub-hosted CPU preflight, first obtain access on the official model page and configure a read-scoped repository Actions secret named `HF_TOKEN` for that account. Then dispatch **DINOv3 official weight access preflight** on main. The token is available only to the credential check/download step; the uploaded artifact contains hashes and metadata, never gated weights or credentials. No RunPod account key or paid GPU is used. This workflow verifies GitHub-runner access, not credential/cache delivery to a future GPU worker.
+
 Prefer **RTX 4090** and select host CUDA capability **>=12.8** through the existing numeric lower-bound logic. The worker image reuses a pinned CUDA environment; accepting a newer host does not change the container runtime. The CPU-tested image workflow builds on PRs and publishes only through explicit `workflow_dispatch` on main; it never creates a Pod.
 
 Before paid execution: complete official-weight access/preflight, freeze source and image digest, reconcile the experiment budget/current provider quote and active Pods, and connect this workload to the reviewed RunPod controller with aggregate accounting and independently verified cleanup. The current GPU workflow still launches Qwen workloads; **do not dispatch it expecting DINOv3**. A local process timeout does not terminate a RunPod Pod or enforce the full experiment's spending cap. No existing authorization marker is reset by this change.
