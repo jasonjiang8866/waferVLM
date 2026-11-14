@@ -11,6 +11,8 @@ COPY src ./src
 RUN uv sync --frozen --extra train --no-dev
 COPY configs ./configs
 COPY scripts ./scripts
+COPY runpod ./runpod
+COPY docs/evidence/wm811k-lot17.json ./docs/evidence/wm811k-lot17.json
 COPY tests ./tests
 COPY profile-input ./profile-input
 RUN python -m unittest discover -s tests -v

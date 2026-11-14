@@ -6,6 +6,8 @@ WORKDIR /app
 COPY src ./src
 COPY configs ./configs
 COPY scripts ./scripts
+COPY runpod ./runpod
+COPY docs/evidence/wm811k-lot17.json ./docs/evidence/wm811k-lot17.json
 COPY tests ./tests
 RUN python -m unittest discover -s tests -p 'test_confirmation*.py' -v
 ENTRYPOINT ["python", "scripts/run_seed_confirmation.py"]

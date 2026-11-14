@@ -2,6 +2,9 @@ name: Build worker image
 on:
   pull_request:
     paths:
+      - .dockerignore
+      - runpod/**
+      - docs/evidence/wm811k-lot17.json
       - runpod/Dockerfile
       - .github/workflows/image.yml
       - pyproject.toml

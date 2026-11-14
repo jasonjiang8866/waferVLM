@@ -2,6 +2,9 @@ name: Build seed confirmation image
 on:
   pull_request:
     paths:
+      - .dockerignore
+      - runpod/**
+      - docs/evidence/wm811k-lot17.json
       - runpod/Dockerfile.confirmation
       - .github/workflows/confirmation-image.yml
       - src/**
