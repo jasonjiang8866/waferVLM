@@ -103,17 +103,26 @@ class SchedulingTests(unittest.TestCase):
 
     def test_exact_cancelled_zero_job_run_can_be_replaced(self):
         os.environ['REPLACE_QUEUED_RUN_ID'] = s.QUEUED_DINO_RUN
-        history = dict(total_count=4,workflow_runs=[{'id':999},self.previous,{'id':int(s.CPU_FAILED_RUN)},
-                                                  {'id':int(s.PAID['run_id'])}])
+        history = dict(total_count=5,workflow_runs=[{'id':999},self.previous,{'id':int(s.CPU_FAILED_RUN)},
+                                                  *[{'id':int(p['run_id'])} for p in s.PAID_HISTORY]])
         with patch.object(s,'request',side_effect=[self.previous,{'total_count':0,'jobs':[]},
                                                   {'total_count':0,'artifacts':[]}]) as read, \
                 patch.object(s,'reconciled_cpu_failure') as cpu, patch.object(s,'reconciled_paid_failure') as paid:
             s.dispatch_history(history,'999','fake')
         cpu.assert_called_once_with('fake')
-        paid.assert_called_once_with('fake')
+        self.assertEqual(paid.call_count,2)
+        self.assertEqual([call.args for call in paid.call_args_list], [('fake',p) for p in s.PAID_HISTORY])
         self.assertEqual(read.call_count,3)
         self.assertIn('filter=all',read.call_args_list[1].args[0])
         self.assertTrue(all('method' not in x.kwargs for x in read.call_args_list))
+
+    def test_fourth_paid_attempt_or_missing_receipt_still_blocks(self):
+        os.environ['REPLACE_QUEUED_RUN_ID'] = s.QUEUED_DINO_RUN
+        prior=[self.previous,{'id':int(s.CPU_FAILED_RUN)},*[{'id':int(p['run_id'])} for p in s.PAID_HISTORY]]
+        for rows in [[{'id':999},*prior,{'id':888}],[{'id':999},*prior[:-1]]]:
+            with patch.object(s,'request') as read, self.assertRaises(ValueError):
+                s.dispatch_history(dict(total_count=len(rows),workflow_runs=rows),'999','fake')
+            read.assert_not_called()
 
     def test_pending_running_rerun_or_wrong_source_is_never_a_free_replacement(self):
         for key,value in [('status','pending'),('conclusion','success'),('run_attempt',2),
@@ -209,7 +218,7 @@ class PaidFailureReceiptTests(unittest.TestCase):
     archive = CpuFailureReceiptTests.archive
 
     def setUp(self):
-        self.receipt = copy.deepcopy(s.PAID)
+        self.receipt = copy.deepcopy(getattr(self, 'pinned', s.PAID))
         p = self.receipt
         self.run = dict(id=int(p['run_id']),head_sha=p['source_sha'],head_branch='main',
                         event='workflow_dispatch',path='.github/workflows/dinov3-gpu.yml',
@@ -230,8 +239,8 @@ class PaidFailureReceiptTests(unittest.TestCase):
 
     def test_paid_attempt_cost_and_two_receipts_are_required(self):
         self.check()
-        self.assertGreater(c.PRIOR_SPEND_USD, .0444)
-        self.assertGreaterEqual(c.PRIOR_RUNTIME_SECONDS, 178)
+        self.assertEqual(c.PRIOR_SPEND_USD, .10)
+        self.assertEqual(c.PRIOR_RUNTIME_SECONDS, 360)
         self.receipt['accounted_usd']=0
         with self.assertRaises(ValueError): self.check()
 
@@ -245,6 +254,10 @@ class PaidFailureReceiptTests(unittest.TestCase):
         self.metadata[receipt]['expired']=False
         self.run['run_attempt']=2
         with self.assertRaises(ValueError): self.check()
+
+
+class SecondPaidFailureReceiptTests(PaidFailureReceiptTests):
+    pinned = s.SECOND_PAID
 
 
 if __name__ == '__main__':
