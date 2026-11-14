@@ -15,12 +15,21 @@ on:
         description: 'Published ghcr.io/jasonjiang8866/wafervlm@sha256:... DINOv3 image'
         type: string
         required: true
+      parallel_vlm_run_id:
+        description: 'Optional reviewed VLM companion run; enables one DINO Pod alongside that separately budgeted run'
+        type: string
+        default: ''
+      replace_queued_run_id:
+        description: 'Optional reviewed DINO run cancelled before ANY job or artifact existed; never a paid retry'
+        type: string
+        default: ''
 permissions:
   contents: read
   actions: read
 concurrency:
-  # Share the existing project mutex so Qwen and DINO cannot allocate concurrently.
-  group: wafervlm-paid-usd20
+  # Serial by default. The opt-in companion is validated against exact live
+  # Actions/Pod identity and a separate account reserve before allocation.
+  group: ${{ inputs.parallel_vlm_run_id != '' && 'wafervlm-dinov3-seed17-v1' || 'wafervlm-paid-usd20' }}
   cancel-in-progress: false
 jobs:
   experiment:
@@ -31,6 +40,8 @@ jobs:
       EXPECTED_SHA: ${{ inputs.expected_sha }}
       DINO_IMAGE: ${{ inputs.image }}
       CONFIRM_PAID: ${{ inputs.confirm_paid }}
+      PARALLEL_VLM_RUN_ID: ${{ inputs.parallel_vlm_run_id }}
+      REPLACE_QUEUED_RUN_ID: ${{ inputs.replace_queued_run_id }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
