@@ -86,9 +86,13 @@ def work():
     result = {'status': 'rejected', 'profiles': [],
               'source_sha': os.environ['WAFER_SOURCE_SHA'],
               'controller_sha': os.environ['WAFER_CONTROLLER_SHA'],
-              'config_sha256': os.environ['WAFER_CONFIG_SHA'], 'seed': 42}
+              'config_sha256': os.environ['WAFER_CONFIG_SHA'], 'seed': None}
     try:
         OUT.mkdir(parents=True, exist_ok=False)  # restart must not rerun training
+        seed = os.environ.get('WAFER_SEED', '')
+        if seed not in {'42', '123'}:
+            raise ValueError('unsupported_training_seed')
+        result['seed'] = int(seed)
         if os.environ.get('WAFERVLM_SOURCE_SHA') != result['source_sha']:
             raise ValueError('image_source_mismatch')
         if digest(ROOT / 'configs/seed-confirmation.json') != result['config_sha256']:
@@ -137,10 +141,10 @@ def work():
         cap = int(float(os.environ['WAFER_DEADLINE']) - time.time() - 180)
         if not 60 <= cap <= 11100:
             raise TimeoutError('insufficient_training_time')
-        run('training', ['scripts/run_seed_confirmation.py', 'train', '--seed', '42',
+        run('training', ['scripts/run_seed_confirmation.py', 'train', '--seed', seed,
             '--dataset', dataset, '--output', str(OUT / 'training'), '--timeout-seconds', str(cap)], cap + 15)
         state = json.loads((OUT / 'training/status.json').read_text())
-        if state != dict(status='completed', seed=42, end_step=250,
+        if state != dict(status='completed', seed=int(seed), end_step=250,
                          test_accessed=False, holdout_accessed=False):
             raise ValueError('confirmation_acceptance_failed')
         result['profiles'] = ['seed-confirmation']

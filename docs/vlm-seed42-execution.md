@@ -75,3 +75,10 @@ run and its two immutable evidence ZIPs are reconciled in
 [vlm-precreate.json](../runpod/vlm-precreate.json); a rerun, changed source, resource
 intent or changed cleanup evidence invalidates that zero-increment accounting.
 No second paid dispatch was submitted during this repair.
+
+The repair was merged in PR #24. The subsequent authorized
+[run 43562568201](https://github.com/jasonjiang8866/waferVLM/actions/runs/43562568201)
+has created a GPU Pod and reached real optimizer updates. Its result and cleanup
+must be verified before recording acceptance. The
+[seed-123 preparation](vlm-seed123-execution.md) carries that verified consumption
+forward and remains blocked while the completed-run receipt is absent.
