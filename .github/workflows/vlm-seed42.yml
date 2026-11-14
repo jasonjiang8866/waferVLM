@@ -80,5 +80,6 @@ jobs:
           path: |
             runpod-results/
             !runpod-results/historical-result.zip
+            !runpod-results/completed-*.zip
           retention-days: 30
           if-no-files-found: warn

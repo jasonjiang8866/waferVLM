@@ -60,6 +60,35 @@ class ContractTests(unittest.TestCase):
 
 
 class ArchivePaths(unittest.TestCase):
+    def test_real_tokenizer_size_only_allowed_at_canonical_adapter_paths(self):
+        # Reproduces the real seed-42 export; tiny metadata fixtures missed this.
+        payload = b'{}' + b' ' * (19_989_343 - 2)
+        for name, accepted in [('results/training/step100/adapter/tokenizer.json', True),
+                               ('results/training/step250/adapter/tokenizer.json', True),
+                               ('results/training/step100/run.json', False),
+                               ('results/other/tokenizer.json', False)]:
+            with self.subTest(name=name), tempfile.TemporaryDirectory() as tmp:
+                root=Path(tmp); archive=root/'x.tar.gz'
+                with tarfile.open(archive,'w:gz') as tar:
+                    member=tarfile.TarInfo(name); member.size=len(payload)
+                    tar.addfile(member,io.BytesIO(payload))
+                if accepted:
+                    unpack(archive,root/'out')
+                    self.assertEqual((root/'out'/name).stat().st_size,len(payload))
+                else:
+                    with self.assertRaisesRegex(ValueError,'JSON member'):
+                        unpack(archive,root/'out')
+
+    def test_tokenizer_still_has_an_explicit_size_limit(self):
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp); archive=root/'x.tar.gz'
+            with tarfile.open(archive,'w:gz') as tar:
+                member=tarfile.TarInfo('results/training/step100/adapter/tokenizer.json')
+                member.size=2; tar.addfile(member,io.BytesIO(b'{}'))
+            with patch('runpod.confirmation_verify.MAX_TOKENIZER_BYTES',1), self.assertRaises(ValueError):
+                unpack(archive,root/'out')
+
     def test_rejects_traversal_links_duplicates_and_noncanonical_paths(self):
         for name,kind in [('results/../escape',tarfile.REGTYPE),
                           ('/results/x',tarfile.REGTYPE),('results//x',tarfile.REGTYPE),

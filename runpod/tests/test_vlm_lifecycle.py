@@ -30,6 +30,8 @@ class LedgerTests(unittest.TestCase):
         self.env.start(); self.addCleanup(self.env.stop)
         self.precreate = patch.object(ledger, 'reconciled_precreate', return_value=None)
         self.precreate.start(); self.addCleanup(self.precreate.stop)
+        completed = patch.object(ledger, 'COMPLETED', [])
+        completed.start(); self.addCleanup(completed.stop)
         self.artifacts = [dict(name=ledger.MARKER, id=x['marker_artifact_id'],
             digest='sha256:'+x['marker_sha256'], expired=False,
             workflow_run={'id': x['run_id']}) for x in ledger.HISTORY]
@@ -112,6 +114,23 @@ class LedgerTests(unittest.TestCase):
         self.assertEqual([x.name for x in target.iterdir()], ['dataset.json'])
         self.assertEqual(hashlib.sha256((target/'dataset.json').read_bytes()).hexdigest(),
                          'c588b3ef59d9dba57cfc745ec20db903e6ff2dcc75504112348f8b9f1ad3ab68')
+
+
+class SeparateDinoLedger(unittest.TestCase):
+    def test_only_exact_separately_approved_dispatch_is_excluded(self):
+        artifact=dict(name=ledger.DINO_MARKER,id=1000,digest='sha256:'+'a'*64,
+            expired=False,workflow_run=dict(id=2000,head_sha='b'*40))
+        run=dict(path='.github/workflows/dinov3-gpu.yml',event='workflow_dispatch',
+            head_branch='main',run_attempt=1,head_sha='b'*40)
+        with patch.dict(os.environ,GH_TOKEN='test'),patch.object(ledger,'request',return_value=run), \
+             patch.object(ledger,'artifact_bytes',return_value=zipped({'run-id.txt':'2000'})):
+            self.assertTrue(ledger.separate_dino_authorization(artifact))
+            self.assertFalse(ledger.separate_dino_authorization(dict(artifact,name='runpod-authorization-other')))
+            for field,value in [('path','.github/workflows/vlm-seed42.yml'),('run_attempt',2)]:
+                original=run[field];run[field]=value
+                with self.subTest(field=field),self.assertRaises(RuntimeError):
+                    ledger.separate_dino_authorization(artifact)
+                run[field]=original
 
 
 class PrecreateReconciliation(unittest.TestCase):
@@ -232,6 +251,166 @@ class LifecycleTests(unittest.TestCase):
         (self.out/'training/train-150.log').write_text('123/150 [running]')
         with patch.object(worker,'OUT',self.out), patch.object(worker,'RESULT',dict(status='running',phase='training')):
             self.assertEqual(worker.progress_snapshot()['progress'], dict(optimizer_step=123,optimizer_steps=150))
+
+
+class CompletedReceipts(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory(); self.addCleanup(self.tmp.cleanup)
+        self.out = Path(self.tmp.name)
+        self.cleanup = dict(status='verified_absent', name='wafer-20261107-usd20-vlm42-5678',
+            creation_confirmed=True, consecutive_absent_checks=3, within_budget=True,
+            within_runtime=True, persistent_volumes_created=False, checked_epoch=100,
+            estimated_total_usd=7.0, estimated_total_seconds=36000)
+        self.independent = dict(status='verified_absent', name=self.cleanup['name'],
+            consecutive_absent_checks=3, checked_epoch=110)
+        self.accepted = dict(status='accepted', seed=42, quality_accepted=False,
+            holdout_accessed=False, endpoints=[dict(step=200), dict(step=250)])
+        self.spec = dict(seed=42, controller_sha='a'*40, ledger=dict(usd=5.903039, seconds=491.911*60))
+        self.pin = dict(seed=42, run_id=5678, controller_sha='a'*40,
+            cleanup=self.cleanup, independent_cleanup=self.independent, acceptance=self.accepted,
+            result_artifact_id=800, independent_cleanup_artifact_id=801,
+            independent_cleanup_sha256='c'*64)
+        self.run = dict(head_sha='a'*40, run_attempt=1, status='completed', conclusion='success',
+            event='workflow_dispatch', head_branch='main', path='.github/workflows/vlm-seed42.yml')
+
+    def check(self, cleanup=None, accepted=None, spec=None, independent=None, worker=None):
+        files = {'cleanup.json':json.dumps(cleanup or self.cleanup),
+                 'launch-spec.json':json.dumps(spec or self.spec)}
+        if self.pin.get('recovery'):
+            files['result.json'] = json.dumps(worker or dict(status='accepted',seed=42,
+                controller_sha='a'*40,source_sha=self.spec.get('source_sha'),
+                profiles=['seed-confirmation'],quality_accepted=False,
+                archive={'sha256':self.accepted.get('archive_sha256')}))
+        else:
+            files['acceptance.json'] = json.dumps(accepted or self.accepted)
+        raw = zipped(files)
+        self.pin['result_sha256'] = hashlib.sha256(raw).hexdigest()
+        cleanup_zip = zipped({'cleanup.json':json.dumps(independent or self.independent)})
+        with patch.dict(os.environ, GH_TOKEN='test'), \
+             patch.object(ledger,'COMPLETED',[self.pin]), \
+             patch.object(ledger,'request',return_value=self.run), \
+             patch.object(ledger,'artifact_bytes',side_effect=[raw,cleanup_zip]), \
+             patch.object(ledger,'verify_completed_archive') as verify:
+            result=ledger.completed_receipts(self.out)
+            verify.assert_called_once()
+            return result
+
+    def test_success_updates_cumulative_cost_only_after_both_cleanup_receipts(self):
+        pins, usd, seconds = self.check()
+        self.assertEqual((usd,seconds),(7.0,36000))
+        self.assertEqual(pins[0]['seed'],42)
+
+    def test_changed_cleanup_or_acceptance_is_not_trusted(self):
+        for changes in [dict(cleanup=dict(self.cleanup,status='unknown')),
+                        dict(accepted=dict(self.accepted,seed=123)),
+                        dict(spec=dict(self.spec,ledger=dict(usd=0,seconds=0))),
+                        dict(independent=dict(self.independent,status='unknown'))]:
+            with self.subTest(changes=changes), self.assertRaises(RuntimeError): self.check(**changes)
+            for cache in self.out.glob('completed-*.zip'): cache.unlink()
+
+    def test_rerun_or_wrong_workflow_cannot_reuse_a_receipt(self):
+        for key,value in [('run_attempt',2),('path','.github/workflows/dinov3-gpu.yml'),
+                          ('conclusion','failure'),('head_sha','b'*40)]:
+            original=dict(self.run)
+            self.run[key]=value
+            with self.subTest(key=key), self.assertRaises(RuntimeError): self.check()
+            self.run=original
+
+    def test_empty_receipts_do_not_invent_seed42_acceptance(self):
+        with patch.object(ledger,'COMPLETED',[]):
+            self.assertEqual(ledger.completed_receipts(self.out),([],5.903039,491.911*60))
+
+    def test_failed_verifier_recovery_requires_matching_worker_and_full_archive_check(self):
+        self.pin['recovery']='canonical_tokenizer_size_cap'
+        self.run['conclusion']='failure'
+        self.assertEqual(self.check()[1:],(7.0,36000))
+        for cache in self.out.glob('completed-*.zip'): cache.unlink()
+        with self.assertRaisesRegex(RuntimeError,'complete matching worker'):
+            self.check(worker={'status':'rejected'})
+
+    def test_recovery_does_not_relabel_original_failure_as_success(self):
+        self.pin['recovery']='canonical_tokenizer_size_cap'
+        with self.assertRaisesRegex(RuntimeError,'identity or outcome'):
+            self.check()
+
+
+class NextSeedLifecycle(unittest.TestCase):
+    setUp = LifecycleTests.setUp
+    pod = LifecycleTests.pod
+
+    def test_seed123_cannot_allocate_without_seed42_acceptance(self):
+        api=Mock()
+        with patch.dict(os.environ,WAFER_VLM_SEED='123'), \
+             patch.object(c,'provenance',return_value={}), \
+             patch.object(ledger,'reconcile',return_value=specification()['ledger']), \
+             self.assertRaisesRegex(RuntimeError,'Seed 42'):
+            c.preflight(api)
+        api.call.assert_not_called()
+        api.listing.assert_not_called()
+
+    def test_seed123_unknown_create_is_single_post_and_scoped_cleanup(self):
+        evidence=dict(self.evidence,ledger=json.loads(json.dumps(self.evidence['ledger'])))
+        evidence['ledger']['attempts'].append(dict(run_id=5678, marker_artifact_id=800,
+            evidence_sha256='a'*64, cleanup='verified_absent', seed=42, accepted=True))
+        evidence['ledger'].update(usd=7.0,seconds=36000)
+        evidence['cost']=c.quote(.89,evidence['ledger'])
+        api=Mock(); api.call.side_effect=RuntimeError('unknown')
+        with patch.dict(os.environ,WAFER_VLM_SEED='123'), \
+             patch.object(c,'authorization_guard'),patch.object(c,'preflight',return_value=evidence), \
+             patch.object(c,'cleanup') as cleanup,patch('builtins.print'),self.assertRaises(RuntimeError):
+            c.launch(api)
+        self.assertEqual(api.call.call_count,1)
+        payload=api.call.call_args.args[2]
+        self.assertEqual(payload['name'],c.AUTHORIZATION+'-vlm123-1234')
+        self.assertEqual(payload['env']['WAFER_SEED'],'123')
+        self.assertEqual(payload['env']['WAFER_EXPERIMENT'],'vlm-seed123')
+        self.assertEqual(payload['env']['WAFER_PRIOR_USD'],'7.0')
+        cleanup.assert_called_once()
+
+    def test_seed123_cleanup_preserves_prior_seed_cost_and_cannot_delete_seed42(self):
+        pod=self.pod()
+        pod['name']=c.AUTHORIZATION+'-vlm123-1234'
+        api=Mock(); api.listing.return_value=[pod]
+        with patch.dict(os.environ,WAFER_VLM_SEED='123'),self.assertRaises(RuntimeError): c.cleanup(api)
+        api.call.assert_not_called()
+        pod['env'].update(WAFER_EXPERIMENT='vlm-seed123',WAFER_PRIOR_USD='7.0',WAFER_PRIOR_SECONDS='36000')
+        api.listing.side_effect=[[pod],[],[],[]]
+        with patch.dict(os.environ,WAFER_VLM_SEED='123'),patch.object(c.time,'sleep'): c.cleanup(api)
+        result=json.loads((self.out/'cleanup.json').read_text())
+        self.assertGreater(result['estimated_total_usd'],7.0)
+        self.assertGreater(result['estimated_total_seconds'],36000)
+
+    def test_unsupported_seed_and_insufficient_remaining_time_block(self):
+        with patch.dict(os.environ,WAFER_VLM_SEED='17'),self.assertRaises(RuntimeError): c.identity()
+        with self.assertRaises(ValueError): c.quote(.89,dict(usd=7.0,seconds=1000*60))
+
+
+class CpuObservation(unittest.TestCase):
+    def test_visible_quota_and_throttling_without_scheduling_changes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            (root/'cpu.max').write_text('400000 100000')
+            (root/'cpu.stat').write_text('usage_usec 500\nnr_throttled 12\nthrottled_usec 200\n')
+            result=worker.cpu_snapshot(root)
+            self.assertEqual(result['quota_cpus'],4)
+            self.assertEqual(result['counters']['nr_throttled'],12)
+            self.assertFalse(result['ancestor_limits_verified'])
+            (root/'cpu.max').write_text('max 100000')
+            self.assertIsNone(worker.cpu_snapshot(root)['quota_cpus'])
+            (root/'cpu.max').write_text('malformed')
+            self.assertTrue(worker.cpu_snapshot(root)['parse_error'])
+
+    def test_v1_or_missing_cgroup_is_not_guessed(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            self.assertIsNone(worker.cpu_snapshot(root)['quota_cpus'])
+            (root/'cpu').mkdir()
+            (root/'cpu/cpu.cfs_quota_us').write_text('200000')
+            (root/'cpu/cpu.cfs_period_us').write_text('100000')
+            (root/'cpu/cpu.stat').write_text('throttled_time 1234')
+            result=worker.cpu_snapshot(root)
+            self.assertEqual((result['version'],result['quota_cpus']),(1,2))
+            self.assertEqual(result['counters']['throttled_time'],1234)
 
 
 if __name__ == '__main__':
