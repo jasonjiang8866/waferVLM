@@ -1,20 +1,13 @@
-name: DINOv3 read-only preflight diagnosis
+name: DINOv3 official weight access preflight
 on:
   workflow_dispatch:
-    inputs:
-      image:
-        description: 'Immutable DINO image to inspect; does not launch a GPU'
-        type: string
-        required: true
-      image_source_sha:
-        description: 'Exact source SHA embedded in that image'
-        type: string
-        required: true
 permissions:
   contents: read
-  actions: read
+concurrency:
+  group: dinov3-weight-preflight
+  cancel-in-progress: false
 jobs:
-  observe:
+  weights:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
@@ -25,24 +18,26 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: echo "HF_HOME=$RUNNER_TEMP/dinov3-hf" >> "$GITHUB_ENV"
-      - run: python -m pip install uv==0.13.5
-      - run: uv sync --frozen --extra train
-      - name: Reproduce official CPU cache preparation
+      - name: Check read credential availability without printing it
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: uv run --frozen --extra train python scripts/run_dinov3.py preflight --output dinov3-results/weights
-      - name: Observe stages without create or cleanup
+        run: |
+          python - <<'PY'
+          import os
+          if not os.environ.get('HF_TOKEN'):
+              raise SystemExit('Configure repository secret HF_TOKEN for an account with approved official DINOv3 access.')
+          PY
+      - run: python -m pip install uv==0.13.5
+      - run: uv sync --frozen --extra train
+      - name: Download and load pinned official weights on CPU
         env:
-          DINO_IMAGE: ${{ inputs.image }}
-          DIAGNOSTIC_IMAGE_SOURCE_SHA: ${{ inputs.image_source_sha }}
-          RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY }}
-          GH_TOKEN: ${{ github.token }}
-        run: uv run --frozen --extra train python -m runpod.dinov3_controller observe
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        if: always()
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_HOME: ${{ runner.temp }}/dinov3-hf
+        run: uv run --frozen --extra train python scripts/run_dinov3.py preflight --output results/dinov3-preflight
+      - name: Preserve hashes only, not gated weights or credentials
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: dinov3-observation-${{ github.run_id }}
-          path: dinov3-results/
-          retention-days: 90
+          name: dinov3-weight-preflight-${{ github.run_id }}
+          path: results/dinov3-preflight/*.json
           if-no-files-found: error
+          retention-days: 30

@@ -221,8 +221,6 @@ def preflight_checks(api, source, github_token):
         image_provenance(image, source)
     with preflight_stage('inventory'):
         pods = api.listing('/pods', 'pods')
-    with preflight_stage('companion'):
-        concurrent = companion(pods, github_token)
     query = urllib.parse.urlencode(dict(include='AVAILABILITY', product='POD', cloud='SECURE', count=1,
                                        minCudaVersion=recipe()['required_min_cuda']))
     with preflight_stage('catalog'):
@@ -240,6 +238,8 @@ def preflight_checks(api, source, github_token):
     with preflight_stage('capacity'):
         if not regions:
             raise ValueError('No 4090 capacity meeting CUDA minimum')
+    with preflight_stage('companion'):
+        concurrent = companion(pods, github_token)
     with preflight_stage('account_budget'):
         account_budget = budget(api, reserve=TOTAL_USD_CAP + concurrent['account_reserve_usd'])
     evidence = dict(status='preflight_passed', source_sha=source, image=image, weights=report,
