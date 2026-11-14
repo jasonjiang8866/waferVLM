@@ -1,5 +1,7 @@
 # Bounded RunPod GPU experiment
 
+DINOv3 uses a separate [seed-17 sweep workflow and launch specification](../docs/dinov3-launch.md). The user approved US$10 / 500 minutes cumulatively for DINOv3 on 2026-11-14; the first attempt retains a US$3 / 100-minute ceiling. Official-weight access and fresh live checks still precede allocation; the Qwen workflow below does not launch DINOv3.
+
 Seed-confirmation implementation and approval handoff: [fixed training/repeat runners](../docs/seed-confirmation-implementation.md). No new paid workflow has been activated.
 
 **Current authorization:** US$30 / 1,100 minutes cumulative. The [validation-only 200→300 continuation](../docs/continuation-300-results.md) completed; checkpoint 250 was selected. Conservative cumulative usage is **US$5.903039 / 491.911 minutes**. Its Pod was verified absent by primary and independent cleanup; no persistent volume was created. Full states and predictions are preserved in [continuation-300-v1](https://github.com/jasonjiang8866/waferVLM/releases/tag/continuation-300-v1). Earlier diagnostic parity failures remain rejected. The [next seed-confirmation workload](../docs/seed-confirmation-plan.md) is planned but not executed. The current authorization marker remains consumed until reconciled with reviewed next-stage code.

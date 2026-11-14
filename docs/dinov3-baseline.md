@@ -1,6 +1,6 @@
 # DINOv3 visual baseline
 
-Status: implementation and CPU compatibility tests; **no pretrained DINOv3 experiment has run**. No DINOv3 accuracy, cost, GPU speed or final-holdout result is available yet. This is separate from the Qwen seed-confirmation work.
+Status: implementation, CPU compatibility tests and [bounded launch integration](dinov3-launch.md); **no pretrained DINOv3 experiment has run**. No DINOv3 accuracy, cost, GPU speed or final-holdout result is available yet. This is separate from the Qwen seed-confirmation work.
 
 ## Question and fixed arms
 
@@ -82,7 +82,7 @@ For a GitHub-hosted CPU preflight, first obtain access on the official model pag
 
 Prefer **RTX 4090** and select host CUDA capability **>=12.8** through the existing numeric lower-bound logic. The worker image reuses a pinned CUDA environment; accepting a newer host does not change the container runtime. The CPU-tested image workflow builds on PRs and publishes only through explicit `workflow_dispatch` on main; it never creates a Pod.
 
-Before paid execution: complete official-weight access/preflight, freeze source and image digest, reconcile the experiment budget/current provider quote and active Pods, and connect this workload to the reviewed RunPod controller with aggregate accounting and independently verified cleanup. The current GPU workflow still launches Qwen workloads; **do not dispatch it expecting DINOv3**. A local process timeout does not terminate a RunPod Pod or enforce the full experiment's spending cap. No existing authorization marker is reset by this change.
+Before paid execution: complete official-weight access/preflight, freeze source and image digest, reconcile the experiment budget/current provider quote and active Pods, and use the dedicated [DINOv3 controller](dinov3-launch.md) with aggregate accounting and independently verified cleanup. The current GPU workflow still launches Qwen workloads; **do not dispatch it expecting DINOv3**. A local process timeout does not terminate a RunPod Pod or enforce the full experiment's spending cap. No existing authorization marker is reset by this change.
 
 ## Verification
 

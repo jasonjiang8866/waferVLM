@@ -3,7 +3,7 @@ on:
   pull_request:
     paths:
       - .dockerignore
-      - runpod/Dockerfile.dinov3
+      - runpod/**
       - .github/workflows/dinov3-image.yml
       - src/**
       - scripts/**

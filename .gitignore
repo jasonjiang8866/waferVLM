@@ -19,3 +19,7 @@ resume-input/
 parent-artifact/
 profile-input/
 parent-release.zip
+
+# Local DINO launch outputs; publish only sanitized Actions artifacts.
+dinov3-results/
+dino-authorization/
