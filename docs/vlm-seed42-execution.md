@@ -32,6 +32,7 @@ The bounded continuation window ends 2026-11-17 00:00 UTC; it does not reset con
 Before create, the controller verifies all seven historical marker ZIP hashes and IDs,
 the last immutable result ZIP's cumulative cleanup record, a complete live marker
 inventory, current owned-Pod absence, price/capacity, CUDA >=12.8 and account guardrails.
+Dispatch history also blocks a prior paid attempt whose marker was deleted or expired.
 An unknown marker from any experiment or any owned Pod blocks allocation. The workflow
 shares the existing `wafervlm-paid-usd20` concurrency group. No RunPod or GitHub account
 credential enters the Pod. Failed or ambiguous creation is never retried automatically.

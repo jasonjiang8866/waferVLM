@@ -48,9 +48,17 @@ class LedgerTests(unittest.TestCase):
         return zipped({'run-id.txt': str(row['run_id'])+'\n'})
 
     def reconcile(self, artifacts, require_current=False):
-        with patch.object(ledger, 'request', return_value={'artifacts': artifacts}), \
+        with patch.object(ledger, 'request', side_effect=lambda url, **kw:
+                          {'artifacts': artifacts} if '/artifacts?' in url else {'workflow_runs': []}), \
              patch.object(ledger, 'artifact_bytes', side_effect=self.download):
             return ledger.reconcile('1234', require_current, self.out)
+
+    def test_deleted_marker_cannot_hide_a_previous_paid_dispatch(self):
+        previous = {'id':888, 'status':'completed', 'run_attempt':1}
+        with patch.object(ledger, 'request', side_effect=[{'workflow_runs':[previous]},
+                {'jobs':[{'steps':[{'name':ledger.PAID_STEP,'conclusion':'failure'}]}]}]), \
+             self.assertRaisesRegex(RuntimeError, 'prior paid'):
+            ledger.reconcile('1234',False,self.out)
 
     def test_all_seven_attempts_and_current_intent_verified(self):
         result = self.reconcile(self.artifacts+[self.current], True)

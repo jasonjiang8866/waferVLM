@@ -17,6 +17,7 @@ MARKER = 'runpod-authorization-wafer-20261107-usd20'
 HISTORY = json.loads((ROOT / 'runpod/vlm-history.json').read_text())
 RESULT_ID = 13706115627
 RESULT_SHA = '32024461ade6dcd34398e96a78b537c5a274e9da636ebda9a655b6618e32a250'
+PAID_STEP = 'Train seed 42, verify full states, retrieve evidence, delete Pod'
 
 
 def artifact_bytes(artifact_id, expected_sha, limit):
@@ -72,6 +73,27 @@ def reconcile(run, require_current, output):
     """Unknown/missing/expired attempts block launch, including another agent's attempt."""
     output = Path(output)
     output.mkdir(parents=True, exist_ok=True)
+    # Run history survives deleted/expired artifacts. A previous paid step must
+    # be reconciled explicitly; only visibly skipped paid steps are read-only.
+    for page in range(1, 101):
+        prior = request(f'{BASE}/actions/workflows/vlm-seed42.yml/runs?event=workflow_dispatch&per_page=100&page={page}',
+                        token=os.environ['GH_TOKEN'])
+        runs = prior.get('workflow_runs')
+        if not isinstance(runs, list):
+            raise RuntimeError('Cannot verify seed-42 dispatch history')
+        for previous in runs:
+            if str(previous.get('id')) == str(run):
+                continue
+            if previous.get('status') != 'completed' or previous.get('run_attempt') != 1:
+                raise RuntimeError('Unreconciled seed-42 dispatch')
+            jobs = request(f"{BASE}/actions/runs/{previous['id']}/jobs?per_page=100", token=os.environ['GH_TOKEN'])
+            paid = [s for j in jobs.get('jobs', []) for s in j.get('steps', []) if s.get('name') == PAID_STEP]
+            if len(paid) != 1 or paid[0].get('conclusion') != 'skipped':
+                raise RuntimeError('A prior paid seed-42 attempt requires reconciliation')
+        if len(runs) < 100:
+            break
+    else:
+        raise RuntimeError('Incomplete seed-42 dispatch history')
     expected = {str(x['run_id']): x for x in HISTORY}
     observed, current, attempts = set(), False, []
     for page in range(1, 101):
