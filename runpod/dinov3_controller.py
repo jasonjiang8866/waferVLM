@@ -14,7 +14,7 @@ import urllib.request
 from pathlib import Path
 
 from runpod.dinov3_bundle import FILES, UPLOAD_CHUNK_BYTES, cache_files, recipe, verify_archive, weight_report
-from runpod.dinov3_scheduling import PAID, companion, dispatch_history
+from runpod.dinov3_scheduling import PAID_HISTORY, companion, dispatch_history
 from runpod.provider import NoRedirect, REPOSITORY, RemoteHTTPError, Runpod, budget, finite, request
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -29,8 +29,8 @@ CLEANUP_SECONDS = 600
 TOTAL_USD_CAP = 3.0  # Conservative first-attempt ceiling within aggregate approval.
 APPROVED_TOTAL_USD = 10.0  # User approval 2026-11-14, DINO only.
 APPROVED_TOTAL_SECONDS = 500 * 60
-PRIOR_SPEND_USD = PAID['accounted_usd']
-PRIOR_RUNTIME_SECONDS = PAID['accounted_seconds']
+PRIOR_SPEND_USD = sum(p['accounted_usd'] for p in PAID_HISTORY)
+PRIOR_RUNTIME_SECONDS = sum(p['accounted_seconds'] for p in PAID_HISTORY)
 MARKER = 'runpod-authorization-' + AUTH
 
 
@@ -344,6 +344,7 @@ def launch(api):
             phase = result.get('phase')
             if phase != last_phase and isinstance(phase, str) and re.fullmatch('[a-z0-9_-]{1,40}', phase):
                 print('DINO phase: ' + phase, flush=True)
+                save('worker-status.json', {k: result[k] for k in ('status', 'phase', 'received', 'error_type') if k in result})
                 last_phase = phase
             if result.get('status') == 'running' and phase == 'awaiting_weights':
                 upload_weights(url, token, files, result)

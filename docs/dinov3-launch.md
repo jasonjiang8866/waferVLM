@@ -240,3 +240,27 @@ come from the diagnostic/live evidence, not from a passing synthetic test.
 No third paid dispatch is enabled here: the existing four-run history guard
 rejects another attempt until the second run's spending/cleanup are explicitly
 reconciled and an additional paid attempt is authorized.
+
+## Third paid attempt authorized (2026-11-14)
+
+The user explicitly authorized a third attempt and requested investigation if
+it fails. `runpod/dinov3-paid-recovery.json` pins the second paid attempt's live
+run/job identity, complete result archive and independent cleanup receipt.
+Both paid receipts are now checked before creation, with cumulative reserves
+of **US$0.10 / 360 seconds**. Remaining aggregate allowance: **US$9.90 / 494
+minutes**, including later experiments, storage, retrieval and cleanup.
+
+The history gate requires exactly five manual dispatches: the cancelled
+zero-job run, the CPU-only failure, the two reconciled paid failures and this
+new dispatch. A fourth paid attempt or an unexpected run remains blocked.
+The six seed-17 trials and their evaluation protocol are unchanged. One 4090,
+CUDA >=12.8, US$0.89/hour GPU quote ceiling, 90 minutes work plus 10 minutes
+cleanup and the cumulative US$3 sweep ceiling remain in force. The fresh
+provider preflight determines current availability and price; historical
+capacity is not a launch guarantee.
+
+Upload/download now use the same explicit client header as status polling
+(PR #29). Worker phase changes are additionally saved in `worker-status.json`
+so a failure preserves its last observed stage. A failed third attempt must
+retain transfer/worker/log evidence and verify deletion before diagnosis; no
+fourth paid attempt is automatically enabled.

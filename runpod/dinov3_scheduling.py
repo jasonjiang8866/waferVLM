@@ -24,11 +24,13 @@ VLM_AUTH = 'wafer-20261107-usd20'
 VLM_ACCOUNT_RESERVE_USD = 30.0
 CPU_FAILED_RUN = '43566277450'
 PAID = json.loads(Path(__file__).with_name('dinov3-paid-history.json').read_text())
+SECOND_PAID = json.loads(Path(__file__).with_name('dinov3-paid-recovery.json').read_text())
+PAID_HISTORY = (PAID, SECOND_PAID)
 
 
-def reconciled_paid_failure(token):
+def reconciled_paid_failure(token, receipt=None):
     """Charge the inspected transfer failure and require both absence receipts."""
-    p = PAID
+    p = PAID if receipt is None else receipt
     run = request(f"{BASE}/actions/runs/{p['run_id']}", token=token)
     if (str(run.get('id')) != p['run_id'] or run.get('head_sha') != p['source_sha']
             or run.get('head_branch') != 'main' or run.get('event') != 'workflow_dispatch'
@@ -120,21 +122,22 @@ def cancelled_before_jobs(run, token):
 
 
 def dispatch_history(data, current, token):
-    """Allow exactly one recovery after the inspected paid transfer failure."""
+    """Allow the explicitly authorized third paid attempt; a fourth stays blocked."""
     rows = data.get('workflow_runs', [])
     replaced = os.environ.get('REPLACE_QUEUED_RUN_ID', '')
     if not replaced:
         if data.get('total_count') == 1 and [str(r['id']) for r in rows] == [current]:
             return
         raise ValueError('Prior DINO dispatch requires ledger/spend/cleanup reconciliation')
-    prior = {replaced, CPU_FAILED_RUN, PAID['run_id']}
-    if (replaced != QUEUED_DINO_RUN or current in prior or data.get('total_count') != 4
-            or len(rows) != 4 or {str(r['id']) for r in rows} != {current, *prior}):
-        raise ValueError('Paid recovery requires exact reconciled four-run history')
+    prior = {replaced, CPU_FAILED_RUN, *(p['run_id'] for p in PAID_HISTORY)}
+    if (replaced != QUEUED_DINO_RUN or current in prior or data.get('total_count') != 5
+            or len(rows) != 5 or {str(r['id']) for r in rows} != {current, *prior}):
+        raise ValueError('Third paid attempt requires exact reconciled five-run history')
     previous = request(f'{BASE}/actions/runs/{replaced}', token=token)
     cancelled_before_jobs(previous, token)
     reconciled_cpu_failure(token)
-    reconciled_paid_failure(token)
+    for receipt in PAID_HISTORY:
+        reconciled_paid_failure(token, receipt)
 
 
 def companion(pods, token):
