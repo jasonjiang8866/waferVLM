@@ -1,0 +1,93 @@
+name: DINOv3 bounded seed-17 sweep
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_paid:
+        description: 'Explicit approval for one 4090 seed-17 sweep: total <= US$3, 90 minutes work + 10 minutes cleanup'
+        type: boolean
+        required: true
+        default: false
+      expected_sha:
+        description: 'Exact reviewed current main SHA; image must embed this same source'
+        type: string
+        required: true
+      image:
+        description: 'Published ghcr.io/jasonjiang8866/wafervlm@sha256:... DINOv3 image'
+        type: string
+        required: true
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  # Share the existing project mutex so Qwen and DINO cannot allocate concurrently.
+  group: wafervlm-paid-usd20
+  cancel-in-progress: false
+jobs:
+  experiment:
+    if: github.ref == 'refs/heads/main' && inputs.confirm_paid
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    env:
+      HF_HOME: ${{ runner.temp }}/dinov3-hf
+      EXPECTED_SHA: ${{ inputs.expected_sha }}
+      DINO_IMAGE: ${{ inputs.image }}
+      CONFIRM_PAID: ${{ inputs.confirm_paid }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check official-model credential before any paid resource
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          python - <<'PY'
+          import os
+          if not os.environ.get('HF_TOKEN'):
+              raise SystemExit('Configure HF_TOKEN for an account with approved official DINOv3 access.')
+          PY
+      - run: python -m pip install uv==0.13.5
+      - run: uv sync --frozen --extra train
+      - name: Load and fingerprint official weights on CPU
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: uv run --frozen --extra train python scripts/run_dinov3.py preflight --output dinov3-results/weights
+      - name: Offline DINO lifecycle and model tests
+        run: |
+          python -m unittest discover -s runpod/tests -v
+          uv run --frozen --extra train python -m unittest discover -s tests -p 'test_dinov3*.py' -v
+      - name: Current image, catalog, inventory and cost checks
+        env:
+          RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY }}
+          GH_TOKEN: ${{ github.token }}
+        run: uv run --frozen --extra train python -m runpod.dinov3_controller preflight
+      - name: Persist one-off create intent marker
+        run: |
+          mkdir -p dino-authorization
+          printf '%s\n' "$GITHUB_RUN_ID" > dino-authorization/run-id.txt
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: runpod-authorization-wafervlm-dinov3-seed17-v1
+          path: dino-authorization/
+          retention-days: 90
+          if-no-files-found: error
+      - name: Run six trials, reload selected models, retrieve evidence and delete Pod
+        env:
+          RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY }}
+          GH_TOKEN: ${{ github.token }}
+        run: uv run --frozen --extra train python -m runpod.dinov3_controller run
+      - name: Independent inventory check
+        if: always()
+        env:
+          RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY }}
+        run: python -m runpod.dinov3_controller cleanup
+      - name: Preserve results and hashes only
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: dinov3-seed17-${{ github.run_id }}
+          path: dinov3-results/
+          retention-days: 90
+          if-no-files-found: warn
