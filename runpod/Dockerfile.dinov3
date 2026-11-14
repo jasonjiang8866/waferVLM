@@ -10,5 +10,5 @@ COPY tests ./tests
 COPY runpod ./runpod
 COPY docs/evidence/wm811k-lot17.json ./docs/evidence/wm811k-lot17.json
 COPY docs/showcase/checkpoint-250 ./docs/showcase/checkpoint-250
-RUN python -m unittest discover -s tests -p 'test_dinov3*.py' -v && python -m unittest discover -s runpod/tests -v
+RUN python -m unittest discover -s tests -p 'test_dinov3*.py' -v && python -m unittest discover -s runpod/tests -p 'test_dinov3*.py' -v
 ENTRYPOINT ["python", "scripts/run_dinov3.py"]
