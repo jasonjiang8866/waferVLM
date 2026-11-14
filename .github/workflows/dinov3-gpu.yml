@@ -40,8 +40,6 @@ jobs:
       EXPECTED_SHA: ${{ inputs.expected_sha }}
       DINO_IMAGE: ${{ inputs.image }}
       CONFIRM_PAID: ${{ inputs.confirm_paid }}
-      PARALLEL_VLM_RUN_ID: ${{ inputs.parallel_vlm_run_id }}
-      REPLACE_QUEUED_RUN_ID: ${{ inputs.replace_queued_run_id }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -72,6 +70,8 @@ jobs:
           uv run --frozen --extra train python -m unittest discover -s tests -p 'test_dinov3*.py' -v
       - name: Current image, catalog, inventory and cost checks
         env:
+          PARALLEL_VLM_RUN_ID: ${{ inputs.parallel_vlm_run_id }}
+          REPLACE_QUEUED_RUN_ID: ${{ inputs.replace_queued_run_id }}
           RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY }}
           GH_TOKEN: ${{ github.token }}
         run: uv run --frozen --extra train python -m runpod.dinov3_controller preflight
@@ -88,6 +88,8 @@ jobs:
           if-no-files-found: error
       - name: Run six trials, reload selected models, retrieve evidence and delete Pod
         env:
+          PARALLEL_VLM_RUN_ID: ${{ inputs.parallel_vlm_run_id }}
+          REPLACE_QUEUED_RUN_ID: ${{ inputs.replace_queued_run_id }}
           AUTHORIZATION_ARTIFACT_ID: ${{ steps.authorization-marker.outputs.artifact-id }}
           RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY }}
           GH_TOKEN: ${{ github.token }}

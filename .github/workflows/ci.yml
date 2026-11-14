@@ -28,6 +28,11 @@ jobs:
       - run: uv run --frozen python -m unittest discover -s tests -p test_dinov3_archive.py -v
       - run: uv run --frozen wafervlm --help
       - run: python -m unittest discover -s runpod/tests -v
+      - name: DINO tests remain offline with production scheduling inputs
+        env:
+          PARALLEL_VLM_RUN_ID: '43562568201'
+          REPLACE_QUEUED_RUN_ID: '43563592797'
+        run: python -m unittest discover -s runpod/tests -p 'test_dinov3*.py' -v
   model-compatibility:
     runs-on: ubuntu-24.04
     timeout-minutes: 20

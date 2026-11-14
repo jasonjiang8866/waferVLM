@@ -1,7 +1,10 @@
 import copy
+import io
+import json
 import os
 import tempfile
 import unittest
+import zipfile
 from pathlib import Path
 from unittest.mock import Mock, patch
 
@@ -100,10 +103,12 @@ class SchedulingTests(unittest.TestCase):
 
     def test_exact_cancelled_zero_job_run_can_be_replaced(self):
         os.environ['REPLACE_QUEUED_RUN_ID'] = s.QUEUED_DINO_RUN
-        history = dict(total_count=2,workflow_runs=[{'id':999},self.previous])
+        history = dict(total_count=3,workflow_runs=[{'id':999},self.previous,{'id':int(s.CPU_FAILED_RUN)}])
         with patch.object(s,'request',side_effect=[self.previous,{'total_count':0,'jobs':[]},
-                                                  {'total_count':0,'artifacts':[]}]) as read:
+                                                  {'total_count':0,'artifacts':[]}]) as read, \
+                patch.object(s,'reconciled_cpu_failure') as cpu:
             s.dispatch_history(history,'999','fake')
+        cpu.assert_called_once_with('fake')
         self.assertEqual(read.call_count,3)
         self.assertIn('filter=all',read.call_args_list[1].args[0])
         self.assertTrue(all('method' not in x.kwargs for x in read.call_args_list))
@@ -131,6 +136,70 @@ class SchedulingTests(unittest.TestCase):
             with self.assertRaises(ValueError), patch.object(s,'request') as read:
                 s.dispatch_history(dict(total_count=len(rows),workflow_runs=rows),'999','fake')
             read.assert_not_called()
+
+
+class CpuFailureReceiptTests(unittest.TestCase):
+    def setUp(self):
+        self.receipt = json.loads(Path(s.__file__).with_name('dinov3-precreate.json').read_text())
+        p = self.receipt
+        self.run = dict(id=int(s.CPU_FAILED_RUN),head_sha=p['source_sha'],head_branch='main',
+                        event='workflow_dispatch',path='.github/workflows/dinov3-gpu.yml',
+                        run_attempt=1,status='completed',conclusion='failure')
+        self.job = dict(id=p['job_id'],status='completed',conclusion='failure',
+                        steps=[dict(name=n,status='completed',conclusion=c) for n,c in p['required_steps'].items()])
+        self.metadata = {}
+        self.payload = {}
+        for kind in ('result','independent'):
+            r = p[kind]
+            self.metadata[r['artifact_id']] = dict(id=r['artifact_id'],name=r['name'],expired=False,
+                digest='sha256:'+r['sha256'],workflow_run=dict(id=int(r['run_id']),head_sha=r['source_sha']))
+            self.payload[r['artifact_id']] = {f:(r['cleanup'] if f=='cleanup.json' else {}) for f in r['files']}
+
+    def read(self,url,**kwargs):
+        if '/artifacts/' in url:
+            return self.metadata[int(url.rsplit('/',1)[1])]
+        if '/jobs?' in url:
+            return dict(total_count=1,jobs=[self.job])
+        return self.run
+
+    def archive(self,artifact_id,sha,limit):
+        out=io.BytesIO()
+        with zipfile.ZipFile(out,'w') as z:
+            for name,data in self.payload[artifact_id].items():
+                z.writestr(name,json.dumps(data))
+        return out.getvalue()
+
+    def check(self):
+        with patch.object(s,'request',side_effect=self.read),patch.object(s,'artifact_bytes',side_effect=self.archive):
+            s.reconciled_cpu_failure('fake')
+
+    def test_exact_cpu_failure_with_two_cleanup_receipts_is_reconciled(self):
+        self.check()
+
+    def test_rerun_or_paid_step_cannot_inherit_zero_spend(self):
+        self.run['run_attempt']=2
+        with self.assertRaises(ValueError): self.check()
+        self.run['run_attempt']=1
+        for step in self.job['steps']:
+            if step['name'].startswith('Run six trials'):
+                step['conclusion']='failure'
+        with self.assertRaises(ValueError): self.check()
+
+    def test_changed_receipt_or_cleanup_is_rejected(self):
+        artifact=self.receipt['independent']['artifact_id']
+        self.metadata[artifact]['digest']='sha256:'+'0'*64
+        with self.assertRaises(ValueError): self.check()
+        self.metadata[artifact]['digest']='sha256:'+self.receipt['independent']['sha256']
+        self.payload[artifact]['cleanup.json']={**self.receipt['independent']['cleanup'],'checks':1}
+        with self.assertRaises(ValueError): self.check()
+
+    def test_resource_intent_or_extra_job_is_rejected(self):
+        artifact=self.receipt['result']['artifact_id']
+        self.payload[artifact]['provision.json']={'pod_id':'unexpected'}
+        with self.assertRaises(ValueError): self.check()
+        del self.payload[artifact]['provision.json']
+        self.job['id']+=1
+        with self.assertRaises(ValueError): self.check()
 
 
 if __name__ == '__main__':
