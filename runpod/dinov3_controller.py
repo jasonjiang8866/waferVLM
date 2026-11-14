@@ -11,6 +11,7 @@ import time
 import urllib.parse
 import urllib.error
 import urllib.request
+from contextlib import contextmanager
 from pathlib import Path
 
 from runpod.dinov3_bundle import FILES, UPLOAD_CHUNK_BYTES, cache_files, recipe, verify_archive, weight_report
@@ -32,6 +33,47 @@ APPROVED_TOTAL_SECONDS = 500 * 60
 PRIOR_SPEND_USD = sum(p['accounted_usd'] for p in PAID_HISTORY)
 PRIOR_RUNTIME_SECONDS = sum(p['accounted_seconds'] for p in PAID_HISTORY)
 MARKER = 'runpod-authorization-' + AUTH
+
+# Only messages authored by our guards may leave the process. Remote exception
+# strings, response bodies, account inventory and credentials remain private.
+SAFE_PREFLIGHT_REASONS = frozenset({
+    'Unexpected repository/run', 'Explicit paid dispatch/current SHA/first attempt required',
+    'Actions read token required', 'main moved before launch',
+    'Pinned official CPU weight preflight required', 'Cached weights differ from CPU preflight',
+    'Pinned waferVLM image digest required', 'Invalid image content digest',
+    'Image content digest mismatch', 'Exactly one linux/amd64 manifest required',
+    'Image source differs from reviewed main SHA', 'Existing project Pod must be reconciled',
+    'Unreviewed parallel VLM run', 'Parallel VLM Actions identity mismatch',
+    'Multiple project Pods; refuse another allocation', 'Parallel VLM Pod identity/state/rate mismatch',
+    '4090 quote exceeds cap', 'Insufficient cleanup/uncertainty reserve',
+    'No 4090 capacity meeting CUDA minimum', 'Invalid budget reserve',
+    'Read-only dispatch/main/source required', 'Read-only provider mutation forbidden',
+})
+
+
+@contextmanager
+def preflight_stage(name):
+    save('preflight-progress.json', dict(stage=name, status='checking'))
+    try:
+        yield
+    except Exception as exc:
+        record = dict(stage=name, status='failed', error_type=type(exc).__name__)
+        if type(exc) is ValueError and str(exc) in SAFE_PREFLIGHT_REASONS:
+            record['reason'] = str(exc)
+        if isinstance(exc, RemoteHTTPError):
+            record.update(http_status=exc.status, categories=exc.categories)
+        save('preflight-progress.json', record)
+        print('DINO preflight: ' + json.dumps(record), flush=True)
+        raise
+    save('preflight-progress.json', dict(stage=name, status='passed'))
+
+
+class ReadOnlyRunpod(Runpod):
+    """Observation cannot create, stop or delete a Pod, including on failure."""
+    def call(self, path, method='GET', body=None):
+        if method != 'GET' or body is not None:
+            raise ValueError('Read-only provider mutation forbidden')
+        return super().call(path, method, body)
 
 
 def save(name, data):
@@ -146,27 +188,64 @@ def ledger_guard():
 
 
 def preflight(api):
-    source, github_token = manual_guard()
+    with preflight_stage('authorization'):
+        source, github_token = manual_guard()
+    return preflight_checks(api, source, github_token)
+
+
+def observe(api):
+    """Same read-only checks against a specified immutable image; no launch gate."""
+    with preflight_stage('observation_identity'):
+        identity()
+        source = os.environ.get('DIAGNOSTIC_IMAGE_SOURCE_SHA', '')
+        token = os.environ.get('GH_TOKEN', '')
+        if (os.environ.get('GITHUB_EVENT_NAME') != 'workflow_dispatch'
+                or os.environ.get('GITHUB_REF') != 'refs/heads/main'
+                or not re.fullmatch('[a-f0-9]{40}', source) or not token
+                or not isinstance(api, ReadOnlyRunpod)):
+            raise ValueError('Read-only dispatch/main/source required')
+    evidence = preflight_checks(api, source, token)
+    evidence.update(status='read_only_observation_passed', controller_sha=git('rev-parse', 'HEAD'),
+                    paid_compute_started=False)
+    save('preflight.json', evidence)
+    return evidence
+
+
+def preflight_checks(api, source, github_token):
     image = os.environ.get('DINO_IMAGE', '')
-    report = weight_report(OUT / 'weights' / 'weights.json')
-    cache_files(report)
-    image_provenance(image, source)
-    pods = api.listing('/pods', 'pods')
-    concurrent = companion(pods, github_token)
+    with preflight_stage('weight_report'):
+        report = weight_report(OUT / 'weights' / 'weights.json')
+    with preflight_stage('weight_cache'):
+        cache_files(report)
+    with preflight_stage('image_provenance'):
+        image_provenance(image, source)
+    with preflight_stage('inventory'):
+        pods = api.listing('/pods', 'pods')
     query = urllib.parse.urlencode(dict(include='AVAILABILITY', product='POD', cloud='SECURE', count=1,
                                        minCudaVersion=recipe()['required_min_cuda']))
-    catalog = api.call('/catalog/gpus/' + urllib.parse.quote(GPU, safe='') + '?' + query)
+    with preflight_stage('catalog'):
+        catalog = api.call('/catalog/gpus/' + urllib.parse.quote(GPU, safe='') + '?' + query)
     rate = catalog.get('price', {}).get('secure')
-    quoted = cost(rate)
+    save('catalog.json', dict(gpu=GPU, required_min_cuda=recipe()['required_min_cuda'],
+                             secure_hourly_usd=rate if finite(rate) else None,
+                             available_region_count=sum(d.get('availability') in {'LOW', 'MEDIUM', 'HIGH'}
+                                                        for d in catalog.get('dataCenters', []))))
+    with preflight_stage('quote'):
+        quoted = cost(rate)
     regions = sorted(d['id'] for d in catalog.get('dataCenters', [])
                      if d.get('availability') in {'LOW', 'MEDIUM', 'HIGH'}
                      and re.fullmatch(r'[A-Za-z0-9-]+', d.get('id', '')))
-    if not regions:
-        raise ValueError('No 4090 capacity meeting CUDA minimum')
+    with preflight_stage('capacity'):
+        if not regions:
+            raise ValueError('No 4090 capacity meeting CUDA minimum')
+    with preflight_stage('companion'):
+        concurrent = companion(pods, github_token)
+    with preflight_stage('account_budget'):
+        account_budget = budget(api, reserve=TOTAL_USD_CAP + concurrent['account_reserve_usd'])
     evidence = dict(status='preflight_passed', source_sha=source, image=image, weights=report,
                     gpu=GPU, min_cuda_version=recipe()['required_min_cuda'], regions=regions, cost=quoted,
                     companion=concurrent,
-                    budget=budget(api, reserve=TOTAL_USD_CAP + concurrent['account_reserve_usd']),
+                    budget=account_budget,
                     checked_epoch=time.time())
     save('preflight.json', evidence)
     return evidence
@@ -367,11 +446,12 @@ def launch(api):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('mode', choices=['preflight', 'run', 'cleanup'])
+    parser.add_argument('mode', choices=['preflight', 'observe', 'run', 'cleanup'])
     args = parser.parse_args()
     identity()
     try:
-        {'preflight': preflight, 'run': launch, 'cleanup': cleanup}[args.mode](Runpod())
+        api = ReadOnlyRunpod() if args.mode == 'observe' else Runpod()
+        {'preflight': preflight, 'observe': observe, 'run': launch, 'cleanup': cleanup}[args.mode](api)
     except Exception as exc:
         # Never expose a provider response, URL credential, or account payload.
         save('error.json', dict(mode=args.mode, error_type=type(exc).__name__))
