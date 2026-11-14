@@ -190,7 +190,9 @@ class DinoLifecycleTests(unittest.TestCase):
             url = 'http://127.0.0.1:' + str(server.server_port)
             def put(name, content, token='test-only'):
                 req = urllib.request.Request(url+'/weights/'+name, data=content, method='PUT',
-                                             headers={'Authorization': 'Bearer '+token})
+                    headers={'Authorization': 'Bearer '+token,
+                             'Content-Range': f'bytes 0-{len(content)-1}/{len(content)}',
+                             'X-Chunk-SHA256': hashlib.sha256(content).hexdigest()})
                 return urllib.request.urlopen(req)
             try:
                 for name, content, token in [('config.json', data['config.json'], 'wrong'),
@@ -202,8 +204,10 @@ class DinoLifecycleTests(unittest.TestCase):
                     with put(name, content) as response:
                         self.assertEqual(response.status, 204)
                 self.assertTrue(w.READY.is_set())
+                with put('config.json', data['config.json']) as replay:
+                    self.assertEqual(replay.status, 204)
                 with self.assertRaises(urllib.error.HTTPError):
-                    put('config.json', data['config.json'])
+                    put('config.json', b'cannot replace verified content')
                 self.assertEqual((Path(tmp)/'model.safetensors').read_bytes(), data['model.safetensors'])
             finally:
                 server.shutdown()
