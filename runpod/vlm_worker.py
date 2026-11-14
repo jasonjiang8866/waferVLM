@@ -32,6 +32,50 @@ def write(name, data):
     (OUT / name).write_text(json.dumps(data, indent=2, allow_nan=False))
 
 
+def cpu_snapshot(cgroup=Path('/sys/fs/cgroup')):
+    """Read visible CPU limits/counters only; never change scheduling or threads.
+
+    Parent-cgroup limits may be hidden by the container namespace. These are
+    observations for a later controlled performance experiment, not a claim
+    that the dashboard's CPU percentage has been explained.
+    """
+    def read(relative):
+        try:
+            with (cgroup / relative).open() as f:
+                return f.read(4096).strip()
+        except OSError:
+            return None
+    try:
+        affinity = len(os.sched_getaffinity(0))
+    except (AttributeError, OSError):
+        affinity = None
+    result = {'checked_epoch': time.time(), 'logical_cpus': os.cpu_count(),
+              'affinity_cpus': affinity, 'quota_cpus': None, 'version': None,
+              'counters': {}, 'ancestor_limits_verified': False}
+    maximum = read('cpu.max')
+    try:
+        if maximum is not None:
+            quota, period = maximum.split()
+            result['version'] = 2
+            result['quota_cpus'] = int(quota) / int(period) if quota != 'max' and int(period) > 0 else None
+            stat = read('cpu.stat')
+        else:
+            quota, period = read('cpu/cpu.cfs_quota_us'), read('cpu/cpu.cfs_period_us')
+            result['version'] = 1 if quota is not None else None
+            if quota is not None and period is not None and int(quota) > 0 and int(period) > 0:
+                result['quota_cpus'] = int(quota) / int(period)
+            stat = read('cpu/cpu.stat')
+        allowed = {'usage_usec', 'user_usec', 'system_usec', 'nr_periods',
+                   'nr_throttled', 'throttled_usec', 'throttled_time'}
+        for line in (stat or '').splitlines():
+            key, value = line.split()
+            if key in allowed and int(value) >= 0:
+                result['counters'][key] = int(value)
+    except (ValueError, ZeroDivisionError):
+        result['parse_error'] = True
+    return result
+
+
 def progress_snapshot():
     """Read only bounded progress, never serve subprocess logs or credentials."""
     snapshot = dict(RESULT)
@@ -89,6 +133,7 @@ def work():
               'config_sha256': os.environ['WAFER_CONFIG_SHA'], 'seed': None}
     try:
         OUT.mkdir(parents=True, exist_ok=False)  # restart must not rerun training
+        write('cpu-start.json', cpu_snapshot())
         seed = os.environ.get('WAFER_SEED', '')
         if seed not in {'42', '123'}:
             raise ValueError('unsupported_training_seed')
@@ -158,6 +203,7 @@ def work():
             os.killpg(child.pid, signal.SIGKILL)
             child.wait()
         if OUT.is_dir():
+            write('cpu-end.json', cpu_snapshot())
             write('worker.json', result)
             # Keep checkpoints and their existing checksums for exact independent verification.
             with tarfile.open(ARCHIVE, 'w:gz') as tar:

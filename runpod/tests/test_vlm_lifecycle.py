@@ -30,6 +30,8 @@ class LedgerTests(unittest.TestCase):
         self.env.start(); self.addCleanup(self.env.stop)
         self.precreate = patch.object(ledger, 'reconciled_precreate', return_value=None)
         self.precreate.start(); self.addCleanup(self.precreate.stop)
+        completed = patch.object(ledger, 'COMPLETED', [])
+        completed.start(); self.addCleanup(completed.stop)
         self.artifacts = [dict(name=ledger.MARKER, id=x['marker_artifact_id'],
             digest='sha256:'+x['marker_sha256'], expired=False,
             workflow_run={'id': x['run_id']}) for x in ledger.HISTORY]
@@ -271,10 +273,17 @@ class CompletedReceipts(unittest.TestCase):
         self.run = dict(head_sha='a'*40, run_attempt=1, status='completed', conclusion='success',
             event='workflow_dispatch', head_branch='main', path='.github/workflows/vlm-seed42.yml')
 
-    def check(self, cleanup=None, accepted=None, spec=None, independent=None):
-        raw = zipped({'cleanup.json':json.dumps(cleanup or self.cleanup),
-            'acceptance.json':json.dumps(accepted or self.accepted),
-            'launch-spec.json':json.dumps(spec or self.spec)})
+    def check(self, cleanup=None, accepted=None, spec=None, independent=None, worker=None):
+        files = {'cleanup.json':json.dumps(cleanup or self.cleanup),
+                 'launch-spec.json':json.dumps(spec or self.spec)}
+        if self.pin.get('recovery'):
+            files['result.json'] = json.dumps(worker or dict(status='accepted',seed=42,
+                controller_sha='a'*40,source_sha=self.spec.get('source_sha'),
+                profiles=['seed-confirmation'],quality_accepted=False,
+                archive={'sha256':self.accepted.get('archive_sha256')}))
+        else:
+            files['acceptance.json'] = json.dumps(accepted or self.accepted)
+        raw = zipped(files)
         self.pin['result_sha256'] = hashlib.sha256(raw).hexdigest()
         cleanup_zip = zipped({'cleanup.json':json.dumps(independent or self.independent)})
         with patch.dict(os.environ, GH_TOKEN='test'), \
@@ -310,6 +319,19 @@ class CompletedReceipts(unittest.TestCase):
     def test_empty_receipts_do_not_invent_seed42_acceptance(self):
         with patch.object(ledger,'COMPLETED',[]):
             self.assertEqual(ledger.completed_receipts(self.out),([],5.903039,491.911*60))
+
+    def test_failed_verifier_recovery_requires_matching_worker_and_full_archive_check(self):
+        self.pin['recovery']='canonical_tokenizer_size_cap'
+        self.run['conclusion']='failure'
+        self.assertEqual(self.check()[1:],(7.0,36000))
+        for cache in self.out.glob('completed-*.zip'): cache.unlink()
+        with self.assertRaisesRegex(RuntimeError,'complete matching worker'):
+            self.check(worker={'status':'rejected'})
+
+    def test_recovery_does_not_relabel_original_failure_as_success(self):
+        self.pin['recovery']='canonical_tokenizer_size_cap'
+        with self.assertRaisesRegex(RuntimeError,'identity or outcome'):
+            self.check()
 
 
 class NextSeedLifecycle(unittest.TestCase):
@@ -361,6 +383,34 @@ class NextSeedLifecycle(unittest.TestCase):
     def test_unsupported_seed_and_insufficient_remaining_time_block(self):
         with patch.dict(os.environ,WAFER_VLM_SEED='17'),self.assertRaises(RuntimeError): c.identity()
         with self.assertRaises(ValueError): c.quote(.89,dict(usd=7.0,seconds=1000*60))
+
+
+class CpuObservation(unittest.TestCase):
+    def test_visible_quota_and_throttling_without_scheduling_changes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            (root/'cpu.max').write_text('400000 100000')
+            (root/'cpu.stat').write_text('usage_usec 500\nnr_throttled 12\nthrottled_usec 200\n')
+            result=worker.cpu_snapshot(root)
+            self.assertEqual(result['quota_cpus'],4)
+            self.assertEqual(result['counters']['nr_throttled'],12)
+            self.assertFalse(result['ancestor_limits_verified'])
+            (root/'cpu.max').write_text('max 100000')
+            self.assertIsNone(worker.cpu_snapshot(root)['quota_cpus'])
+            (root/'cpu.max').write_text('malformed')
+            self.assertTrue(worker.cpu_snapshot(root)['parse_error'])
+
+    def test_v1_or_missing_cgroup_is_not_guessed(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            self.assertIsNone(worker.cpu_snapshot(root)['quota_cpus'])
+            (root/'cpu').mkdir()
+            (root/'cpu/cpu.cfs_quota_us').write_text('200000')
+            (root/'cpu/cpu.cfs_period_us').write_text('100000')
+            (root/'cpu/cpu.stat').write_text('throttled_time 1234')
+            result=worker.cpu_snapshot(root)
+            self.assertEqual((result['version'],result['quota_cpus']),(1,2))
+            self.assertEqual(result['counters']['throttled_time'],1234)
 
 
 if __name__ == '__main__':

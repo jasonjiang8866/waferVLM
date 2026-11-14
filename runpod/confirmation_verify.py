@@ -7,6 +7,19 @@ from pathlib import Path, PurePosixPath
 
 MAX_FILES = 10000
 MAX_BYTES = 4 * 1024**3
+MAX_JSON_BYTES = 8_000_000
+MAX_TOKENIZER_BYTES = 32_000_000
+
+
+def json_member_limit(path):
+    # The pinned Qwen processor exports a 19,989,343-byte vocabulary. Only its
+    # four canonical adapter paths get the larger bound; experiment metadata
+    # retains the 8 MB cap. Every tokenizer is also covered by stage/tree hashes.
+    if (len(path.parts) == 5 and path.parts[:2] == ('results', 'training')
+            and path.parts[2] in {'step100', 'step150', 'step200', 'step250'}
+            and path.parts[3:] == ('adapter', 'tokenizer.json')):
+        return MAX_TOKENIZER_BYTES
+    return MAX_JSON_BYTES
 
 
 def unpack(archive, destination):
@@ -26,9 +39,10 @@ def unpack(archive, destination):
             if not member.isdir() and not member.isfile():
                 raise ValueError('Links/devices are not permitted')
             total += member.size
-            if (member.size < 0 or total > MAX_BYTES
-                    or (p.suffix in {'.json', '.jsonl'} and member.size > 8_000_000)):
+            if member.size < 0 or total > MAX_BYTES:
                 raise ValueError('Archive exceeds unpacked size cap')
+            if p.suffix in {'.json', '.jsonl'} and member.size > json_member_limit(p):
+                raise ValueError('Archive JSON member exceeds size cap: ' + str(p))
             out = destination.joinpath(*p.parts)
             if member.isdir():
                 out.mkdir(parents=True, exist_ok=True)

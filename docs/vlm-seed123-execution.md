@@ -4,14 +4,16 @@ This prepares the second fresh seed of the frozen
 [confirmation protocol](seed-confirmation-plan.md). The first seed-42 GPU run is
 [43562568201](https://github.com/jasonjiang8866/waferVLM/actions/runs/43562568201),
 launched on 2026-11-14 from `537e59bd34e1415bf5091b90bb270fcc3ac08f22`.
-Live logs have confirmed optimizer updates. Completion, checkpoint integrity,
-final cost and cleanup are still pending at the time of this preparation.
+All 250 updates completed. The original workflow failed in archive verification
+because four valid 19,989,343-byte tokenizer exports exceeded its generic 8 MB
+JSON cap. The original bytes now pass the corrected verifier; see the
+[seed-42 result and recovery](vlm-seed42-results.md).
 
 ## Admission gate
 
-`runpod/vlm-completed.json` is intentionally empty. Do not fill it with estimated
-success, synthetic test fixtures or a workflow's green status alone. Before
-dispatching seed 123:
+`runpod/vlm-completed.json` now pins the recovered seed-42 receipt. The original
+failed Actions conclusion is retained, with an explicit recovery reason and
+full archive re-verification. For each future receipt:
 
 1. Download the seed-42 authorization marker, result ZIP and independent-cleanup
    ZIP. Record their exact artifact IDs and SHA256 values, run ID and controller SHA.
@@ -26,7 +28,7 @@ dispatching seed 123:
    exact SHA. `confirm_paid=false` runs GET-only preflight; `true` may allocate one
    Pod only after all gates pass. Reruns cannot allocate.
 
-The controller rechecks immutable ZIP bytes, all four training stages and both
+The controller and the CPU-only CI receipt job recheck immutable ZIP bytes, all four training stages and both
 endpoint states, original run identity, cumulative consumption, and both cleanup
 receipts. Missing acceptance, altered history, any prior unreviewed paid attempt,
 or insufficient remaining budget blocks allocation. It never treats quality as
@@ -63,3 +65,12 @@ It does not evaluate the test set or final 148-image lot holdout.
 After seeds 17, 42 and 123 have frozen step-200/250 endpoints, the next experiment
 is the planned 18 fresh-process validation passes. This PR does not dispatch that
 evaluation, select a winning checkpoint or unlock the final holdout.
+
+## CPU/GPU utilization follow-up
+
+The next worker records CPU affinity, visible cgroup v1/v2 quota and start/end
+usage/throttling counters. It does not alter thread counts, data loading, kernels
+or the frozen training recipe. Hidden ancestor limits remain explicitly
+unverified. These observations let a later isolated performance experiment
+distinguish CPU quota throttling from the already-observed DeltaNet fallback
+launch overhead; no speedup is claimed here.

@@ -6,6 +6,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 FILES = {"config.json": 1_000_000, "model.safetensors": 256 * 1024**2}
+UPLOAD_CHUNK_BYTES = 4 * 1024**2
 
 
 def recipe():

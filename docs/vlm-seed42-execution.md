@@ -78,7 +78,8 @@ No second paid dispatch was submitted during this repair.
 
 The repair was merged in PR #24. The subsequent authorized
 [run 43562568201](https://github.com/jasonjiang8866/waferVLM/actions/runs/43562568201)
-has created a GPU Pod and reached real optimizer updates. Its result and cleanup
-must be verified before recording acceptance. The
+completed all 250 steps. Its original verifier rejected oversized tokenizer JSON;
+the corrected independent verifier accepted the preserved archive and both
+cleanup records establish Pod absence. See [the result report](vlm-seed42-results.md). The
 [seed-123 preparation](vlm-seed123-execution.md) carries that verified consumption
-forward and remains blocked while the completed-run receipt is absent.
+forward from the pinned recovered receipt.

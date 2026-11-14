@@ -163,6 +163,9 @@ def provenance():
         head,
         "--",
         "src", "scripts", "configs", "uv.lock", "pyproject.toml", "runpod/Dockerfile.confirmation",
+        # This independent DINO proxy diagnostic is never imported/executed by
+        # the VLM worker; merging it does not change the pinned VLM workload.
+        ":(exclude)scripts/check_dinov3_proxy.py",
     )
     if changed:
         raise RuntimeError("Current workload differs from pinned image; review image/source pin")

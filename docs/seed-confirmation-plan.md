@@ -1,6 +1,8 @@
 # Fixed-recipe seed and untouched-lot confirmation
 
-Prepared 2026-11-11 SGT. This plan has not been executed and does not launch compute.
+Protocol frozen 2026-11-11 SGT. Seed 42 completed and was independently recovered
+on 2026-11-14; see [execution evidence](vlm-seed42-results.md). This plan itself
+does not launch compute or authorize recipe changes.
 
 The [continuation study](continuation-300-results.md) selected checkpoint 250 by validation macro-F1. Its gain over the re-evaluated checkpoint 200 is comparable to the observed cross-run difference at unchanged step-200 weights. Freeze the comparison now; adding more steps on the same seed would not establish repeatability or lot generalization.
 

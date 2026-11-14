@@ -1,0 +1,52 @@
+{
+  "run_id": "43566277450",
+  "source_sha": "f851c88e1dd40f99bb03157c163dda4ec9d564fe",
+  "job_id": 132360723923,
+  "estimated_gpu_usd": 0,
+  "gpu_seconds": 0,
+  "required_steps": {
+    "Load and fingerprint official weights on CPU": "success",
+    "Offline DINO lifecycle and model tests": "failure",
+    "Current image, catalog, inventory and cost checks": "skipped",
+    "Persist one-off create intent marker": "skipped",
+    "Run actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02": "skipped",
+    "Run six trials, reload selected models, retrieve evidence and delete Pod": "skipped",
+    "Independent inventory check": "success"
+  },
+  "result": {
+    "artifact_id": 14102875938,
+    "name": "dinov3-seed17-43566277450",
+    "sha256": "0bf323a51d28cbaa44a3247701812f887977e8f6fe13d124d11b0fda3943399f",
+    "run_id": "43566277450",
+    "source_sha": "f851c88e1dd40f99bb03157c163dda4ec9d564fe",
+    "files": [
+      "cleanup.json",
+      "weights/checksums.json",
+      "weights/weights.json"
+    ],
+    "cleanup": {
+      "status": "verified_absent",
+      "run_id": "43566277450",
+      "checks": 12,
+      "persistent_volumes_created": false,
+      "checked_epoch": 1794637707.280026
+    }
+  },
+  "independent": {
+    "artifact_id": 14102672204,
+    "name": "dinov3-cleanup-43566277450",
+    "sha256": "0f35d411d399fdb0cc06132db77f24aab3195b36c34395b4424782f04510ee81",
+    "run_id": "43566510887",
+    "source_sha": "f851c88e1dd40f99bb03157c163dda4ec9d564fe",
+    "files": [
+      "cleanup.json"
+    ],
+    "cleanup": {
+      "status": "verified_absent",
+      "run_id": "43566277450",
+      "checks": 12,
+      "persistent_volumes_created": false,
+      "checked_epoch": 1794637835.0855174
+    }
+  }
+}

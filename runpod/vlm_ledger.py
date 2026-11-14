@@ -135,13 +135,17 @@ def completed_receipts(output):
     verified = []
     for p in COMPLETED:
         seed = p['seed']
+        recovery = p.get('recovery')
+        if recovery not in (None, 'canonical_tokenizer_size_cap'):
+            raise RuntimeError('Unknown completed-run recovery reason')
         if seed not in {42, 123} or any(x['seed'] == seed or x['run_id'] == p['run_id'] for x in verified):
             raise RuntimeError('Duplicate or unsupported completed seed receipt')
         if seed == 123 and not any(x['seed'] == 42 for x in verified):
             raise RuntimeError('Completed seed receipts are out of order')
         run = request(f"{BASE}/actions/runs/{p['run_id']}", token=os.environ['GH_TOKEN'])
         if (run.get('head_sha') != p['controller_sha'] or run.get('run_attempt') != 1
-                or run.get('status') != 'completed' or run.get('conclusion') != 'success'
+                or run.get('status') != 'completed'
+                or run.get('conclusion') != ('failure' if recovery else 'success')
                 or run.get('event') != 'workflow_dispatch' or run.get('head_branch') != 'main'
                 or run.get('path') != f'.github/workflows/vlm-seed{seed}.yml'):
             raise RuntimeError('Completed training run identity or outcome changed')
@@ -152,8 +156,26 @@ def completed_receipts(output):
         if hashlib.sha256(raw).hexdigest() != p['result_sha256']:
             raise RuntimeError('Completed result cache changed')
         cleanup = zip_json(raw, 'cleanup.json')
-        accepted = zip_json(raw, 'acceptance.json')
         spec = zip_json(raw, 'launch-spec.json')
+        if recovery:
+            # The original controller retrieved complete training but rejected a
+            # legitimate 20 MB tokenizer before writing acceptance.json. Never
+            # rewrite that failed run as green: recompute all acceptance gates.
+            with zipfile.ZipFile(io.BytesIO(raw)) as z:
+                if 'acceptance.json' in z.namelist():
+                    raise RuntimeError('Recovery unexpectedly contains prior acceptance')
+            worker_result = zip_json(raw, 'result.json')
+            accepted = p['acceptance']
+            if (worker_result.get('status') != 'accepted'
+                    or worker_result.get('seed') != seed
+                    or worker_result.get('controller_sha') != p['controller_sha']
+                    or worker_result.get('source_sha') != spec.get('source_sha')
+                    or worker_result.get('profiles') != ['seed-confirmation']
+                    or worker_result.get('quality_accepted') is not False
+                    or worker_result.get('archive', {}).get('sha256') != accepted.get('archive_sha256')):
+                raise RuntimeError('Recovery lacks a complete matching worker result')
+        else:
+            accepted = zip_json(raw, 'acceptance.json')
         if (cleanup != p['cleanup'] or accepted != p['acceptance']
                 or cleanup.get('status') != 'verified_absent'
                 or cleanup.get('name') != f"wafer-20261107-usd20-vlm{seed}-{p['run_id']}"
@@ -353,3 +375,22 @@ def dataset_metadata(output):
     directory.mkdir(exist_ok=True)
     (directory / 'dataset.json').write_bytes(data)
     return directory
+
+
+def main():
+    import argparse
+    parser = argparse.ArgumentParser(description='Read-only verification of pinned VLM receipts; no RunPod calls.')
+    parser.add_argument('mode', choices=['verify-completed'])
+    parser.add_argument('--output', type=Path, default=Path('vlm-receipt-check'))
+    args = parser.parse_args()
+    args.output.mkdir(parents=True, exist_ok=True)
+    pins, usd, seconds = completed_receipts(args.output)
+    summary = dict(status='verified', runs=[p['run_id'] for p in pins],
+                   cumulative_estimated_usd=usd, cumulative_seconds=seconds,
+                   quality_accepted=False, holdout_accessed=False)
+    (args.output/'receipt-summary.json').write_text(json.dumps(summary, indent=2)+'\n')
+    print(json.dumps(summary))
+
+
+if __name__ == '__main__':
+    main()

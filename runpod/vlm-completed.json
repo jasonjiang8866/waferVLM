@@ -1,1 +1,73 @@
-[]
+[
+  {
+    "seed": 42,
+    "run_id": 43562568201,
+    "controller_sha": "537e59bd34e1415bf5091b90bb270fcc3ac08f22",
+    "marker_artifact_id": 14100597084,
+    "marker_sha256": "0fbdc49903f33518b7887226a77b6522541035948db6b28e9182f39c94a0a71e",
+    "result_artifact_id": 14104346663,
+    "result_sha256": "fabbcef0155c8c5f379da2d353654717f8a39fb4f699751a6b733b112a6d7c1e",
+    "independent_cleanup_artifact_id": 14103842479,
+    "independent_cleanup_sha256": "fc27bae978bf4f1256c1f99992007a29b5b5925034bec65fea3f61e28be67edd",
+    "recovery": "canonical_tokenizer_size_cap",
+    "acceptance": {
+      "status": "accepted",
+      "seed": 42,
+      "endpoints": [
+        {
+          "seed": 42,
+          "step": 200,
+          "files": {
+            "adapter_config.json": "71087778e9140e8d82790a6586f60823425694974045351354a273bf9afdad90",
+            "adapter_model.safetensors": "b0b6918dc761aabb7fa17781f7cff70a702a385c63e30a16e5aa06da628035cc",
+            "optimizer.pt": "e9d98d5b507c8f8ae8be218c5f5107f0c0432a4b65ab0d56158819bca14cccbf",
+            "rng_state.pth": "f4a9f217e852f439efa6bd32fde98d6867f11aa6ea13ddc021ba10af6a0b0934",
+            "scheduler.pt": "37c9346d225deccff771594bb8343dc5fe37100b59d484fb90194174b473c854",
+            "trainer_state.json": "7d3747690a39c6580caeab2f186945d4119f8c8e4c515a1deb0b8deecfbd38bd",
+            "training_args.bin": "bcdcd936be38121b38decee4557e9d03f23e7cc28ca5464639a0d084cf67db50"
+          },
+          "run_sha256": "71c0c8b65ee29cf93f601d967b178d0b01f75bf4d686aaa8dea9c5c4575c5278"
+        },
+        {
+          "seed": 42,
+          "step": 250,
+          "files": {
+            "adapter_config.json": "71087778e9140e8d82790a6586f60823425694974045351354a273bf9afdad90",
+            "adapter_model.safetensors": "9c46d6fb0840ae0eacf4a1802e5f9edf3d17ed1ed7670665ed652e27db568b3a",
+            "optimizer.pt": "92601c99246fd894cdcd612810269330b749497f5aec937c1f724059d87f82b3",
+            "rng_state.pth": "f4a9f217e852f439efa6bd32fde98d6867f11aa6ea13ddc021ba10af6a0b0934",
+            "scheduler.pt": "3fba097194f6407bf8d2166ee08e5800211d030ca2bf6ec1c0e3dab68f30706e",
+            "trainer_state.json": "38752aece3399cd5837feb831d58d1c033b189cda5c5c63ff2a1c20b14ecca97",
+            "training_args.bin": "39d7f21e911f68888b4879a3bcfac5077d2bf731c87fb189a37659fd07b43da1"
+          },
+          "run_sha256": "3bf464f1dee9e71e6a281bdf9f49784f47411293cbc993e42a3d0dfafa2d2ddf"
+        }
+      ],
+      "archive_sha256": "3296b25380b1e2f553cc1d29908eb347d1f4bfdf6a7c6d51d1607af4b3ddaf1e",
+      "quality_accepted": false,
+      "holdout_accessed": false
+    },
+    "cleanup": {
+      "status": "verified_absent",
+      "name": "wafer-20261107-usd20-vlm42-43562568201",
+      "checked_epoch": 1794640340.164011,
+      "consecutive_absent_checks": 3,
+      "creation_confirmed": true,
+      "elapsed_billing_bound_s": 5524.365254878998,
+      "estimated_total_usd": 7.282486157393892,
+      "within_budget": true,
+      "estimated_total_seconds": 35039.025254879,
+      "within_runtime": true,
+      "persistent_volumes_created": false,
+      "cost_basis": "conservative_intent_to_absence_estimate_not_invoice"
+    },
+    "independent_cleanup": {
+      "status": "verified_absent",
+      "name": "wafer-20261107-usd20-vlm42-43562568201",
+      "checked_epoch": 1794640385.3381472,
+      "consecutive_absent_checks": 3,
+      "creation_confirmed": false,
+      "cost": "unverified_no_local_intent"
+    }
+  }
+]

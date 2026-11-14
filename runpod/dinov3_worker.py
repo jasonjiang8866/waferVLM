@@ -3,6 +3,7 @@ import hashlib
 import hmac
 import json
 import os
+import re
 import shutil
 import signal
 import subprocess
@@ -13,7 +14,7 @@ import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
-from runpod.dinov3_bundle import FILES, recipe, select, trials
+from runpod.dinov3_bundle import FILES, UPLOAD_CHUNK_BYTES, recipe, select, trials
 
 ROOT = Path('/app')
 OUT = Path('/workspace/dino-results')
@@ -59,35 +60,50 @@ class Handler(BaseHTTPRequestHandler):
             size = int(self.headers.get('Content-Length', '0'))
         except ValueError:
             size = 0
-        if self.path != '/weights/' + name or name not in FILES or not 0 < size <= FILES[name]:
+        span = re.fullmatch(r'bytes (\d+)-(\d+)/(\d+)', self.headers.get('Content-Range', ''))
+        if self.path != '/weights/' + name or name not in FILES or not span:
             self.send_error(400)
             return
-        # Serialize retries; neither arbitrary paths nor overwrites are accepted.
+        start, end, total = map(int, span.groups())
+        if not (0 <= start <= end < total <= FILES[name] and end-start+1 == size
+                and 0 < size <= UPLOAD_CHUNK_BYTES):
+            self.send_error(400)
+            return
+        # Read at most one bounded chunk. Commit only authenticated, hash-checked
+        # bytes. Replaying an acknowledged chunk is safe after a lost response.
         with LOCK:
             target = cache_root() / name
-            if target.exists():
-                self.send_error(409)
-                return
             target.parent.mkdir(parents=True, exist_ok=True)
             temporary = target.with_suffix('.upload')
-            self.connection.settimeout(120)
+            self.connection.settimeout(45)
             try:
-                left = size
-                with temporary.open('wb') as f:
-                    while left:
-                        block = self.rfile.read(min(left, 1024 * 1024))
-                        if not block:
-                            raise ValueError('truncated_upload')
+                block = self.rfile.read(size)
+                if len(block) != size or hashlib.sha256(block).hexdigest() != self.headers.get('X-Chunk-SHA256'):
+                    raise ValueError('chunk_hash_mismatch')
+                existing = target if target.exists() else temporary
+                offset = existing.stat().st_size if existing.exists() else 0
+                if start < offset:
+                    with existing.open('rb') as f:
+                        f.seek(start)
+                        same = end < offset and f.read(size) == block
+                    if not same or (target.exists() and offset != total):
+                        self.send_error(409)
+                        return
+                elif start == offset and not target.exists():
+                    with temporary.open('ab') as f:
                         f.write(block)
-                        left -= len(block)
-                if digest(temporary) != WEIGHTS['files_sha256'][name]:
-                    raise ValueError('weight_hash_mismatch')
-                temporary.replace(target)
-                STATE['received'] = [n for n in FILES if (cache_root() / n).is_file()]
-                if len(STATE['received']) == len(FILES):
-                    READY.set()
+                else:
+                    self.send_error(409)
+                    return
+                if not target.exists() and temporary.stat().st_size == total:
+                    if digest(temporary) != WEIGHTS['files_sha256'][name]:
+                        temporary.unlink()
+                        raise ValueError('weight_hash_mismatch')
+                    temporary.replace(target)
+                    STATE['received'] = [n for n in FILES if (cache_root() / n).is_file()]
+                    if len(STATE['received']) == len(FILES):
+                        READY.set()
             except Exception:
-                temporary.unlink(missing_ok=True)
                 self.send_error(400)
                 return
         self.send_response(204)

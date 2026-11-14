@@ -1,0 +1,127 @@
+{
+  "run_id": 43569912370,
+  "source_sha": "e156026b2a1c22d9eaa91d654d62ae725f63a6f3",
+  "result_artifact_id": 14104152449,
+  "result_sha256": "b6a704f88a8148b9334652241496a229b6b68da84943ed5e892ed75512a51923",
+  "entries": {
+    "allocation.json": {
+      "pod_id": "vvwvq9qu6267as",
+      "gpu": "NVIDIA GeForce RTX 4090",
+      "data_center": "US-NC-1",
+      "hourly_usd": 0.89
+    },
+    "cleanup.json": {
+      "status": "verified_absent",
+      "run_id": "43569912370",
+      "checks": 3,
+      "persistent_volumes_created": false,
+      "checked_epoch": 1794640536.2225494,
+      "elapsed_billing_bound_s": 167.8191945552826,
+      "estimated_usd": 0.041904852449964905,
+      "cost_basis": "intent_to_absence_estimate_not_invoice",
+      "cumulative_estimated_usd": 0.09190485244996491,
+      "cumulative_runtime_bound_s": 347.8191945552826,
+      "within_cap": true
+    },
+    "error.json": {
+      "mode": "run",
+      "error_type": "HTTPError"
+    },
+    "preflight.json": {
+      "status": "preflight_passed",
+      "source_sha": "e156026b2a1c22d9eaa91d654d62ae725f63a6f3",
+      "image": "ghcr.io/jasonjiang8866/wafervlm@sha256:4e5ea625b7bb31db7fddf0137284bec4cfa52568cb47830cedcb6238c4b05eab",
+      "weights": {
+        "files_sha256": {
+          "config.json": "9481247be9f95a134a5599402b4bfc838eecdf9a7fffbf4debd1c70ec213898b",
+          "model.safetensors": "4610ad75edef83e75afdebf162d148dc628045ea6cbb83d67d4708c709c4f91d"
+        },
+        "model_id": "facebook/dinov3-vits16-pretrain-lvd1689m",
+        "model_revision": "114c1379950215c8b35dfcd4e90a5c251dde0d32",
+        "paid_compute_started": false,
+        "parameters": 21596544,
+        "status": "weights-access-and-load-verified"
+      },
+      "gpu": "NVIDIA GeForce RTX 4090",
+      "min_cuda_version": "12.8",
+      "regions": [
+        "EU-CZ-1",
+        "EU-RO-1",
+        "EUR-IS-1",
+        "EUR-IS-2",
+        "US-IL-1",
+        "US-NC-1"
+      ],
+      "cost": {
+        "gpu_hourly_usd": 0.89,
+        "disk_hourly_usd": 0.008928571428571428,
+        "work_seconds": 5400,
+        "cleanup_seconds": 600,
+        "estimated_max_usd": 1.4982142857142857,
+        "total_cap_usd": 3.0,
+        "reserve_usd": 1.4517857142857145,
+        "approved_total_usd": 10.0,
+        "approved_total_seconds": 30000,
+        "prior_spend_usd": 0.05,
+        "prior_runtime_seconds": 180
+      },
+      "companion": {
+        "run_id": "43562568201",
+        "active_pod": false,
+        "account_reserve_usd": 30.0
+      },
+      "budget": {
+        "reserve_usd": 33.0,
+        "monthly_budget_usd": 500,
+        "balance_sufficient": true,
+        "month_headroom_sufficient": true,
+        "month_basis": "UTC",
+        "checked_utc": "2026-11-14T07:12:48.039594+00:00",
+        "scope": "reported charges; billing may lag; storage/request fees additional"
+      },
+      "checked_epoch": 1794640368.3317716
+    },
+    "provision.json": {
+      "pod_id": "vvwvq9qu6267as",
+      "started_epoch": 1794640368.403358,
+      "rate": 0.89
+    },
+    "weights/checksums.json": {
+      "weights.json": "e5448aa6d6fb171e05e6840c09cac3af7a533ebf202f4572f37567a48ea19557"
+    },
+    "transfer.json": {
+      "file": "config.json",
+      "offset": 0,
+      "size": 743,
+      "total": 743,
+      "attempt": 1,
+      "status": "failed",
+      "http_status": 403,
+      "error_type": "HTTPError"
+    },
+    "weights/weights.json": {
+      "files_sha256": {
+        "config.json": "9481247be9f95a134a5599402b4bfc838eecdf9a7fffbf4debd1c70ec213898b",
+        "model.safetensors": "4610ad75edef83e75afdebf162d148dc628045ea6cbb83d67d4708c709c4f91d"
+      },
+      "model_id": "facebook/dinov3-vits16-pretrain-lvd1689m",
+      "model_revision": "114c1379950215c8b35dfcd4e90a5c251dde0d32",
+      "paid_compute_started": false,
+      "parameters": 21596544,
+      "status": "weights-access-and-load-verified"
+    }
+  },
+  "independent_run_id": 43570257215,
+  "independent_artifact_id": 14103497546,
+  "independent_sha256": "31aac13cfd004721ce7bd2e55ae6e306352d1ab139b4ca68735f6b4be757bb83",
+  "independent_cleanup": {
+    "status": "verified_absent",
+    "run_id": "43569912370",
+    "checks": 12,
+    "persistent_volumes_created": false,
+    "checked_epoch": 1794640664.4930167
+  },
+  "accounted_usd": 0.05,
+  "accounted_seconds": 180,
+  "third_paid_attempt_enabled": false
+}

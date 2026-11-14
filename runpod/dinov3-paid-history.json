@@ -1,0 +1,132 @@
+{
+  "run_id": "43568169684",
+  "source_sha": "a81cf7dba843de55b0ddbbabbec4268620dc2f82",
+  "job_id": 132366507113,
+  "accounted_usd": 0.05,
+  "accounted_seconds": 180,
+  "required_steps": {
+    "Load and fingerprint official weights on CPU": "success",
+    "Offline DINO lifecycle and model tests": "success",
+    "Current image, catalog, inventory and cost checks": "success",
+    "Run six trials, reload selected models, retrieve evidence and delete Pod": "failure",
+    "Independent inventory check": "success"
+  },
+  "result": {
+    "artifact_id": 14102598774,
+    "name": "dinov3-seed17-43568169684",
+    "sha256": "d0db636b2a7f6c538c7e0be0cc2bddfe01bd56907dc0bbbdf8eab4861a9c861f",
+    "run_id": "43568169684",
+    "source_sha": "a81cf7dba843de55b0ddbbabbec4268620dc2f82",
+    "entries": {
+      "allocation.json": {
+        "pod_id": "u1l48a4ovbi1s6",
+        "gpu": "NVIDIA GeForce RTX 4090",
+        "data_center": "US-NC-1",
+        "hourly_usd": 0.89
+      },
+      "error.json": {
+        "mode": "run",
+        "error_type": "HTTPError"
+      },
+      "cleanup.json": {
+        "status": "verified_absent",
+        "run_id": "43568169684",
+        "checks": 3,
+        "persistent_volumes_created": false,
+        "checked_epoch": 1794639195.733605,
+        "elapsed_billing_bound_s": 177.83523797988892,
+        "estimated_usd": 0.044405882340811546,
+        "cost_basis": "intent_to_absence_estimate_not_invoice",
+        "within_cap": true
+      },
+      "preflight.json": {
+        "status": "preflight_passed",
+        "source_sha": "a81cf7dba843de55b0ddbbabbec4268620dc2f82",
+        "image": "ghcr.io/jasonjiang8866/wafervlm@sha256:fb2f2951ac12bf95121f530a083f644d0c24029f7d8695265b6a97af9d3552c6",
+        "weights": {
+          "files_sha256": {
+            "config.json": "9481247be9f95a134a5599402b4bfc838eecdf9a7fffbf4debd1c70ec213898b",
+            "model.safetensors": "4610ad75edef83e75afdebf162d148dc628045ea6cbb83d67d4708c709c4f91d"
+          },
+          "model_id": "facebook/dinov3-vits16-pretrain-lvd1689m",
+          "model_revision": "114c1379950215c8b35dfcd4e90a5c251dde0d32",
+          "paid_compute_started": false,
+          "parameters": 21596544,
+          "status": "weights-access-and-load-verified"
+        },
+        "gpu": "NVIDIA GeForce RTX 4090",
+        "min_cuda_version": "12.8",
+        "regions": [
+          "EU-RO-1",
+          "EUR-IS-1",
+          "EUR-IS-2",
+          "US-IL-1",
+          "US-NC-1"
+        ],
+        "cost": {
+          "gpu_hourly_usd": 0.89,
+          "disk_hourly_usd": 0.008928571428571428,
+          "work_seconds": 5400,
+          "cleanup_seconds": 600,
+          "estimated_max_usd": 1.4982142857142857,
+          "total_cap_usd": 3.0,
+          "reserve_usd": 1.5017857142857143,
+          "approved_total_usd": 10.0,
+          "approved_total_seconds": 30000,
+          "prior_spend_usd": 0.0,
+          "prior_runtime_seconds": 0
+        },
+        "companion": {
+          "run_id": "43562568201",
+          "active_pod": true,
+          "account_reserve_usd": 30.0
+        },
+        "budget": {
+          "reserve_usd": 33.0,
+          "monthly_budget_usd": 500,
+          "balance_sufficient": true,
+          "month_headroom_sufficient": true,
+          "month_basis": "UTC",
+          "checked_utc": "2026-11-14T06:50:17.575668+00:00",
+          "scope": "reported charges; billing may lag; storage/request fees additional"
+        },
+        "checked_epoch": 1794639017.8551667
+      },
+      "provision.json": {
+        "pod_id": "u1l48a4ovbi1s6",
+        "started_epoch": 1794639017.8983688,
+        "rate": 0.89
+      },
+      "weights/checksums.json": {
+        "weights.json": "e5448aa6d6fb171e05e6840c09cac3af7a533ebf202f4572f37567a48ea19557"
+      },
+      "weights/weights.json": {
+        "files_sha256": {
+          "config.json": "9481247be9f95a134a5599402b4bfc838eecdf9a7fffbf4debd1c70ec213898b",
+          "model.safetensors": "4610ad75edef83e75afdebf162d148dc628045ea6cbb83d67d4708c709c4f91d"
+        },
+        "model_id": "facebook/dinov3-vits16-pretrain-lvd1689m",
+        "model_revision": "114c1379950215c8b35dfcd4e90a5c251dde0d32",
+        "paid_compute_started": false,
+        "parameters": 21596544,
+        "status": "weights-access-and-load-verified"
+      }
+    }
+  },
+  "independent": {
+    "artifact_id": 14102984704,
+    "name": "dinov3-cleanup-43568169684",
+    "sha256": "f9944092793370ba2c894dc35f54d0e5167c14737065dc808e5920803e05c5fd",
+    "run_id": "43568497764",
+    "source_sha": "a81cf7dba843de55b0ddbbabbec4268620dc2f82",
+    "entries": {
+      "cleanup.json": {
+        "status": "verified_absent",
+        "run_id": "43568169684",
+        "checks": 12,
+        "persistent_volumes_created": false,
+        "checked_epoch": 1794639324.7154894
+      }
+    }
+  }
+}
