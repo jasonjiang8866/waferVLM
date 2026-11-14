@@ -1,4 +1,4 @@
-"""One seed-42 VLM training lifecycle; shares the existing $30 / 1100-minute ledger.
+"""One independent VLM seed lifecycle; shares the existing $30 / 1100-minute ledger.
 
 Transport and ownership cleanup follow controller.py. Kept separately so DINOv3
 and the historical continuation workflow cannot silently change this workload.
@@ -62,6 +62,17 @@ PRIOR_SPEND_RESERVE = 5.903039  # cumulative conservative estimate, rounded UP
 APPROVED_USD = 30.0
 
 
+def training_seed():
+    value = os.environ.get("WAFER_VLM_SEED", "42")
+    if value not in {"42", "123"}:
+        raise RuntimeError("Unsupported VLM training seed")
+    return int(value)
+
+
+def experiment():
+    return "vlm-seed" + str(training_seed())
+
+
 def save(name, value):
     OUT.mkdir(exist_ok=True)
     temporary = OUT / (name + ".tmp")
@@ -70,6 +81,7 @@ def save(name, value):
 
 
 def identity():
+    training_seed()
     if os.environ.get("GITHUB_REPOSITORY") != REPOSITORY:
         raise RuntimeError("Unexpected repository")
     run = os.environ.get("GITHUB_RUN_ID", "")
@@ -78,21 +90,26 @@ def identity():
     return run
 
 
-def quote(rate):
+def quote(rate, ledger=None):
     if not finite(rate, 0.001) or rate > MAX_RATE:
         raise ValueError("GPU quote exceeds authorized maximum")
+    prior_usd = PRIOR_SPEND_RESERVE if ledger is None else ledger['usd']
+    prior_seconds = PRIOR_RUNTIME_RESERVE_SECONDS if ledger is None else ledger['seconds']
+    if (not finite(prior_usd) or not finite(prior_seconds)
+            or prior_usd < PRIOR_SPEND_RESERVE or prior_seconds < PRIOR_RUNTIME_RESERVE_SECONDS):
+        raise ValueError("Incomplete cumulative VLM ledger")
     hourly = rate + DISK_HOURLY
-    work = min(MAX_WORK_SECONDS, APPROVED_TOTAL_SECONDS - PRIOR_RUNTIME_RESERVE_SECONDS - CLEANUP_SECONDS, math.floor((APPROVED_USD - PRIOR_SPEND_RESERVE - 2) / hourly * 3600) - CLEANUP_SECONDS)
-    if work < 600:
+    work = min(MAX_WORK_SECONDS, APPROVED_TOTAL_SECONDS - prior_seconds - CLEANUP_SECONDS, math.floor((APPROVED_USD - prior_usd - 2) / hourly * 3600) - CLEANUP_SECONDS)
+    if work < MAX_WORK_SECONDS:
         raise ValueError("Insufficient budget or aggregate runtime")
-    estimate = PRIOR_SPEND_RESERVE + hourly * (work + CLEANUP_SECONDS) / 3600
+    estimate = prior_usd + hourly * (work + CLEANUP_SECONDS) / 3600
     return {"gpu_hourly_usd": rate, "disk_hourly_usd": DISK_HOURLY,
             "work_seconds": work, "cleanup_seconds": CLEANUP_SECONDS,
             "planned_total_usd": estimate, "approved_usd": APPROVED_USD,
-            "prior_spend_reserve_usd": PRIOR_SPEND_RESERVE,
-            "prior_runtime_reserve_seconds": PRIOR_RUNTIME_RESERVE_SECONDS,
+            "prior_spend_reserve_usd": prior_usd,
+            "prior_runtime_reserve_seconds": prior_seconds,
             "approved_total_seconds": APPROVED_TOTAL_SECONDS,
-            "planned_total_seconds": PRIOR_RUNTIME_RESERVE_SECONDS + work + CLEANUP_SECONDS,
+            "planned_total_seconds": prior_seconds + work + CLEANUP_SECONDS,
             "unallocated_reserve_usd": APPROVED_USD - estimate,
             "transfer_usd": 0, "storage_gb": DISK_GB,
             "pricing_source": "https://docs.runpod.io/pods/pricing",
@@ -162,7 +179,7 @@ def provenance():
         "image_source_sha": SOURCE,
         "image": IMAGE,
         "anonymous_manifest_verified": verify_image_manifest(),
-        "suite": "seed42-independent-confirmation",
+        "suite": f"seed{training_seed()}-independent-confirmation",
         "config_sha256": hashlib.sha256(
             (ROOT / "configs/seed-confirmation.json").read_bytes()
         ).hexdigest(),
@@ -174,7 +191,10 @@ def preflight(api):
     identity()
     evidence = provenance()
     from runpod.vlm_ledger import reconcile
-    evidence["ledger"] = reconcile(identity(), require_current=False, output=OUT)
+    evidence["ledger"] = reconcile(identity(), require_current=False, output=OUT, seed=training_seed())
+    attempts = evidence["ledger"]["attempts"]
+    if training_seed() == 123 and not any(a.get("seed") == 42 and a.get("accepted") is True for a in attempts):
+        raise RuntimeError("Seed 42 acceptance and cleanup must be pinned before seed 123")
     pods = api.listing("/pods", "pods")
     if any(p.get("env", {}).get(OWNER) == REPOSITORY for p in pods):
         raise RuntimeError("An owned Pod already exists; cleanup and inspect before launch")
@@ -201,7 +221,7 @@ def preflight(api):
             entry["rate"] = rate if finite(rate) else None
             if not finite(rate, 0.001) or rate > GPU_CAPS[name]:
                 raise ValueError("Per-model approved price exceeded")
-            cost = quote(rate)
+            cost = quote(rate, evidence["ledger"])
             regions = sorted(
                 d["id"]
                 for d in data.get("dataCenters", [])
@@ -264,7 +284,7 @@ def authorization_guard():
     if remote.get("object", {}).get("sha") != os.environ["EXPECTED_SHA"]:
         raise RuntimeError("main moved; no paid launch")
     from runpod.vlm_ledger import reconcile
-    reconcile(run, require_current=True, output=OUT)
+    reconcile(run, require_current=True, output=OUT, seed=training_seed())
 
 
 def owned(pod, state):
@@ -274,7 +294,7 @@ def owned(pod, state):
         and env.get(OWNER) == REPOSITORY
         and env.get("WAFER_RUN_ID") == state["run_id"]
         and env.get("WAFER_AUTHORIZATION") == AUTHORIZATION
-        and env.get("WAFER_EXPERIMENT") == "vlm-seed42"
+        and env.get("WAFER_EXPERIMENT") == experiment()
         and (not state.get("pod_id") or pod.get("id") == state["pod_id"])
     )
 
@@ -285,7 +305,7 @@ def cleanup(api):
     state = (
         json.loads(path.read_text())
         if path.exists()
-        else {"name": AUTHORIZATION + "-vlm42-" + run, "run_id": run, "pod_id": None}
+        else {"name": AUTHORIZATION + f"-vlm{training_seed()}-" + run, "run_id": run, "pod_id": None}
     )
     # Invalidate any earlier success before querying inventory again.
     save("cleanup.json", {"status": "unknown", "name": state["name"]})
@@ -345,9 +365,15 @@ def cleanup(api):
                 started = float(matches[0]["env"]["WAFER_STARTED"])
                 if not finite(started, 1) or started > time.time():
                     raise RuntimeError("Invalid recovered start time")
+                prior = {
+                    'usd': float(matches[0]['env'].get('WAFER_PRIOR_USD', PRIOR_SPEND_RESERVE)),
+                    'seconds': float(matches[0]['env'].get('WAFER_PRIOR_SECONDS', PRIOR_RUNTIME_RESERVE_SECONDS)),
+                }
+                if training_seed() == 123 and not {'WAFER_PRIOR_USD', 'WAFER_PRIOR_SECONDS'} <= matches[0]['env'].keys():
+                    raise RuntimeError("Missing seed-123 cumulative cost recovery metadata")
                 state.update(
                     started_epoch=started,
-                    cost=quote(float(matches[0]["env"]["WAFER_RATE"])),
+                    cost=quote(float(matches[0]["env"]["WAFER_RATE"]), prior),
                 )
             state["pod_id"] = pod_id
             save("provision.json", state)
@@ -409,7 +435,7 @@ def launch(api):
     authorization_guard()
     evidence = preflight(api)
     from runpod.confirmation_contract import launch_plan
-    spec = {"seed": 42, "source_sha": SOURCE, "controller_sha": evidence["controller_sha"],
+    spec = {"seed": training_seed(), "source_sha": SOURCE, "controller_sha": evidence["controller_sha"],
             "image": IMAGE, "gpu": evidence["gpu"],
             "gpu_hourly_usd": evidence["cost"]["gpu_hourly_usd"], "ledger": evidence["ledger"]}
     launch_plan(spec)
@@ -420,7 +446,7 @@ def launch(api):
     started = time.time()
     deadline = started + evidence["cost"]["work_seconds"]
     state = {
-        "name": AUTHORIZATION + "-vlm42-" + run,
+        "name": AUTHORIZATION + f"-vlm{training_seed()}-" + run,
         "run_id": run,
         "started_epoch": started,
         "deadline_epoch": deadline,
@@ -455,8 +481,8 @@ def launch(api):
             OWNER: REPOSITORY,
             "WAFER_RUN_ID": run,
             "WAFER_AUTHORIZATION": AUTHORIZATION,
-            "WAFER_EXPERIMENT": "vlm-seed42",
-            "WAFER_SEED": "42",
+            "WAFER_EXPERIMENT": experiment(),
+            "WAFER_SEED": str(training_seed()),
             "WAFER_RESULT_TOKEN": token,
             "WAFER_DEADLINE": str(deadline - 90),
             "WAFER_SOURCE_SHA": SOURCE,
@@ -464,6 +490,8 @@ def launch(api):
             "WAFER_CONTROLLER_SHA": evidence["controller_sha"],
             "WAFER_STARTED": str(started),
             "WAFER_RATE": str(evidence["cost"]["gpu_hourly_usd"]),
+            "WAFER_PRIOR_USD": str(evidence["cost"]["prior_spend_reserve_usd"]),
+            "WAFER_PRIOR_SECONDS": str(evidence["cost"]["prior_runtime_reserve_seconds"]),
             "WAFERVLM_IMAGE_DIGEST": IMAGE.split("@")[1],
             "WAFER_DATASET_SHA": json.loads((ROOT / "docs/evidence/wm811k-lot17.json").read_text())["dataset_sha256"],
         },
@@ -535,7 +563,7 @@ def launch(api):
             step, total = progress.get("optimizer_step"), progress.get("optimizer_steps")
             if (type(step) is int and type(total) is int and total in {100, 150, 200, 250}
                     and 0 <= step <= total and (step, total) != last_progress):
-                print(f"Seed 42 optimizer step {step}/{total}", flush=True)
+                print(f"Seed {training_seed()} optimizer step {step}/{total}", flush=True)
                 last_progress = (step, total)
             if result.get("status") in {"accepted", "rejected", "partial"}:
                 # Worker returns only explicit evidence fields, never its environment.
@@ -554,7 +582,7 @@ def launch(api):
                     or result.get("config_sha256") != evidence["config_sha256"]
                     or result.get("controller_sha") != evidence["controller_sha"]
                     or result.get("profiles") != ["seed-confirmation"]
-                    or result.get("seed") != 42
+                    or result.get("seed") != training_seed()
                     or not (OUT / "experiment.tar.gz").is_file()
                 ):
                     raise RuntimeError("Result provenance/completeness mismatch")

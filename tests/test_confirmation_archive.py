@@ -28,18 +28,18 @@ class TrainingArchive(unittest.TestCase):
         self.plan=launch_plan(self.spec)
         write_json(self.results/'worker.json',dict(status='accepted',profiles=['seed-confirmation'],
             source_sha=self.spec['source_sha'],controller_sha=self.spec['controller_sha'],
-            config_sha256=self.plan['config_sha256'],seed=42))
+            config_sha256=self.plan['config_sha256'],seed=self.spec['seed']))
         write_json(self.results/'hardware.json',dict(gpu='fixture',image_digest=self.spec['image'].split('@')[1]))
         write_json(self.results/'acquisition.json',json.loads((c.ROOT/'docs/evidence/wm811k-lot17.json').read_text()))
         write_json(self.training/'workload.json',self.cfg)
-        write_json(self.training/'status.json',dict(status='completed',seed=42,end_step=250,
+        write_json(self.training/'status.json',dict(status='completed',seed=self.spec['seed'],end_step=250,
                    test_accessed=False,holdout_accessed=False))
         start=0;parent=None;endpoints=[]
         for end in self.cfg['stages']:
             stage=self.training/f'step{end}';cp=stage/f'checkpoints/checkpoint-{end}';cp.mkdir(parents=True)
             for name in REQUIRED:(cp/name).write_text('{}')
             write_json(cp/'trainer_state.json',{'global_step':end})
-            config=c.training_config(42,end)
+            config=c.training_config(self.spec['seed'],end)
             resume=check_resume(parent,self.data,MODEL_REVISION,config,lower_learning_rate=start==100) if parent else None
             write_json(stage/'run.json',dict(model_id=MODEL_ID,model_revision=MODEL_REVISION,
                 dataset_sha256=self.cfg['dataset_sha256'],labels=list(LABELS),prompt=PROMPT,config=config,
@@ -50,7 +50,7 @@ class TrainingArchive(unittest.TestCase):
                 learning_rate_trace=[dict(step=s,rates=[config['learning_rate']]) for s in range(start+1,end+1)],
                 learning_rate_intervention={'from':.0002,'to':.00005,'scheduler_last_epoch':100} if start==100 else None))
             seal_output(stage)
-            if end in (200,250):endpoints.append(c.inspect_checkpoint(cp,self.data,42,end))
+            if end in (200,250):endpoints.append(c.inspect_checkpoint(cp,self.data,self.spec['seed'],end))
             start=end;parent=cp
         write_json(self.training/'endpoints.json',endpoints);seal_output(self.training)
 
@@ -69,7 +69,7 @@ class TrainingArchive(unittest.TestCase):
         with self.assertRaises(ValueError):verify_training_archive(self.pack(),self.data,self.spec)
 
     def test_resealed_wrong_seed_and_provenance_rejected(self):
-        for field,value in [('source_sha','f'*40),('config',c.training_config(123,150))]:
+        for field,value in [('source_sha','f'*40),('config',c.training_config(123 if self.spec['seed'] == 42 else 42,150))]:
             p=self.training/'step150/run.json';original=json.loads(p.read_text());run=copy.deepcopy(original)
             run[field]=value;write_json(p,run);seal_output(p.parent);seal_output(self.training)
             with self.assertRaises(ValueError):verify_training_archive(self.pack(),self.data,self.spec)
