@@ -242,6 +242,7 @@ def upload_weights(url, token, files, result):
                     record = dict(file=name, offset=offset, size=len(block), total=total, attempt=attempt+1)
                     req = urllib.request.Request(url + '/weights/' + name, data=block, method='PUT', headers={
                         'Authorization': 'Bearer ' + token, 'Content-Type': 'application/octet-stream',
+                        'User-Agent': 'waferVLM-actions/0.1',
                         'Content-Range': f'bytes {offset}-{offset+len(block)-1}/{total}',
                         'X-Chunk-SHA256': hashlib.sha256(block).hexdigest()})
                     try:
@@ -265,7 +266,8 @@ def download(url, token, meta):
     size, digest = meta.get('size'), meta.get('sha256')
     if type(size) is not int or not 0 < size <= 2 * 1024**3 or not re.fullmatch('[a-f0-9]{64}', digest or ''):
         raise ValueError('Invalid archive metadata')
-    req = urllib.request.Request(url + '/archive', headers={'Authorization': 'Bearer ' + token})
+    req = urllib.request.Request(url + '/archive', headers={
+        'Authorization': 'Bearer ' + token, 'User-Agent': 'waferVLM-actions/0.1'})
     path = OUT / 'experiment.tar.gz'
     count, hasher = 0, hashlib.sha256()
     with urllib.request.build_opener(NoRedirect).open(req, timeout=30) as response, path.open('wb') as f:
