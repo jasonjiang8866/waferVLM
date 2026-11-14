@@ -56,3 +56,22 @@ After seed 42 is accepted and its actual consumption and cleanup are reconciled,
 the remaining budget for independent seed 123, then the frozen 18 fresh-process
 validation passes. This workflow intentionally cannot repeat seed 42 or launch seed 123
 against a stale ledger. The final 148-image lot holdout remains sealed.
+
+## First live dispatch and receipt fix
+
+[Run 43553982790](https://github.com/jasonjiang8866/waferVLM/actions/runs/43553982790)
+passed anonymous image provenance, historical budget, owned-Pod absence, live
+capacity/rates and account checks. RTX 4090 was available in five regions at
+US$0.89/hour. It then failed inside authorization_guard, before launch-spec,
+resource intent or POST /pods: the newly uploaded marker had not appeared in
+the repository artifact listing. Only ledger, preflight and cleanup files were
+produced. Both cleanup paths independently observed absence. No training ran.
+
+The fix passes the exact upload receipt ID to the controller. If the list lags,
+it verifies that specific artifact's repository/run/SHA/digest and ZIP contents;
+only a 404 on this GET is retried (at most 55 seconds), never Pod creation.
+Missing historical markers and unknown attempts remain blocking. The exact failed
+run and its two immutable evidence ZIPs are reconciled in
+[vlm-precreate.json](../runpod/vlm-precreate.json); a rerun, changed source, resource
+intent or changed cleanup evidence invalidates that zero-increment accounting.
+No second paid dispatch was submitted during this repair.

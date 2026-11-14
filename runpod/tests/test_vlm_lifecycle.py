@@ -28,11 +28,13 @@ class LedgerTests(unittest.TestCase):
         self.out = Path(self.tmp.name)
         self.env = patch.dict(os.environ, GH_TOKEN='test-token', GITHUB_SHA='a'*40)
         self.env.start(); self.addCleanup(self.env.stop)
+        self.precreate = patch.object(ledger, 'reconciled_precreate', return_value=None)
+        self.precreate.start(); self.addCleanup(self.precreate.stop)
         self.artifacts = [dict(name=ledger.MARKER, id=x['marker_artifact_id'],
             digest='sha256:'+x['marker_sha256'], expired=False,
             workflow_run={'id': x['run_id']}) for x in ledger.HISTORY]
         self.current = dict(name=ledger.MARKER, id=999, digest='sha256:'+'a'*64,
-                            expired=False, workflow_run={'id': 1234})
+                            expired=False, workflow_run={'id': 1234, 'head_sha':'a'*40})
         cleanup = json.loads((c.ROOT/'docs/evidence/continuation-42682266526.json').read_text())['cleanup']
         self.raw = zipped({'cleanup.json': json.dumps(cleanup)})
         self.digest_patch = patch.object(ledger, 'RESULT_SHA', hashlib.sha256(self.raw).hexdigest())
@@ -75,8 +77,24 @@ class LedgerTests(unittest.TestCase):
                 self.reconcile(rows)
 
     def test_paid_mode_requires_current_marker(self):
-        with self.assertRaises(RuntimeError):
+        with patch.dict(os.environ, AUTHORIZATION_ARTIFACT_ID=''), self.assertRaises(RuntimeError):
             self.reconcile(self.artifacts, True)
+
+    def test_upload_receipt_survives_list_visibility_delay(self):
+        def read(url, **kwargs):
+            if '/artifacts?' in url: return {'artifacts':self.artifacts}
+            if url.endswith('/artifacts/999'): return self.current
+            return {'workflow_runs':[]}
+        with patch.dict(os.environ, AUTHORIZATION_ARTIFACT_ID='999'), \
+             patch.object(ledger,'request',side_effect=read), \
+             patch.object(ledger,'artifact_bytes',side_effect=self.download):
+            self.assertEqual(len(ledger.reconcile('1234',True,self.out)['attempts']),7)
+
+    def test_receipt_cannot_substitute_another_run_or_commit(self):
+        for field, value in [('id',888),('head_sha','c'*40)]:
+            artifact = dict(self.current, workflow_run=dict(self.current['workflow_run']))
+            artifact['workflow_run'][field] = value
+            with self.assertRaises(RuntimeError): ledger.verify_current_artifact(artifact,'1234')
 
     def test_corrupted_historical_cache_blocks(self):
         (self.out/'historical-result.zip').write_bytes(b'changed')
@@ -94,6 +112,37 @@ class LedgerTests(unittest.TestCase):
         self.assertEqual([x.name for x in target.iterdir()], ['dataset.json'])
         self.assertEqual(hashlib.sha256((target/'dataset.json').read_bytes()).hexdigest(),
                          'c588b3ef59d9dba57cfc745ec20db903e6ff2dcc75504112348f8b9f1ad3ab68')
+
+
+class PrecreateReconciliation(unittest.TestCase):
+    def setUp(self):
+        self.p = ledger.PRECREATE
+        self.run = dict(head_sha=self.p['controller_sha'], run_attempt=1,
+                        status='completed', conclusion='failure')
+        self.result = zipped({'cleanup.json':json.dumps(self.p['cleanup']),
+                              'ledger.json':'{}','preflight.json':'{}'})
+        self.cleanup = zipped({'cleanup.json':json.dumps(self.p['independent_cleanup'])})
+
+    def test_exact_failed_guard_run_is_reconciled(self):
+        with patch.dict(os.environ, GH_TOKEN='test-token'), \
+             patch.object(ledger,'request',return_value=self.run), \
+             patch.object(ledger,'artifact_bytes',side_effect=[self.result,self.cleanup]):
+            self.assertEqual(ledger.reconciled_precreate()['run_id'],43553982790)
+
+    def test_rerun_cannot_inherit_zero_cost_reconciliation(self):
+        with patch.dict(os.environ, GH_TOKEN='test-token'), \
+             patch.object(ledger,'request',return_value=dict(self.run,run_attempt=2)), \
+             patch.object(ledger,'artifact_bytes') as download, self.assertRaises(RuntimeError):
+            ledger.reconciled_precreate()
+        download.assert_not_called()
+
+    def test_resource_intent_or_changed_cleanup_blocks_reconciliation(self):
+        bad=zipped({'cleanup.json':json.dumps(self.p['cleanup']), 'ledger.json':'{}',
+                    'preflight.json':'{}', 'provision.json':'{}'})
+        with patch.dict(os.environ, GH_TOKEN='test-token'), \
+             patch.object(ledger,'request',return_value=self.run), \
+             patch.object(ledger,'artifact_bytes',return_value=bad), self.assertRaises(RuntimeError):
+            ledger.reconciled_precreate()
 
 
 class LifecycleTests(unittest.TestCase):

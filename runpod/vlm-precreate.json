@@ -1,0 +1,100 @@
+{
+  "run_id": 43553982790,
+  "controller_sha": "529aea9b91a8c07881e7e6523727187e9c940c15",
+  "marker_artifact_id": 14097845102,
+  "marker_sha256": "bb48489f35b749dafd5b49e5cef1722b76bff204abfe3bd8a7fe5654c0c1e3a0",
+  "result_artifact_id": 14097815264,
+  "result_sha256": "37100e949dcc8e0b2ca1aa7b466c823f71e3292e7a2c37ba85452a9b70f7fb44",
+  "independent_cleanup_run": 43554068733,
+  "independent_cleanup_artifact_id": 14097019529,
+  "independent_cleanup_sha256": "73fab872dea301c7559bf887ac496348f2e2a899e5357fbf32df27bb8d2b2484",
+  "failure": "Required historical/current authorization marker missing",
+  "failure_function": "authorization_guard",
+  "create_path_reached": false,
+  "provision_intent_present": false,
+  "runpod_incremental_usd": 0,
+  "accounting_basis": "guard failed before launch-spec, provision intent or POST; result ZIP and independent absence verified",
+  "preflight": {
+    "status": "preflight_passed",
+    "image": "ghcr.io/jasonjiang8866/wafervlm@sha256:a6d31b4f12c2c3ee64c59d08b1e67c89e9bbf9b46cbdb4179417f1d1efa3fa79",
+    "image_source_sha": "11d2e5f088b350dd9391864dbe2869417fff5af7",
+    "anonymous_manifest_verified": true,
+    "gpu": "NVIDIA GeForce RTX 4090",
+    "min_cuda_version": "12.8",
+    "catalog": [
+      {
+        "gpu": "NVIDIA GeForce RTX 4090",
+        "min_cuda_version": "12.8",
+        "rate": 0.89,
+        "regions": [
+          "EU-CZ-1",
+          "EU-RO-1",
+          "EUR-IS-1",
+          "EUR-IS-2",
+          "US-IL-1"
+        ],
+        "status": "available"
+      },
+      {
+        "gpu": "NVIDIA RTX PRO 6000 Blackwell Server Edition MIG 1g.24gb",
+        "min_cuda_version": "12.8",
+        "rate": 0.69,
+        "regions": [
+          "EUR-IS-2",
+          "US-PA-1"
+        ],
+        "status": "available"
+      },
+      {
+        "gpu": "NVIDIA GeForce RTX 3090",
+        "min_cuda_version": "12.8",
+        "rate": 0.5,
+        "regions": [
+          "EU-CZ-1"
+        ],
+        "status": "available"
+      },
+      {
+        "gpu": "NVIDIA GeForce RTX 5090",
+        "min_cuda_version": "12.8",
+        "rate": 1.39,
+        "regions": [],
+        "status": "quote_rejected"
+      }
+    ],
+    "cost": {
+      "gpu_hourly_usd": 0.89,
+      "disk_hourly_usd": 0.008928571428571428,
+      "work_seconds": 11100,
+      "cleanup_seconds": 600,
+      "planned_total_usd": 8.824556857142857,
+      "approved_usd": 30.0,
+      "prior_spend_reserve_usd": 5.903039,
+      "prior_runtime_reserve_seconds": 29514.66,
+      "approved_total_seconds": 66000,
+      "planned_total_seconds": 41214.66,
+      "unallocated_reserve_usd": 21.17544314285714,
+      "transfer_usd": 0,
+      "storage_gb": 60,
+      "pricing_source": "https://docs.runpod.io/pods/pricing",
+      "note": "Conservative estimate, not a provider hard cap. Cleanup failure can overrun."
+    },
+    "checked_epoch": 1794628498.9564035
+  },
+  "cleanup": {
+    "status": "verified_absent",
+    "name": "wafer-20261107-usd20-vlm42-43553982790",
+    "checked_epoch": 1794628525.994841,
+    "consecutive_absent_checks": 3,
+    "creation_confirmed": false,
+    "cost": "unverified_no_local_intent"
+  },
+  "independent_cleanup": {
+    "status": "verified_absent",
+    "name": "wafer-20261107-usd20-vlm42-43553982790",
+    "checked_epoch": 1794628566.009406,
+    "consecutive_absent_checks": 3,
+    "creation_confirmed": false,
+    "cost": "unverified_no_local_intent"
+  }
+}
