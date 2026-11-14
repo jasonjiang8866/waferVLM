@@ -96,17 +96,17 @@ weights and real remote upload/cleanup remain unverified until a live run.
 
 The marker is read by the exact artifact ID returned by its upload step; this avoids the observed GitHub list-visibility race while still verifying run, source, name, expiry and digest.
 
-## Optional parallel execution proposal (not activated)
+## Optional parallel execution (activated 2026-11-14)
 
-The first dispatch [43563592797](https://github.com/jasonjiang8866/waferVLM/actions/runs/43563592797)
-is waiting for VLM seed-42 run
+The historical first dispatch [43563592797](https://github.com/jasonjiang8866/waferVLM/actions/runs/43563592797)
+was waiting for VLM seed-42 run
 [43562568201](https://github.com/jasonjiang8866/waferVLM/actions/runs/43562568201).
 At 2026-11-14 05:56 UTC, the VLM worker was training (29/100 optimizer steps
 in its first phase), while DINO had no jobs or paid allocation. A shared mutex
 serializes these separately funded experiments even though they use independent
 Pods, temporary disks and cleanup ownership.
 
-The proposed `parallel_vlm_run_id` input defaults to empty, preserving serial
+The `parallel_vlm_run_id` input defaults to empty, preserving serial
 execution. Explicitly selecting `43562568201` uses a DINO-specific mutex and
 allows at most that one VLM Pod alongside DINO. Both live Actions identity
 (workflow, source, branch, event, first attempt, state) and Pod identity
@@ -137,15 +137,15 @@ To switch the queued task after the parallel change is reviewed and approved:
    `parallel_vlm_run_id=43562568201` and
    `replace_queued_run_id=43563592797`.
 5. The ledger now allows exactly the current dispatch, this cancelled zero-job
-   predecessor, and the explicitly reconciled CPU failure below. Any additional
-   run, changed identity, rerun or paid-step execution requires separate
+   predecessor, the explicitly reconciled CPU failure, and the first paid
+   transfer failure below. Any additional run, changed identity or rerun requires separate
    reconciliation. This does not reset spend/time allowances.
 
 If the queued run begins before switching, preserve it and use the existing
 serial path. The unit tests cover ownership, duplicate history, account reserve,
 default behavior, cancelled-versus-executed runs and cleanup isolation; the new
-parallel path still needs real provider verification before it can be described
-as operationally verified.
+parallel path created a separate 4090 in run `43568169684` without interrupting
+VLM. The six-trial training/result path still needs a successful live run.
 
 ## CPU preflight failure and recovery
 
@@ -174,3 +174,38 @@ changed cleanup or unexpected resource-intent file still blocks launch.
 
 The first sweep remains within US$3 / 100 minutes and the approved aggregate
 US$10 / 500 minutes. VLM training and its independent budget are unchanged.
+
+
+## First paid attempt: transfer failure and bounded recovery
+
+Run [43568169684](https://github.com/jasonjiang8866/waferVLM/actions/runs/43568169684)
+passed official CPU weight loading, offline tests, image provenance, inventory,
+price and account checks. It allocated one RTX 4090 in US-NC-1 at US$0.89/hour.
+The worker reached `awaiting_weights`; the controller then received an HTTP
+error during weight delivery. No training result was produced. The old log
+preserved only the exception type, so the exact response status and underlying
+cause cannot be recovered; a proxy size/timeout limit is not established.
+
+The main receipt verifies three consecutive inventory absences, with an
+intent-to-absence bound of 177.835 seconds and estimated US$0.044406 including
+60 GB ephemeral disk. Independent cleanup run
+[43568497764](https://github.com/jasonjiang8866/waferVLM/actions/runs/43568497764)
+verified twelve additional absences. No persistent volume was created. These
+are conservative estimates, not provider invoices.
+
+`runpod/dinov3-paid-history.json` pins both artifacts, their complete JSON
+contents, source, run and job. The next dispatch revalidates those bytes and
+live run history, charges **US$0.05 / 180 seconds** to DINO's aggregate ledger,
+and allows exactly one further paid attempt. Unknown runs/reruns still block.
+The remaining aggregate allowance is US$9.95 / 497 minutes; the recovery still
+uses 90 minutes of work plus 10 minutes of cleanup and a cumulative US$3 ceiling.
+
+Weight delivery now uses authenticated chunks of at most 4 MiB. Each chunk and
+the completed file are SHA256-checked; duplicate acknowledgements can be safely
+replayed, but content cannot be overwritten. Only transient transport/5xx,
+408 and 429 failures get at most three requests for the same chunk. There is
+still exactly one Pod-create request. `transfer.json` preserves the filename,
+byte range, attempt and HTTP status without tokens, URLs or response bodies.
+Local HTTP tests cover multi-chunk delivery, a lost acknowledgement after bytes
+are committed, invalid ranges/hashes and sanitized terminal errors. These tests
+are not a claim that the live RunPod proxy has already been verified.

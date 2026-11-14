@@ -23,6 +23,51 @@ VLM_AUTH = 'wafer-20261107-usd20'
 # currentSpendPerHr. Deliberately conservative about billing/reporting lag.
 VLM_ACCOUNT_RESERVE_USD = 30.0
 CPU_FAILED_RUN = '43566277450'
+PAID = json.loads(Path(__file__).with_name('dinov3-paid-history.json').read_text())
+
+
+def reconciled_paid_failure(token):
+    """Charge the inspected transfer failure and require both absence receipts."""
+    p = PAID
+    run = request(f"{BASE}/actions/runs/{p['run_id']}", token=token)
+    if (str(run.get('id')) != p['run_id'] or run.get('head_sha') != p['source_sha']
+            or run.get('head_branch') != 'main' or run.get('event') != 'workflow_dispatch'
+            or run.get('path') != '.github/workflows/dinov3-gpu.yml'
+            or run.get('run_attempt') != 1 or run.get('status') != 'completed'
+            or run.get('conclusion') != 'failure'):
+        raise ValueError('Reconciled paid failure changed')
+    jobs = request(f"{BASE}/actions/runs/{p['run_id']}/jobs?filter=all&per_page=100", token=token)
+    if jobs.get('total_count') != 1 or len(jobs.get('jobs', [])) != 1:
+        raise ValueError('Paid failure job history changed')
+    job = jobs['jobs'][0]
+    if job.get('id') != p['job_id'] or job.get('status') != 'completed' or job.get('conclusion') != 'failure':
+        raise ValueError('Paid failure job identity changed')
+    for name, conclusion in p['required_steps'].items():
+        matches = [step for step in job.get('steps', []) if step.get('name') == name]
+        if len(matches) != 1 or matches[0].get('status') != 'completed' or matches[0].get('conclusion') != conclusion:
+            raise ValueError('Paid failure step changed')
+    for kind in ('result', 'independent'):
+        receipt = p[kind]
+        meta = request(f"{BASE}/actions/artifacts/{receipt['artifact_id']}", token=token)
+        origin = meta.get('workflow_run', {})
+        if (meta.get('id') != receipt['artifact_id'] or meta.get('name') != receipt['name']
+                or meta.get('expired') is not False or meta.get('digest') != 'sha256:'+receipt['sha256']
+                or str(origin.get('id')) != receipt['run_id'] or origin.get('head_sha') != receipt['source_sha']):
+            raise ValueError('Paid failure artifact receipt changed')
+        data = artifact_bytes(receipt['artifact_id'], receipt['sha256'], 64_000)
+        with zipfile.ZipFile(io.BytesIO(data)) as archive:
+            if sorted(archive.namelist()) != sorted(receipt['entries']):
+                raise ValueError('Paid failure file set changed')
+        for name, expected in receipt['entries'].items():
+            if zip_json(data, name) != expected:
+                raise ValueError('Paid failure evidence changed')
+    cleanup = p['result']['entries']['cleanup.json']
+    independent = p['independent']['entries']['cleanup.json']
+    if (cleanup['status'] != 'verified_absent' or cleanup['within_cap'] is not True
+            or independent['status'] != 'verified_absent' or independent['checks'] < 12
+            or not finite(p['accounted_usd'], cleanup['estimated_usd'])
+            or not finite(p['accounted_seconds'], cleanup['elapsed_billing_bound_s'])):
+        raise ValueError('Paid failure cost/time/cleanup not reconciled')
 
 
 def reconciled_cpu_failure(token):
@@ -75,19 +120,21 @@ def cancelled_before_jobs(run, token):
 
 
 def dispatch_history(data, current, token):
-    """Allow only current + exact zero-job cancel + verified CPU-only failure."""
+    """Allow exactly one recovery after the inspected paid transfer failure."""
     rows = data.get('workflow_runs', [])
     replaced = os.environ.get('REPLACE_QUEUED_RUN_ID', '')
     if not replaced:
         if data.get('total_count') == 1 and [str(r['id']) for r in rows] == [current]:
             return
         raise ValueError('Prior DINO dispatch requires ledger/spend/cleanup reconciliation')
-    if (replaced != QUEUED_DINO_RUN or current in {replaced, CPU_FAILED_RUN} or data.get('total_count') != 3
-            or len(rows) != 3 or {str(r['id']) for r in rows} != {current, replaced, CPU_FAILED_RUN}):
-        raise ValueError('Queued replacement requires exact reconciled three-run history')
+    prior = {replaced, CPU_FAILED_RUN, PAID['run_id']}
+    if (replaced != QUEUED_DINO_RUN or current in prior or data.get('total_count') != 4
+            or len(rows) != 4 or {str(r['id']) for r in rows} != {current, *prior}):
+        raise ValueError('Paid recovery requires exact reconciled four-run history')
     previous = request(f'{BASE}/actions/runs/{replaced}', token=token)
     cancelled_before_jobs(previous, token)
     reconciled_cpu_failure(token)
+    reconciled_paid_failure(token)
 
 
 def companion(pods, token):

@@ -103,12 +103,14 @@ class SchedulingTests(unittest.TestCase):
 
     def test_exact_cancelled_zero_job_run_can_be_replaced(self):
         os.environ['REPLACE_QUEUED_RUN_ID'] = s.QUEUED_DINO_RUN
-        history = dict(total_count=3,workflow_runs=[{'id':999},self.previous,{'id':int(s.CPU_FAILED_RUN)}])
+        history = dict(total_count=4,workflow_runs=[{'id':999},self.previous,{'id':int(s.CPU_FAILED_RUN)},
+                                                  {'id':int(s.PAID['run_id'])}])
         with patch.object(s,'request',side_effect=[self.previous,{'total_count':0,'jobs':[]},
                                                   {'total_count':0,'artifacts':[]}]) as read, \
-                patch.object(s,'reconciled_cpu_failure') as cpu:
+                patch.object(s,'reconciled_cpu_failure') as cpu, patch.object(s,'reconciled_paid_failure') as paid:
             s.dispatch_history(history,'999','fake')
         cpu.assert_called_once_with('fake')
+        paid.assert_called_once_with('fake')
         self.assertEqual(read.call_count,3)
         self.assertIn('filter=all',read.call_args_list[1].args[0])
         self.assertTrue(all('method' not in x.kwargs for x in read.call_args_list))
@@ -199,6 +201,49 @@ class CpuFailureReceiptTests(unittest.TestCase):
         with self.assertRaises(ValueError): self.check()
         del self.payload[artifact]['provision.json']
         self.job['id']+=1
+        with self.assertRaises(ValueError): self.check()
+
+
+class PaidFailureReceiptTests(unittest.TestCase):
+    read = CpuFailureReceiptTests.read
+    archive = CpuFailureReceiptTests.archive
+
+    def setUp(self):
+        self.receipt = copy.deepcopy(s.PAID)
+        p = self.receipt
+        self.run = dict(id=int(p['run_id']),head_sha=p['source_sha'],head_branch='main',
+                        event='workflow_dispatch',path='.github/workflows/dinov3-gpu.yml',
+                        run_attempt=1,status='completed',conclusion='failure')
+        self.job = dict(id=p['job_id'],status='completed',conclusion='failure',
+                        steps=[dict(name=n,status='completed',conclusion=c) for n,c in p['required_steps'].items()])
+        self.metadata, self.payload = {}, {}
+        for kind in ('result','independent'):
+            r = p[kind]
+            self.metadata[r['artifact_id']] = dict(id=r['artifact_id'],name=r['name'],expired=False,
+                digest='sha256:'+r['sha256'],workflow_run=dict(id=int(r['run_id']),head_sha=r['source_sha']))
+            self.payload[r['artifact_id']] = copy.deepcopy(r['entries'])
+
+    def check(self):
+        with patch.object(s,'PAID',self.receipt), patch.object(s,'request',side_effect=self.read), \
+                patch.object(s,'artifact_bytes',side_effect=self.archive):
+            s.reconciled_paid_failure('fake')
+
+    def test_paid_attempt_cost_and_two_receipts_are_required(self):
+        self.check()
+        self.assertGreater(c.PRIOR_SPEND_USD, .0444)
+        self.assertGreaterEqual(c.PRIOR_RUNTIME_SECONDS, 178)
+        self.receipt['accounted_usd']=0
+        with self.assertRaises(ValueError): self.check()
+
+    def test_changed_cleanup_expired_receipt_and_rerun_rejected(self):
+        receipt=self.receipt['independent']['artifact_id']
+        self.payload[receipt]['cleanup.json']['checks']=1
+        with self.assertRaises(ValueError): self.check()
+        self.payload[receipt]=copy.deepcopy(self.receipt['independent']['entries'])
+        self.metadata[receipt]['expired']=True
+        with self.assertRaises(ValueError): self.check()
+        self.metadata[receipt]['expired']=False
+        self.run['run_attempt']=2
         with self.assertRaises(ValueError): self.check()
 
 

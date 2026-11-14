@@ -9,11 +9,12 @@ import signal
 import subprocess
 import time
 import urllib.parse
+import urllib.error
 import urllib.request
 from pathlib import Path
 
-from runpod.dinov3_bundle import FILES, cache_files, recipe, verify_archive, weight_report
-from runpod.dinov3_scheduling import companion, dispatch_history
+from runpod.dinov3_bundle import FILES, UPLOAD_CHUNK_BYTES, cache_files, recipe, verify_archive, weight_report
+from runpod.dinov3_scheduling import PAID, companion, dispatch_history
 from runpod.provider import NoRedirect, REPOSITORY, RemoteHTTPError, Runpod, budget, finite, request
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -28,8 +29,8 @@ CLEANUP_SECONDS = 600
 TOTAL_USD_CAP = 3.0  # Conservative first-attempt ceiling within aggregate approval.
 APPROVED_TOTAL_USD = 10.0  # User approval 2026-11-14, DINO only.
 APPROVED_TOTAL_SECONDS = 500 * 60
-PRIOR_SPEND_USD = 0.0
-PRIOR_RUNTIME_SECONDS = 0
+PRIOR_SPEND_USD = PAID['accounted_usd']
+PRIOR_RUNTIME_SECONDS = PAID['accounted_seconds']
 MARKER = 'runpod-authorization-' + AUTH
 
 
@@ -56,12 +57,12 @@ def cost(rate):
     if not finite(rate, .001) or rate > RATE_CAP:
         raise ValueError('4090 quote exceeds cap')
     maximum = (rate + DISK_RATE) * (WORK_SECONDS + CLEANUP_SECONDS) / 3600
-    if (maximum + 1 > min(TOTAL_USD_CAP, APPROVED_TOTAL_USD - PRIOR_SPEND_USD)
+    if (maximum + 1 > min(TOTAL_USD_CAP, APPROVED_TOTAL_USD) - PRIOR_SPEND_USD
             or PRIOR_RUNTIME_SECONDS + WORK_SECONDS + CLEANUP_SECONDS > APPROVED_TOTAL_SECONDS):
         raise ValueError('Insufficient cleanup/uncertainty reserve')
     return dict(gpu_hourly_usd=rate, disk_hourly_usd=DISK_RATE, work_seconds=WORK_SECONDS,
                 cleanup_seconds=CLEANUP_SECONDS, estimated_max_usd=maximum,
-                total_cap_usd=TOTAL_USD_CAP, reserve_usd=TOTAL_USD_CAP-maximum,
+                total_cap_usd=TOTAL_USD_CAP, reserve_usd=TOTAL_USD_CAP-PRIOR_SPEND_USD-maximum,
                 approved_total_usd=APPROVED_TOTAL_USD, approved_total_seconds=APPROVED_TOTAL_SECONDS,
                 prior_spend_usd=PRIOR_SPEND_USD, prior_runtime_seconds=PRIOR_RUNTIME_SECONDS)
 
@@ -198,7 +199,11 @@ def cleanup(api):
                     estimate = elapsed / 3600 * (state['rate'] + DISK_RATE)
                     record.update(elapsed_billing_bound_s=elapsed, estimated_usd=estimate,
                                   cost_basis='intent_to_absence_estimate_not_invoice',
-                                  within_cap=estimate <= TOTAL_USD_CAP and elapsed <= WORK_SECONDS + CLEANUP_SECONDS)
+                                  cumulative_estimated_usd=PRIOR_SPEND_USD+estimate,
+                                  cumulative_runtime_bound_s=PRIOR_RUNTIME_SECONDS+elapsed,
+                                  within_cap=PRIOR_SPEND_USD+estimate <= TOTAL_USD_CAP
+                                  and elapsed <= WORK_SECONDS + CLEANUP_SECONDS
+                                  and PRIOR_RUNTIME_SECONDS+elapsed <= APPROVED_TOTAL_SECONDS)
                 save('cleanup.json', record)
                 if record.get('within_cap') is False:
                     raise RuntimeError('Estimated cost/runtime exceeded ceiling')
@@ -230,13 +235,30 @@ def upload_weights(url, token, files, result):
     for name, path in files.items():
         if name in result.get('received', []):
             continue
+        total, offset = path.stat().st_size, 0
         with path.open('rb') as data:
-            req = urllib.request.Request(url + '/weights/' + name, data=data, method='PUT', headers={
-                'Authorization': 'Bearer ' + token, 'Content-Length': str(path.stat().st_size),
-                'Content-Type': 'application/octet-stream'})
-            with urllib.request.build_opener(NoRedirect).open(req, timeout=120) as response:
-                if response.status != 204:
-                    raise ValueError('Weight delivery not acknowledged')
+            while block := data.read(UPLOAD_CHUNK_BYTES):
+                for attempt in range(3):
+                    record = dict(file=name, offset=offset, size=len(block), total=total, attempt=attempt+1)
+                    req = urllib.request.Request(url + '/weights/' + name, data=block, method='PUT', headers={
+                        'Authorization': 'Bearer ' + token, 'Content-Type': 'application/octet-stream',
+                        'Content-Range': f'bytes {offset}-{offset+len(block)-1}/{total}',
+                        'X-Chunk-SHA256': hashlib.sha256(block).hexdigest()})
+                    try:
+                        with urllib.request.build_opener(NoRedirect).open(req, timeout=45) as response:
+                            if response.status != 204:
+                                raise ValueError('Weight delivery not acknowledged')
+                        save('transfer.json', dict(**record, status='acknowledged'))
+                        break
+                    except (urllib.error.URLError, TimeoutError, OSError) as exc:
+                        status = exc.code if isinstance(exc, urllib.error.HTTPError) else None
+                        save('transfer.json', dict(**record, status='failed', http_status=status,
+                                                  error_type=type(exc).__name__))
+                        if attempt == 2 or (status is not None and status not in {408, 429} and status < 500):
+                            raise
+                        time.sleep(2 * (attempt + 1))
+                offset += len(block)
+        print('DINO weights delivered: ' + name + ' (' + str(total) + ' bytes)', flush=True)
 
 
 def download(url, token, meta):
