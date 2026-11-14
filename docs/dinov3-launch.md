@@ -51,7 +51,8 @@ The paid workflow downloads and loads weights on CPU again **before** allocating
 compute. `HF_TOKEN` is scoped only to that step. The controller verifies both
 cached file hashes, the immutable image manifest/config and its embedded source
 SHA, current main, current GPU quote/capacity, account headroom and owned-Pod
-absence. A shared project concurrency group serializes Qwen and DINO launches.
+absence. By default the shared project concurrency group serializes Qwen and
+DINO launches. The optional narrowly scoped parallel mode is described below.
 
 Only `config.json` and `model.safetensors` are streamed over the RunPod HTTPS
 proxy with a masked per-run token. The worker checks their pinned hashes before
@@ -94,3 +95,54 @@ Provider rates/inventory, actual CUDA performance, final spending, official
 weights and real remote upload/cleanup remain unverified until a live run.
 
 The marker is read by the exact artifact ID returned by its upload step; this avoids the observed GitHub list-visibility race while still verifying run, source, name, expiry and digest.
+
+## Optional parallel execution proposal (not activated)
+
+The first dispatch [43563592797](https://github.com/jasonjiang8866/waferVLM/actions/runs/43563592797)
+is waiting for VLM seed-42 run
+[43562568201](https://github.com/jasonjiang8866/waferVLM/actions/runs/43562568201).
+At 2026-11-14 05:56 UTC, the VLM worker was training (29/100 optimizer steps
+in its first phase), while DINO had no jobs or paid allocation. A shared mutex
+serializes these separately funded experiments even though they use independent
+Pods, temporary disks and cleanup ownership.
+
+The proposed `parallel_vlm_run_id` input defaults to empty, preserving serial
+execution. Explicitly selecting `43562568201` uses a DINO-specific mutex and
+allows at most that one VLM Pod alongside DINO. Both live Actions identity
+(workflow, source, branch, event, first attempt, state) and Pod identity
+(repository, authorization, experiment, controller source, run and name) must
+match. Unknown/duplicate project Pods, stopped Pods, persistent mounts and
+rates above the reviewed VLM ceiling block creation. No VLM lifecycle code is
+changed. DINO cleanup still targets only its own exact authorization/run/name.
+
+The account guard conservatively reserves **US$33**: the first DINO ceiling of
+US$3 plus the VLM experiment's entire separately approved US$30 allowance. This
+is headroom verification, not a new charge or a larger DINO budget. DINO remains
+within US$10 / 500 aggregate minutes and US$3 / 100 minutes for this first sweep.
+Live GPU inventory, price and account checks still run twice before allocation.
+
+To switch the queued task after the parallel change is reviewed and approved:
+
+1. Recheck DINO run `43563592797`. Only if it is still waiting with **zero jobs**
+   may it be cancelled and replaced. Do not interrupt or replace a running
+   experiment under this procedure. Do not cancel VLM.
+2. Verify the old DINO run is terminal `cancelled`, attempt 1, has zero jobs
+   across **all attempts**, and zero artifacts. Verify its independent cleanup
+   succeeds. This proves no execution began, rather than assuming cancellation
+   means zero spend. Live inventory is checked again before the new create.
+3. Merge the reviewed change; publish an image for the exact new main SHA and
+   verify immutable image/source identity. Do not reuse the old digest with a
+   new source SHA.
+4. Dispatch once with the normal paid/SHA/image inputs plus
+   `parallel_vlm_run_id=43562568201` and
+   `replace_queued_run_id=43563592797`.
+5. The ledger allows exactly the current dispatch plus this exact cancelled
+   zero-job predecessor. Any third run, prior job/artifact, changed identity,
+   rerun, or execution failure requires separate reconciliation. The exception
+   does not permit a paid retry or reset spend/time allowances.
+
+If the queued run begins before switching, preserve it and use the existing
+serial path. The unit tests cover ownership, duplicate history, account reserve,
+default behavior, cancelled-versus-executed runs and cleanup isolation; the new
+parallel path still needs real provider verification before it can be described
+as operationally verified.

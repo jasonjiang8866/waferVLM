@@ -13,6 +13,7 @@ import urllib.request
 from pathlib import Path
 
 from runpod.dinov3_bundle import FILES, cache_files, recipe, verify_archive, weight_report
+from runpod.dinov3_scheduling import companion, dispatch_history
 from runpod.provider import NoRedirect, REPOSITORY, RemoteHTTPError, Runpod, budget, finite, request
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -121,8 +122,7 @@ def ledger_guard():
     # The first manual run is a one-off. Subsequent dispatches require reviewed
     # reconciliation, even if an old marker was deleted or expired.
     data = request(base + '/actions/workflows/dinov3-gpu.yml/runs?event=workflow_dispatch&per_page=100', token=token)
-    if data.get('total_count') != 1 or [str(r['id']) for r in data.get('workflow_runs', [])] != [run]:
-        raise ValueError('Prior DINO dispatch requires ledger/spend/cleanup reconciliation')
+    dispatch_history(data, run, token)
     receipt = os.environ.get('AUTHORIZATION_ARTIFACT_ID', '')
     if not receipt.isdigit() or int(receipt) <= 0:
         raise ValueError('Exact authorization upload receipt required')
@@ -145,14 +145,13 @@ def ledger_guard():
 
 
 def preflight(api):
-    source, _ = manual_guard()
+    source, github_token = manual_guard()
     image = os.environ.get('DINO_IMAGE', '')
     report = weight_report(OUT / 'weights' / 'weights.json')
     cache_files(report)
     image_provenance(image, source)
     pods = api.listing('/pods', 'pods')
-    if any(p.get('env', {}).get('WAFER_MANAGED_BY') == REPOSITORY for p in pods):
-        raise ValueError('Existing project Pod must be reconciled')
+    concurrent = companion(pods, github_token)
     query = urllib.parse.urlencode(dict(include='AVAILABILITY', product='POD', cloud='SECURE', count=1,
                                        minCudaVersion=recipe()['required_min_cuda']))
     catalog = api.call('/catalog/gpus/' + urllib.parse.quote(GPU, safe='') + '?' + query)
@@ -165,7 +164,9 @@ def preflight(api):
         raise ValueError('No 4090 capacity meeting CUDA minimum')
     evidence = dict(status='preflight_passed', source_sha=source, image=image, weights=report,
                     gpu=GPU, min_cuda_version=recipe()['required_min_cuda'], regions=regions, cost=quoted,
-                    budget=budget(api, reserve=TOTAL_USD_CAP), checked_epoch=time.time())
+                    companion=concurrent,
+                    budget=budget(api, reserve=TOTAL_USD_CAP + concurrent['account_reserve_usd']),
+                    checked_epoch=time.time())
     save('preflight.json', evidence)
     return evidence
 
