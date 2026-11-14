@@ -3,13 +3,14 @@ import hashlib
 import io
 import json
 import os
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
 import zipfile
 from pathlib import Path
 
-from runpod.provider import NoRedirect, REPOSITORY, request
+from runpod.provider import NoRedirect, REPOSITORY, RemoteHTTPError, request
 
 ROOT = Path(__file__).resolve().parents[1]
 BASE = f'https://api.github.com/repos/{REPOSITORY}'
@@ -18,6 +19,7 @@ HISTORY = json.loads((ROOT / 'runpod/vlm-history.json').read_text())
 RESULT_ID = 13706115627
 RESULT_SHA = '32024461ade6dcd34398e96a78b537c5a274e9da636ebda9a655b6618e32a250'
 PAID_STEP = 'Train seed 42, verify full states, retrieve evidence, delete Pod'
+PRECREATE = json.loads((ROOT / 'runpod/vlm-precreate.json').read_text())
 
 
 def artifact_bytes(artifact_id, expected_sha, limit):
@@ -53,7 +55,7 @@ def zip_json(data, name):
         return json.loads(archive.read(matches[0]))
 
 
-def verify_marker(data, run, current=False):
+def verify_marker(data, run, current=False, controller_sha=None):
     with zipfile.ZipFile(io.BytesIO(data)) as archive:
         names = archive.namelist()
         expected = ['intent.json', 'run-id.txt'] if current else ['run-id.txt']
@@ -64,15 +66,64 @@ def verify_marker(data, run, current=False):
             raise RuntimeError('Authorization marker run mismatch')
     if current:
         intent = zip_json(data, 'intent.json')
-        if intent != {'seed': 42, 'controller_sha': os.environ.get('GITHUB_SHA'),
+        if intent != {'seed': 42, 'controller_sha': controller_sha or os.environ.get('GITHUB_SHA'),
                       'run_id': str(run), 'workload': 'vlm-seed42'}:
             raise RuntimeError('Current launch intent mismatch')
+
+
+def reconciled_precreate():
+    """Accept only the inspected guard failure, with unchanged immutable evidence."""
+    p = PRECREATE
+    run = request(f"{BASE}/actions/runs/{p['run_id']}", token=os.environ['GH_TOKEN'])
+    if (run.get('head_sha') != p['controller_sha'] or run.get('run_attempt') != 1
+            or run.get('status') != 'completed' or run.get('conclusion') != 'failure'):
+        raise RuntimeError('Previously reconciled pre-create run changed')
+    data = artifact_bytes(p['result_artifact_id'], p['result_sha256'], 64_000)
+    with zipfile.ZipFile(io.BytesIO(data)) as z:
+        if sorted(z.namelist()) != ['cleanup.json', 'ledger.json', 'preflight.json']:
+            raise RuntimeError('Pre-create evidence contains an unexpected resource intent')
+    if zip_json(data, 'cleanup.json') != p['cleanup']:
+        raise RuntimeError('Pre-create cleanup evidence mismatch')
+    independent = artifact_bytes(p['independent_cleanup_artifact_id'], p['independent_cleanup_sha256'], 64_000)
+    if zip_json(independent, 'cleanup.json') != p['independent_cleanup']:
+        raise RuntimeError('Independent absence evidence mismatch')
+    return {k:p[k] for k in ('run_id','marker_artifact_id','marker_sha256','controller_sha')}
+
+
+def verify_current_artifact(artifact, run):
+    digest = artifact.get('digest', '')
+    identity = artifact.get('workflow_run', {})
+    if (artifact.get('name') != MARKER or artifact.get('expired') is not False
+            or str(identity.get('id')) != str(run)
+            or identity.get('head_sha') != os.environ.get('GITHUB_SHA')
+            or not digest.startswith('sha256:') or len(digest) != 71):
+        raise RuntimeError('Current marker identity or digest mismatch')
+    verify_marker(artifact_bytes(artifact['id'], digest[7:], 64_000), run, current=True)
+
+
+def verify_upload_receipt(run):
+    """The upload receipt is authoritative even while list APIs lag behind."""
+    artifact_id = os.environ.get('AUTHORIZATION_ARTIFACT_ID', '')
+    if not artifact_id.isdigit() or int(artifact_id) <= 0:
+        raise RuntimeError('Missing exact authorization artifact upload receipt')
+    for attempt in range(12):
+        try:
+            artifact = request(f'{BASE}/actions/artifacts/{artifact_id}', token=os.environ['GH_TOKEN'])
+            break
+        except RemoteHTTPError as exc:
+            if exc.status != 404 or attempt == 11:
+                raise
+            time.sleep(5)  # GET only; no provisioning retry
+    if artifact.get('id') != int(artifact_id):
+        raise RuntimeError('Authorization upload receipt ID mismatch')
+    verify_current_artifact(artifact, run)
 
 
 def reconcile(run, require_current, output):
     """Unknown/missing/expired attempts block launch, including another agent's attempt."""
     output = Path(output)
     output.mkdir(parents=True, exist_ok=True)
+    precreate = reconciled_precreate()
     # Run history survives deleted/expired artifacts. A previous paid step must
     # be reconciled explicitly; only visibly skipped paid steps are read-only.
     for page in range(1, 101):
@@ -84,6 +135,8 @@ def reconcile(run, require_current, output):
         for previous in runs:
             if str(previous.get('id')) == str(run):
                 continue
+            if precreate and previous.get('id') == precreate['run_id']:
+                continue  # exact run, attempt, source and archive bytes checked above
             if previous.get('status') != 'completed' or previous.get('run_attempt') != 1:
                 raise RuntimeError('Unreconciled seed-42 dispatch')
             jobs = request(f"{BASE}/actions/runs/{previous['id']}/jobs?per_page=100", token=os.environ['GH_TOKEN'])
@@ -94,7 +147,7 @@ def reconcile(run, require_current, output):
             break
     else:
         raise RuntimeError('Incomplete seed-42 dispatch history')
-    expected = {str(x['run_id']): x for x in HISTORY}
+    expected = {str(x['run_id']): x for x in HISTORY + ([precreate] if precreate else [])}
     observed, current, attempts = set(), False, []
     for page in range(1, 101):
         data = request(f'{BASE}/actions/artifacts?per_page=100&page={page}', token=os.environ['GH_TOKEN'])
@@ -111,25 +164,25 @@ def reconcile(run, require_current, output):
                 raise RuntimeError('Duplicate authorization marker')
             observed.add(origin)
             if origin == str(run):
-                digest = artifact.get('digest', '')
-                if not digest.startswith('sha256:') or len(digest) != 71:
-                    raise RuntimeError('Current marker digest missing')
-                verify_marker(artifact_bytes(artifact['id'], digest[7:], 64_000), run, current=True)
+                verify_current_artifact(artifact, run)
                 current = True
                 continue
             pin = expected.get(origin)
             if (pin is None or artifact.get('id') != pin['marker_artifact_id']
                     or artifact.get('digest') != 'sha256:' + pin['marker_sha256']):
                 raise RuntimeError('Unreconciled attempt; do not buy another GPU')
-            verify_marker(artifact_bytes(pin['marker_artifact_id'], pin['marker_sha256'], 64_000), origin)
+            verify_marker(artifact_bytes(pin['marker_artifact_id'], pin['marker_sha256'], 64_000), origin,
+                          current=bool(pin.get('controller_sha')), controller_sha=pin.get('controller_sha'))
             attempts.append(dict(run_id=int(origin), marker_artifact_id=pin['marker_artifact_id'],
                                  evidence_sha256=pin['marker_sha256'], cleanup='verified_absent'))
         if len(artifacts) < 100:
             break
     else:
         raise RuntimeError('Incomplete authorization ledger')
-    if not set(expected) <= observed or (require_current and not current):
-        raise RuntimeError('Required historical/current authorization marker missing')
+    if not set(expected) <= observed:
+        raise RuntimeError('Required historical authorization marker missing')
+    if require_current and not current:
+        verify_upload_receipt(run)
     # The existing controller already reconciled the first six attempts. Verify
     # the seventh attempt's cumulative cleanup record against its immutable ZIP.
     cache = output / 'historical-result.zip'

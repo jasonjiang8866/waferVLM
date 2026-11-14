@@ -52,6 +52,7 @@ jobs:
           PYTHON
           printf '%s\n' "$GITHUB_RUN_ID" > runpod-authorization/run-id.txt
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        id: authorization-marker
         if: inputs.confirm_paid && github.run_attempt == 1
         with:
           name: runpod-authorization-wafer-20261107-usd20
@@ -65,6 +66,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           CONFIRM_PAID: ${{ inputs.confirm_paid }}
           EXPECTED_SHA: ${{ inputs.expected_sha }}
+          AUTHORIZATION_ARTIFACT_ID: ${{ steps.authorization-marker.outputs.artifact-id }}
         run: python -m runpod.vlm_controller run
       - name: Independent inventory check and cleanup
         if: always() && inputs.confirm_paid
