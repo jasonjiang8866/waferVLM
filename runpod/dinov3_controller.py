@@ -13,7 +13,7 @@ import urllib.request
 from pathlib import Path
 
 from runpod.dinov3_bundle import FILES, cache_files, recipe, verify_archive, weight_report
-from runpod.provider import NoRedirect, REPOSITORY, Runpod, budget, finite, request
+from runpod.provider import NoRedirect, REPOSITORY, RemoteHTTPError, Runpod, budget, finite, request
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / 'dinov3-results'
@@ -24,7 +24,11 @@ DISK_GB = 60
 DISK_RATE = DISK_GB * .10 / (28 * 24)
 WORK_SECONDS = 5400
 CLEANUP_SECONDS = 600
-TOTAL_USD_CAP = 3.0  # Technical ceiling, not a claim of user approval.
+TOTAL_USD_CAP = 3.0  # Conservative first-attempt ceiling within aggregate approval.
+APPROVED_TOTAL_USD = 10.0  # User approval 2026-11-14, DINO only.
+APPROVED_TOTAL_SECONDS = 500 * 60
+PRIOR_SPEND_USD = 0.0
+PRIOR_RUNTIME_SECONDS = 0
 MARKER = 'runpod-authorization-' + AUTH
 
 
@@ -51,11 +55,14 @@ def cost(rate):
     if not finite(rate, .001) or rate > RATE_CAP:
         raise ValueError('4090 quote exceeds cap')
     maximum = (rate + DISK_RATE) * (WORK_SECONDS + CLEANUP_SECONDS) / 3600
-    if maximum + 1 > TOTAL_USD_CAP:
+    if (maximum + 1 > min(TOTAL_USD_CAP, APPROVED_TOTAL_USD - PRIOR_SPEND_USD)
+            or PRIOR_RUNTIME_SECONDS + WORK_SECONDS + CLEANUP_SECONDS > APPROVED_TOTAL_SECONDS):
         raise ValueError('Insufficient cleanup/uncertainty reserve')
     return dict(gpu_hourly_usd=rate, disk_hourly_usd=DISK_RATE, work_seconds=WORK_SECONDS,
                 cleanup_seconds=CLEANUP_SECONDS, estimated_max_usd=maximum,
-                total_cap_usd=TOTAL_USD_CAP, reserve_usd=TOTAL_USD_CAP-maximum)
+                total_cap_usd=TOTAL_USD_CAP, reserve_usd=TOTAL_USD_CAP-maximum,
+                approved_total_usd=APPROVED_TOTAL_USD, approved_total_seconds=APPROVED_TOTAL_SECONDS,
+                prior_spend_usd=PRIOR_SPEND_USD, prior_runtime_seconds=PRIOR_RUNTIME_SECONDS)
 
 
 def image_provenance(image, source):
@@ -109,21 +116,32 @@ def manual_guard():
 
 def ledger_guard():
     _, token = manual_guard()
-    run, seen = identity(), False
+    run = identity()
     base = f'https://api.github.com/repos/{REPOSITORY}'
     # The first manual run is a one-off. Subsequent dispatches require reviewed
     # reconciliation, even if an old marker was deleted or expired.
     data = request(base + '/actions/workflows/dinov3-gpu.yml/runs?event=workflow_dispatch&per_page=100', token=token)
     if data.get('total_count') != 1 or [str(r['id']) for r in data.get('workflow_runs', [])] != [run]:
         raise ValueError('Prior DINO dispatch requires ledger/spend/cleanup reconciliation')
-    artifacts = request(base + '/actions/artifacts?' + urllib.parse.urlencode({'name': MARKER, 'per_page': 100}), token=token)
-    if artifacts.get('total_count') != 1:
-        raise ValueError('Exactly one persisted authorization marker required')
-    for artifact in artifacts.get('artifacts', []):
-        seen = (artifact.get('name') == MARKER and not artifact.get('expired')
-                and str(artifact.get('workflow_run', {}).get('id')) == run)
-    if not seen:
-        raise ValueError('Current authorization marker missing')
+    receipt = os.environ.get('AUTHORIZATION_ARTIFACT_ID', '')
+    if not receipt.isdigit() or int(receipt) <= 0:
+        raise ValueError('Exact authorization upload receipt required')
+    # Listing can lag a successful upload. Read the exact receipt, with bounded
+    # GET-only retries; this does not retry or weaken the one-create gate.
+    for attempt in range(12):
+        try:
+            artifact = request(base + '/actions/artifacts/' + receipt, token=token)
+            break
+        except RemoteHTTPError as exc:
+            if exc.status != 404 or attempt == 11:
+                raise
+            time.sleep(5)
+    origin = artifact.get('workflow_run', {})
+    if (artifact.get('id') != int(receipt) or artifact.get('name') != MARKER
+            or artifact.get('expired') is not False or str(origin.get('id')) != run
+            or origin.get('head_sha') != os.environ.get('EXPECTED_SHA')
+            or not re.fullmatch('sha256:[a-f0-9]{64}', artifact.get('digest', ''))):
+        raise ValueError('Authorization upload identity/source/digest mismatch')
 
 
 def preflight(api):

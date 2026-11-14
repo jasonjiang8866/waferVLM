@@ -1,6 +1,6 @@
 # Bounded RunPod GPU experiment
 
-DINOv3 uses a separate [seed-17 sweep workflow and launch specification](../docs/dinov3-launch.md). Its official-weight access and new experiment budget must be resolved before paid dispatch; the Qwen workflow below does not launch DINOv3.
+DINOv3 uses a separate [seed-17 sweep workflow and launch specification](../docs/dinov3-launch.md). The user approved US$10 / 500 minutes cumulatively for DINOv3 on 2026-11-14; the first attempt retains a US$3 / 100-minute ceiling. Official-weight access and fresh live checks still precede allocation; the Qwen workflow below does not launch DINOv3.
 
 Seed-confirmation implementation and approval handoff: [fixed training/repeat runners](../docs/seed-confirmation-implementation.md). No new paid workflow has been activated.
 

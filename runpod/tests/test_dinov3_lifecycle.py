@@ -47,6 +47,38 @@ class DinoLifecycleTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'Prior DINO'):
                 c.ledger_guard()
 
+    def test_exact_upload_receipt_works_without_artifact_listing(self):
+        artifact = dict(id=99, name=c.MARKER, expired=False, digest='sha256:'+'b'*64,
+                        workflow_run={'id': 7, 'head_sha': 'a'*40})
+        def read(url, **kwargs):
+            if '/workflows/' in url:
+                return {'total_count': 1, 'workflow_runs': [{'id': 7}]}
+            self.assertTrue(url.endswith('/artifacts/99'))
+            return artifact
+        with patch.object(c, 'manual_guard', return_value=('a'*40, 'fake')), \
+                patch.object(c, 'identity', return_value='7'), patch.object(c, 'request', side_effect=read), \
+                patch.dict(os.environ, AUTHORIZATION_ARTIFACT_ID='99', EXPECTED_SHA='a'*40):
+            c.ledger_guard()
+            for key, value in [('id',8), ('head_sha','c'*40)]:
+                previous = artifact['workflow_run'][key]
+                artifact['workflow_run'][key] = value
+                with self.assertRaises(ValueError):
+                    c.ledger_guard()
+                artifact['workflow_run'][key] = previous
+
+    def test_upload_receipt_404_retries_reads_only(self):
+        artifact = dict(id=99, name=c.MARKER, expired=False, digest='sha256:'+'b'*64,
+                        workflow_run={'id': 7, 'head_sha': 'a'*40})
+        with patch.object(c, 'manual_guard', return_value=('a'*40, 'fake')), \
+                patch.object(c, 'identity', return_value='7'), patch.object(c.time, 'sleep'), \
+                patch.object(c, 'request', side_effect=[
+                    {'total_count':1,'workflow_runs':[{'id':7}]},
+                    c.RemoteHTTPError(404, []), artifact]) as read, \
+                patch.dict(os.environ, AUTHORIZATION_ARTIFACT_ID='99', EXPECTED_SHA='a'*40):
+            c.ledger_guard()
+            self.assertEqual(read.call_count, 3)
+            self.assertTrue(all('method' not in x.kwargs for x in read.call_args_list))
+
     def test_live_preflight_uses_minimum_and_4090(self):
         api = Mock()
         api.listing.return_value = []

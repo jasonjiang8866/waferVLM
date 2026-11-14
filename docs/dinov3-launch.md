@@ -1,13 +1,23 @@
 # First DINOv3 RunPod experiment
 
-Status: launch integration prepared; **no DINOv3 GPU has been allocated**. The real
+Status: merge and execution authorized on 2026-11-14; **no DINOv3 GPU has been allocated yet**. The real
 [CPU access preflight on 2026-11-14](https://github.com/jasonjiang8866/waferVLM/actions/runs/43552229499)
 failed before downloading weights because repository Actions secret `HF_TOKEN`
-was not available. This is separate from the historical Qwen authorization.
+was not available. The user subsequently configured it and approved **US$10 /
+500 minutes cumulative for DINOv3**, including retries, temporary storage,
+transfer and cleanup, plus PR #22 merge and execution. This is separate from the
+historical Qwen authorization. The first attempt keeps the stricter US$3 /
+100-minute bound below; subsequent attempts must reconcile spend and cleanup
+against the same US$10 / 500-minute total, not receive a fresh budget.
+
+[Repeated CPU preflight 43562198996](https://github.com/jasonjiang8866/waferVLM/actions/runs/43562198996)
+passed on main `529aea9b91a8c07881e7e6523727187e9c940c15`: the approved token
+downloaded and fully loaded pinned official ViT-S/16 weights (21,596,544
+parameters). This establishes weight access, not GPU quality or performance.
 
 ## Reviewable first launch
 
-| Item | Proposed bounded experiment |
+| Item | Authorized first bounded experiment |
 |---|---|
 | Workload | Seed 17, linear `{.001,.003,.01}` and Q/V LoRA `{.00005,.0001,.0002}`; six full 10-epoch trials |
 | Data | Existing hash-pinned 790 train / 160 validation; historical test integrity audit only; no reserved holdout |
@@ -15,10 +25,10 @@ was not available. This is separate from the historical Qwen authorization.
 | CUDA | Host capability minimum 12.8 via `minCudaVersion`; newer supported versions accepted |
 | Disk | 60 GB ephemeral; no persistent volume |
 | Time | 90 minutes total from create intent through retrieval, plus 10 minutes cleanup |
-| Proposed total spending ceiling | US$3 including compute, temporary disk, transfer and cleanup; user approval still required |
+| First-attempt spending ceiling | US$3 including compute, temporary disk, transfer and cleanup, within approved US$10 cumulative |
 | Ceiling-rate estimate | US$1.49822 for 100 minutes including disk, leaving > US$1.50 uncertainty reserve; **not a current provider quote or enforced billing cap** |
 | Selection | Highest validation macro-F1, earliest epoch ties; lower LR for tied trials |
-| Follow-up | Freeze selected LRs before separately authorizing/dispatching seeds 42 and 123 |
+| Follow-up | Freeze selected LRs before dispatching seeds 42 and 123 within the remaining approved aggregate budget/time |
 
 The first launch is a development sweep, not a three-seed result or an unbiased
 holdout comparison. All six trials share one Pod, one budget and one controller
@@ -33,7 +43,7 @@ deadline. No automatic Pod-create retry or confirmation-seed launch exists.
 3. Merge this reviewed integration, then publish `dinov3-image.yml` on the exact
    resulting main SHA with `publish=true`. It contains code only, not gated
    weights. Record the resulting immutable GHCR digest.
-4. After approving the first sweep's budget, dispatch `dinov3-gpu.yml` on main:
+4. Using the approval above, dispatch `dinov3-gpu.yml` on main:
    `confirm_paid=true`, `expected_sha=<that full main SHA>`, and
    `image=ghcr.io/jasonjiang8866/wafervlm@sha256:<published digest>`.
 
@@ -75,10 +85,12 @@ billing; a worker timeout alone is not cleanup evidence.
 The first manual GPU dispatch is one-off. A second dispatch or rerun is blocked
 until its complete outcome, cost and cleanup have been reviewed and the launch
 ledger deliberately reconciled. Workflow history is checked as well as the
-persisted marker, so marker expiry/deletion does not silently allow another run.
+persisted upload receipt, so marker expiry/deletion does not silently allow another run.
 This also blocks a repeat after a pre-allocation failure; do not use the paid
 workflow for credential experiments—use the dedicated free CPU preflight.
 
 Evidence is uploaded as `dinov3-seed17-<run-id>` with a separate cleanup artifact.
 Provider rates/inventory, actual CUDA performance, final spending, official
 weights and real remote upload/cleanup remain unverified until a live run.
+
+The marker is read by the exact artifact ID returned by its upload step; this avoids the observed GitHub list-visibility race while still verifying run, source, name, expiry and digest.
