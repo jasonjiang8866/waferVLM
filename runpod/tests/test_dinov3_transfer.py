@@ -45,6 +45,9 @@ class TransferTests(unittest.TestCase):
             failed=False
             sizes=[]
             def do_PUT(self):
+                if self.headers.get('User-Agent') != 'waferVLM-actions/0.1':
+                    self.send_error(403)
+                    return
                 type(self).sizes.append(int(self.headers['Content-Length']))
                 super().do_PUT()
             def send_response(self,code,message=None):
@@ -89,6 +92,22 @@ class TransferTests(unittest.TestCase):
             self.assertFalse(w.READY.is_set())
             self.assertFalse((cache/'model.safetensors').exists())
         self.exchange(w.Handler,action)
+
+    def test_archive_download_uses_the_same_explicit_client_header(self):
+        import io
+        from unittest.mock import Mock
+        payload=b'archive fixture'
+        response=io.BytesIO(payload)
+        response.status=200
+        opener=Mock()
+        opener.open.return_value=response
+        with tempfile.TemporaryDirectory() as tmp, patch.object(c,'OUT',Path(tmp)), \
+                patch.object(c.urllib.request,'build_opener',return_value=opener):
+            archive=c.download('https://example.invalid','test-only',
+                               {'size':len(payload),'sha256':hashlib.sha256(payload).hexdigest()})
+            self.assertEqual(archive.read_bytes(),payload)
+        req=opener.open.call_args.args[0]
+        self.assertEqual(req.get_header('User-agent'),'waferVLM-actions/0.1')
 
 
 if __name__=='__main__': unittest.main()

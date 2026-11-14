@@ -1,0 +1,25 @@
+name: DINOv3 free proxy client diagnostic
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - scripts/check_dinov3_proxy.py
+      - .github/workflows/dinov3-transport-check.yml
+permissions:
+  contents: read
+jobs:
+  diagnose:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Compare anonymous client headers on a deleted Pod route
+        run: python scripts/check_dinov3_proxy.py | tee proxy-diagnostic.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: dinov3-proxy-client-${{ github.run_id }}
+          path: proxy-diagnostic.json
+          retention-days: 90
+          if-no-files-found: error

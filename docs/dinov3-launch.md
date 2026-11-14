@@ -209,3 +209,34 @@ byte range, attempt and HTTP status without tokens, URLs or response bodies.
 Local HTTP tests cover multi-chunk delivery, a lost acknowledgement after bytes
 are committed, invalid ranges/hashes and sanitized terminal errors. These tests
 are not a claim that the live RunPod proxy has already been verified.
+
+
+## Second paid attempt: first 743-byte upload receives HTTP 403
+
+Recovery run [43569912370](https://github.com/jasonjiang8866/waferVLM/actions/runs/43569912370)
+again reached `awaiting_weights`. Its sanitized transfer receipt identifies
+`config.json`, offset 0, size/total 743 bytes, attempt 1, HTTP **403**. No model
+weight or training result was delivered. This is not a large-payload failure.
+The main cleanup receipt verifies three inventory absences and estimates
+167.819 seconds / US$0.041905 including disk. Across the two paid attempts the
+measured intent-to-absence estimates sum to **345.654 seconds / US$0.086311**;
+rounding each upward reserves **US$0.10 / 360 seconds** for future accounting.
+These remain estimates rather than provider invoices.
+
+The successful `/result` requests already send `User-Agent: waferVLM-actions/0.1`.
+Upload and archive download had omitted that header, falling back to Python's
+default. Both now use the same honest project client identifier. No credential,
+permission, TLS, redirect, endpoint or authentication rule is changed. The local
+HTTP regression requires that header and still verifies chunk replay; archive
+download checks the same header.
+
+A free Actions diagnostic compares two anonymous GETs to this now-deleted Pod's
+proxy route, with the Python default and the project client respectively. It
+requires no RunPod or HF secret and creates no resource. This can discriminate
+an HTTP client-dependent proxy response; it cannot establish successful weight
+delivery or CUDA training. The observed response and root-cause conclusion must
+come from the diagnostic/live evidence, not from a passing synthetic test.
+
+No third paid dispatch is enabled here: the existing four-run history guard
+rejects another attempt until the second run's spending/cleanup are explicitly
+reconciled and an additional paid attempt is authorized.
