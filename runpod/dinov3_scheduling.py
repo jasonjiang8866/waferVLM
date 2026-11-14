@@ -1,12 +1,17 @@
 """Narrow opt-in for the two separately approved November 14 experiments.
 
-No create/delete calls. Unknown project Pods and any previous executed DINO job
-still block allocation. A queued cancellation is not a paid retry allowance.
+No create/delete calls. Unknown project Pods and any unreviewed executed DINO
+job still block allocation. Reconciled CPU failures are not paid retry allowances.
 """
+import io
+import json
 import os
 import re
+import zipfile
+from pathlib import Path
 
 from runpod.provider import REPOSITORY, finite, request
+from runpod.vlm_ledger import artifact_bytes, zip_json
 
 BASE = f'https://api.github.com/repos/{REPOSITORY}'
 QUEUED_DINO_RUN = '43563592797'
@@ -17,6 +22,43 @@ VLM_AUTH = 'wafer-20261107-usd20'
 # Reserve the ENTIRE separately approved VLM allowance, not just one hour of
 # currentSpendPerHr. Deliberately conservative about billing/reporting lag.
 VLM_ACCOUNT_RESERVE_USD = 30.0
+CPU_FAILED_RUN = '43566277450'
+
+
+def reconciled_cpu_failure(token):
+    """Verify the exact pre-allocation test failure; never forgive a paid step."""
+    p = json.loads((Path(__file__).with_name('dinov3-precreate.json')).read_text())
+    run = request(f'{BASE}/actions/runs/{CPU_FAILED_RUN}', token=token)
+    if (str(run.get('id')) != CPU_FAILED_RUN or run.get('head_sha') != p['source_sha']
+            or run.get('head_branch') != 'main' or run.get('event') != 'workflow_dispatch'
+            or run.get('path') != '.github/workflows/dinov3-gpu.yml'
+            or run.get('run_attempt') != 1 or run.get('status') != 'completed'
+            or run.get('conclusion') != 'failure'):
+        raise ValueError('Reconciled CPU failure changed')
+    jobs = request(f'{BASE}/actions/runs/{CPU_FAILED_RUN}/jobs?filter=all&per_page=100', token=token)
+    if jobs.get('total_count') != 1 or len(jobs.get('jobs', [])) != 1:
+        raise ValueError('CPU failure job history changed')
+    job = jobs['jobs'][0]
+    if job.get('id') != p['job_id'] or job.get('status') != 'completed' or job.get('conclusion') != 'failure':
+        raise ValueError('CPU failure job identity changed')
+    for name, conclusion in p['required_steps'].items():
+        matches = [step for step in job.get('steps', []) if step.get('name') == name]
+        if len(matches) != 1 or matches[0].get('status') != 'completed' or matches[0].get('conclusion') != conclusion:
+            raise ValueError('CPU failure reached an unreviewed step')
+    for kind in ('result', 'independent'):
+        receipt = p[kind]
+        meta = request(f"{BASE}/actions/artifacts/{receipt['artifact_id']}", token=token)
+        origin = meta.get('workflow_run', {})
+        if (meta.get('id') != receipt['artifact_id'] or meta.get('name') != receipt['name']
+                or meta.get('expired') is not False or meta.get('digest') != 'sha256:'+receipt['sha256']
+                or str(origin.get('id')) != receipt['run_id'] or origin.get('head_sha') != receipt['source_sha']):
+            raise ValueError('CPU failure artifact receipt changed')
+        data = artifact_bytes(receipt['artifact_id'], receipt['sha256'], 64_000)
+        with zipfile.ZipFile(io.BytesIO(data)) as archive:
+            if sorted(archive.namelist()) != receipt['files']:
+                raise ValueError('CPU failure contains unexpected resource intent')
+        if zip_json(data, 'cleanup.json') != receipt['cleanup']:
+            raise ValueError('CPU failure cleanup changed')
 
 
 def cancelled_before_jobs(run, token):
@@ -33,18 +75,19 @@ def cancelled_before_jobs(run, token):
 
 
 def dispatch_history(data, current, token):
-    """Allow exactly one current run plus an explicitly verified zero-job cancel."""
+    """Allow only current + exact zero-job cancel + verified CPU-only failure."""
     rows = data.get('workflow_runs', [])
     replaced = os.environ.get('REPLACE_QUEUED_RUN_ID', '')
     if not replaced:
         if data.get('total_count') == 1 and [str(r['id']) for r in rows] == [current]:
             return
         raise ValueError('Prior DINO dispatch requires ledger/spend/cleanup reconciliation')
-    if (replaced != QUEUED_DINO_RUN or current == replaced or data.get('total_count') != 2
-            or len(rows) != 2 or {str(r['id']) for r in rows} != {current, replaced}):
-        raise ValueError('Queued replacement requires exact two-run history')
+    if (replaced != QUEUED_DINO_RUN or current in {replaced, CPU_FAILED_RUN} or data.get('total_count') != 3
+            or len(rows) != 3 or {str(r['id']) for r in rows} != {current, replaced, CPU_FAILED_RUN}):
+        raise ValueError('Queued replacement requires exact reconciled three-run history')
     previous = request(f'{BASE}/actions/runs/{replaced}', token=token)
     cancelled_before_jobs(previous, token)
+    reconciled_cpu_failure(token)
 
 
 def companion(pods, token):

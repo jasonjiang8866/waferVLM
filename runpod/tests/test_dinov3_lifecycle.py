@@ -17,6 +17,13 @@ from runpod.dinov3_bundle import recipe, select, trials, weight_report
 
 
 class DinoLifecycleTests(unittest.TestCase):
+    def setUp(self):
+        # Production workflow inputs must never turn unit fakes into live API
+        # calls or replace their intentionally synthetic one-run history.
+        env = patch.dict(os.environ, PARALLEL_VLM_RUN_ID='', REPLACE_QUEUED_RUN_ID='')
+        env.start()
+        self.addCleanup(env.stop)
+
     def test_budget_includes_disk_cleanup_and_reserve(self):
         q = c.cost(.89)
         self.assertLess(q['estimated_max_usd'], 1.5)

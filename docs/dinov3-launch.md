@@ -136,13 +136,41 @@ To switch the queued task after the parallel change is reviewed and approved:
 4. Dispatch once with the normal paid/SHA/image inputs plus
    `parallel_vlm_run_id=43562568201` and
    `replace_queued_run_id=43563592797`.
-5. The ledger allows exactly the current dispatch plus this exact cancelled
-   zero-job predecessor. Any third run, prior job/artifact, changed identity,
-   rerun, or execution failure requires separate reconciliation. The exception
-   does not permit a paid retry or reset spend/time allowances.
+5. The ledger now allows exactly the current dispatch, this cancelled zero-job
+   predecessor, and the explicitly reconciled CPU failure below. Any additional
+   run, changed identity, rerun or paid-step execution requires separate
+   reconciliation. This does not reset spend/time allowances.
 
 If the queued run begins before switching, preserve it and use the existing
 serial path. The unit tests cover ownership, duplicate history, account reserve,
 default behavior, cancelled-versus-executed runs and cleanup isolation; the new
 parallel path still needs real provider verification before it can be described
 as operationally verified.
+
+## CPU preflight failure and recovery
+
+Parallel mode was authorized and PR #26 merged as
+`f851c88e1dd40f99bb03157c163dda4ec9d564fe`. Dispatch
+[43566277450](https://github.com/jasonjiang8866/waferVLM/actions/runs/43566277450)
+downloaded and loaded the official weights, then failed the offline tests.
+The job-level scheduling inputs leaked into tests that deliberately mock
+single-run history and empty inventory. They activated the parallel path inside
+those tests; one fake-token request consequently received HTTP 401. Provider
+preflight, authorization marker and paid create/training steps were all skipped.
+
+Scheduling inputs are now scoped to the two controller steps. Lifecycle tests
+also isolate these variables, and CI exercises the tests with the real
+scheduling input values present. This fixes environment leakage without
+disabling a test or loosening provider checks.
+
+`runpod/dinov3-precreate.json` records the exact failed run, job, source, required
+skipped steps and two immutable cleanup artifact receipts. Both cleanup records
+verified 12 consecutive inventory absences. The result archive contains only
+CPU weight fingerprints and cleanup; no provision intent or allocation exists.
+The reconciled GPU cost/runtime are therefore zero. The next dispatch verifies
+the exact live run/job history, both artifact identities/digests and archive
+contents before accepting this exception. A paid step, rerun, extra job,
+changed cleanup or unexpected resource-intent file still blocks launch.
+
+The first sweep remains within US$3 / 100 minutes and the approved aggregate
+US$10 / 500 minutes. VLM training and its independent budget are unchanged.
