@@ -68,13 +68,24 @@ class DinoArchiveTests(unittest.TestCase):
             seal_output(folder)
         return cfg
 
-    def verify(self, root, cfg):
+    def verify(self, root, cfg, expected_gpu=None):
         archive = root.parent / 'experiment.tar.gz'
         with tarfile.open(archive, 'w:gz') as tar:
             tar.add(root, arcname='results')
         with patch('runpod.dinov3_bundle.recipe', return_value=cfg), \
                 patch('wafervlm.vision_comparison.recipe', return_value=cfg):
-            return verify_archive(archive, SOURCE, IMAGE, WEIGHTS)
+            return verify_archive(archive, SOURCE, IMAGE, WEIGHTS, expected_gpu=expected_gpu)
+
+    def test_selected_gpu_requires_matching_hardware_and_executed_bf16_kernel(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)/'results'
+            cfg = self.fixture(root)
+            with self.assertRaisesRegex(ValueError, 'runtime smoke mismatch'):
+                self.verify(root, cfg, 'synthetic GPU')
+            write_json(root/'hardware.json', dict(gpu='synthetic GPU', bf16=True, bf16_matmul_passed=True))
+            self.assertEqual(self.verify(root, cfg, 'synthetic GPU')['status'], 'accepted')
+            with self.assertRaisesRegex(ValueError, 'runtime smoke mismatch'):
+                self.verify(root, cfg, 'NVIDIA GeForce RTX 5090')
 
     def test_archive_relocation_recomputes_scores_and_selection(self):
         with tempfile.TemporaryDirectory() as tmp:

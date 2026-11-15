@@ -2,6 +2,13 @@ name: DINOv3 read-only preflight diagnosis
 on:
   workflow_dispatch:
     inputs:
+      gpu:
+        description: 'GPU to quote and check without allocating'
+        type: choice
+        default: 'NVIDIA GeForce RTX 4090'
+        options:
+          - 'NVIDIA GeForce RTX 4090'
+          - 'NVIDIA GeForce RTX 5090'
       image:
         description: 'Immutable DINO image to inspect; does not launch a GPU'
         type: string
@@ -35,6 +42,7 @@ jobs:
       - name: Observe stages without create or cleanup
         env:
           DINO_IMAGE: ${{ inputs.image }}
+          DINO_GPU: ${{ inputs.gpu }}
           DIAGNOSTIC_IMAGE_SOURCE_SHA: ${{ inputs.image_source_sha }}
           RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY }}
           GH_TOKEN: ${{ github.token }}

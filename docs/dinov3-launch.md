@@ -1,6 +1,39 @@
-# First DINOv3 RunPod experiment
+# Bounded DINOv3 RunPod experiment
 
-Status: merge and execution authorized on 2026-11-14; **no DINOv3 GPU has been allocated yet**. The real
+## Current launch: explicit RTX 5090 test (2026-11-15)
+
+The user requested a 5090 attempt under the existing **US$10 / 500-minute**
+aggregate DINO allowance. RTX 4090 remains the default; select
+`gpu=NVIDIA GeForce RTX 5090` explicitly in the paid or read-only workflow.
+No automatic GPU fallback is performed. The model, six seed-17 trials,
+data hashes, validation selection and untouched holdout are unchanged.
+
+| Item | 4090 default | Explicit 5090 |
+|---|---:|---:|
+| Maximum GPU-only USD/hour | 0.89 | 1.19 |
+| Cumulative attempt ceiling, including prior spend | US$3.00 | US$3.50 |
+| Work + cleanup | 90 + 10 minutes | 90 + 10 minutes |
+| Maximum new compute + 60GB ephemeral disk estimate | US$1.49822 | US$1.99822 |
+| Minimum host CUDA | 12.8 | 12.8 |
+
+These are ceilings, not live quotes. Current price/capacity, account headroom,
+owned-Pod absence and exact image/source are checked before allocation. The
+worker must report the selected GPU and execute a CUDA BF16 matrix multiply
+before data preparation; the retrieved archive is checked against that GPU.
+Independent cleanup recovers the GPU/rate from the owned Pod's markers even
+without the original Actions input.
+
+Two previous paid transfer failures remain conservatively charged at **US$0.10
+and 360 seconds**. The [pre-allocation failure 43609129272](https://github.com/jasonjiang8866/waferVLM/actions/runs/43609129272)
+is reconciled separately at zero GPU spend/runtime, using the exact skipped
+create steps plus SHA-verified result and independent absence artifacts in
+`runpod/dinov3-preflight-failure.json`. It does not consume a paid attempt.
+Exactly the known five historical dispatches plus one new dispatch are allowed;
+an unknown subsequent attempt still blocks. DINO training has not yet completed.
+
+## Historical first-launch preparation
+
+Merge and execution were authorized on 2026-11-14. At that initial preparation stage, no DINOv3 GPU had been allocated. The real
 [CPU access preflight on 2026-11-14](https://github.com/jasonjiang8866/waferVLM/actions/runs/43552229499)
 failed before downloading weights because repository Actions secret `HF_TOKEN`
 was not available. The user subsequently configured it and approved **US$10 /

@@ -26,6 +26,9 @@ CPU_FAILED_RUN = '43566277450'
 PAID = json.loads(Path(__file__).with_name('dinov3-paid-history.json').read_text())
 SECOND_PAID = json.loads(Path(__file__).with_name('dinov3-paid-recovery.json').read_text())
 PAID_HISTORY = (PAID, SECOND_PAID)
+PREFLIGHT_FAILED = json.loads(Path(__file__).with_name('dinov3-preflight-failure.json').read_text())
+KNOWN_PRIOR_RUNS = {QUEUED_DINO_RUN, CPU_FAILED_RUN, PREFLIGHT_FAILED['run_id'],
+                    *(p['run_id'] for p in PAID_HISTORY)}
 
 
 def reconciled_paid_failure(token, receipt=None):
@@ -72,17 +75,18 @@ def reconciled_paid_failure(token, receipt=None):
         raise ValueError('Paid failure cost/time/cleanup not reconciled')
 
 
-def reconciled_cpu_failure(token):
+def reconciled_cpu_failure(token, receipt=None):
     """Verify the exact pre-allocation test failure; never forgive a paid step."""
-    p = json.loads((Path(__file__).with_name('dinov3-precreate.json')).read_text())
-    run = request(f'{BASE}/actions/runs/{CPU_FAILED_RUN}', token=token)
-    if (str(run.get('id')) != CPU_FAILED_RUN or run.get('head_sha') != p['source_sha']
+    p = json.loads((Path(__file__).with_name('dinov3-precreate.json')).read_text()) if receipt is None else receipt
+    failed_run = p['run_id']
+    run = request(f'{BASE}/actions/runs/{failed_run}', token=token)
+    if (str(run.get('id')) != failed_run or run.get('head_sha') != p['source_sha']
             or run.get('head_branch') != 'main' or run.get('event') != 'workflow_dispatch'
             or run.get('path') != '.github/workflows/dinov3-gpu.yml'
             or run.get('run_attempt') != 1 or run.get('status') != 'completed'
             or run.get('conclusion') != 'failure'):
         raise ValueError('Reconciled CPU failure changed')
-    jobs = request(f'{BASE}/actions/runs/{CPU_FAILED_RUN}/jobs?filter=all&per_page=100', token=token)
+    jobs = request(f'{BASE}/actions/runs/{failed_run}/jobs?filter=all&per_page=100', token=token)
     if jobs.get('total_count') != 1 or len(jobs.get('jobs', [])) != 1:
         raise ValueError('CPU failure job history changed')
     job = jobs['jobs'][0]
@@ -129,15 +133,33 @@ def dispatch_history(data, current, token):
         if data.get('total_count') == 1 and [str(r['id']) for r in rows] == [current]:
             return
         raise ValueError('Prior DINO dispatch requires ledger/spend/cleanup reconciliation')
-    prior = {replaced, CPU_FAILED_RUN, *(p['run_id'] for p in PAID_HISTORY)}
-    if (replaced != QUEUED_DINO_RUN or current in prior or data.get('total_count') != 5
-            or len(rows) != 5 or {str(r['id']) for r in rows} != {current, *prior}):
-        raise ValueError('Third paid attempt requires exact reconciled five-run history')
-    previous = request(f'{BASE}/actions/runs/{replaced}', token=token)
+    prior = KNOWN_PRIOR_RUNS
+    if (replaced != QUEUED_DINO_RUN or current in prior or data.get('total_count') != 6
+            or len(rows) != 6 or {str(r['id']) for r in rows} != {current, *prior}):
+        raise ValueError('Third paid attempt requires exact reconciled six-run history')
+    reconcile_prior_records(token)
+
+
+def reconcile_prior_records(token):
+    previous = request(f'{BASE}/actions/runs/{QUEUED_DINO_RUN}', token=token)
     cancelled_before_jobs(previous, token)
     reconciled_cpu_failure(token)
+    reconciled_cpu_failure(token, PREFLIGHT_FAILED)
     for receipt in PAID_HISTORY:
         reconciled_paid_failure(token, receipt)
+
+
+def observe_history(token):
+    """Verify every prior receipt before another paid dispatch exists."""
+    data = request(BASE+'/actions/workflows/dinov3-gpu.yml/runs?event=workflow_dispatch&per_page=100', token=token)
+    rows = data.get('workflow_runs', [])
+    if (data.get('total_count') != len(KNOWN_PRIOR_RUNS) or len(rows) != len(KNOWN_PRIOR_RUNS)
+            or {str(r['id']) for r in rows} != KNOWN_PRIOR_RUNS):
+        raise ValueError('Unexpected DINO history before launch')
+    reconcile_prior_records(token)
+    return dict(status='verified', prior_runs=sorted(KNOWN_PRIOR_RUNS), paid_attempts=len(PAID_HISTORY),
+                accounted_usd=sum(p['accounted_usd'] for p in PAID_HISTORY),
+                accounted_seconds=sum(p['accounted_seconds'] for p in PAID_HISTORY))
 
 
 def companion(pods, token):

@@ -50,6 +50,7 @@ jobs:
       - run: python -m unittest discover -s runpod/tests -v
       - name: DINO tests remain offline with production scheduling inputs
         env:
+          DINO_GPU: 'NVIDIA GeForce RTX 5090'
           PARALLEL_VLM_RUN_ID: '43562568201'
           REPLACE_QUEUED_RUN_ID: '43563592797'
         run: python -m unittest discover -s runpod/tests -p 'test_dinov3*.py' -v

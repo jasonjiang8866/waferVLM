@@ -3,10 +3,17 @@ on:
   workflow_dispatch:
     inputs:
       confirm_paid:
-        description: 'Explicit approval for one 4090 seed-17 sweep: total <= US$3, 90 minutes work + 10 minutes cleanup'
+        description: 'One seed-17 sweep: cumulative <= US$3 (4090) or US$3.50 (5090); 90m work + 10m cleanup'
         type: boolean
         required: true
         default: false
+      gpu:
+        description: 'Exact GPU for this attempt (no automatic fallback)'
+        type: choice
+        default: 'NVIDIA GeForce RTX 4090'
+        options:
+          - 'NVIDIA GeForce RTX 4090'
+          - 'NVIDIA GeForce RTX 5090'
       expected_sha:
         description: 'Exact reviewed current main SHA; image must embed this same source'
         type: string
@@ -40,6 +47,7 @@ jobs:
       EXPECTED_SHA: ${{ inputs.expected_sha }}
       DINO_IMAGE: ${{ inputs.image }}
       CONFIRM_PAID: ${{ inputs.confirm_paid }}
+      DINO_GPU: ${{ inputs.gpu }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:

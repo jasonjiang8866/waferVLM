@@ -11,7 +11,7 @@ from runpod import dinov3_controller as c
 class DiagnosticsTests(unittest.TestCase):
     def test_known_guard_reason_is_reported_but_remote_message_is_redacted(self):
         with tempfile.TemporaryDirectory() as tmp, patch.object(c, 'OUT', Path(tmp)):
-            for message in ('No 4090 capacity meeting CUDA minimum', 'secret-token-in-remote-response'):
+            for message in ('No selected GPU capacity meeting CUDA minimum', 'secret-token-in-remote-response'):
                 with self.assertRaises(ValueError), c.preflight_stage('capacity'):
                     raise ValueError(message)
                 record = json.loads((Path(tmp) / 'preflight-progress.json').read_text())
@@ -38,6 +38,7 @@ class DiagnosticsTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp, patch.object(c, 'OUT', Path(tmp)), patch.dict(os.environ, env), \
                 patch.object(c, 'git', return_value='b'*40), patch.object(c, 'manual_guard') as guard, \
                 patch.object(c, 'launch') as launch, patch.object(c, 'cleanup') as cleanup, \
+                patch.object(c, 'observe_history', return_value={}), \
                 patch.object(c, 'preflight_checks', return_value={}) as checks:
             api = c.ReadOnlyRunpod()
             result = c.observe(api)

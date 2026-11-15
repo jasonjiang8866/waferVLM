@@ -61,7 +61,7 @@ def select(rows):
             for mode in recipe()['modes']}
 
 
-def verify_archive(archive, source, image, weights):
+def verify_archive(archive, source, image, weights, expected_gpu=None):
     """Recompute scores/checksums after relocation; never load tensor objects."""
     from runpod.confirmation_verify import unpack
     from wafervlm.core import read_jsonl, sha256_file
@@ -84,6 +84,9 @@ def verify_archive(archive, source, image, weights):
         hardware = json.loads((root / 'hardware.json').read_text())
         if not hardware.get('gpu') or not hardware.get('bf16'):
             raise ValueError('GPU evidence missing')
+        if expected_gpu is not None and (hardware.get('gpu') != expected_gpu
+                                        or hardware.get('bf16_matmul_passed') is not True):
+            raise ValueError('Selected GPU/runtime smoke mismatch')
         rows = []
         for trial in trials():
             folder = root / trial['name']

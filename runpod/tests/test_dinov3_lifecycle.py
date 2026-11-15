@@ -20,7 +20,7 @@ class DinoLifecycleTests(unittest.TestCase):
     def setUp(self):
         # Production workflow inputs must never turn unit fakes into live API
         # calls or replace their intentionally synthetic one-run history.
-        env = patch.dict(os.environ, PARALLEL_VLM_RUN_ID='', REPLACE_QUEUED_RUN_ID='')
+        env = patch.dict(os.environ, PARALLEL_VLM_RUN_ID='', REPLACE_QUEUED_RUN_ID='', DINO_GPU='')
         env.start()
         self.addCleanup(env.stop)
 
@@ -115,7 +115,7 @@ class DinoLifecycleTests(unittest.TestCase):
         api = Mock()
         api.call.side_effect = RuntimeError('ambiguous create')
         evidence = dict(source_sha='a'*40, image='image@sha256:'+'b'*64, weights={},
-                        cost=c.cost(.69), min_cuda_version='12.8', regions=['EU-RO-1'])
+                        gpu=c.GPU, cost=c.cost(.69), min_cuda_version='12.8', regions=['EU-RO-1'])
         with tempfile.TemporaryDirectory() as tmp, patch.object(c, 'OUT', Path(tmp)), \
                 patch.object(c, 'identity', return_value='7'), patch.object(c, 'ledger_guard'), \
                 patch.object(c, 'preflight', return_value=evidence), patch.object(c, 'cache_files', return_value={}), \
@@ -169,6 +169,7 @@ class DinoLifecycleTests(unittest.TestCase):
                     patch.object(w, 'ARCHIVE', root/'result.tar.gz'), patch.object(w, 'DATASET', dataset), \
                     patch.object(w, 'recipe', return_value=cfg), patch.object(w, 'READY', ready), \
                     patch.object(w, 'STATE', {}), patch.dict('sys.modules', torch=torch), \
+                    patch.object(w, 'hardware_smoke', return_value={'gpu':'synthetic GPU','bf16':True}), \
                     patch.object(w.subprocess, 'Popen', side_effect=process), \
                     patch.dict(os.environ, WAFERVLM_SOURCE_SHA='a'*40, DINO_IMAGE='image',
                         DINO_DEADLINE=str(c.time.time()+5400), HF_TOKEN='test-only', RUNPOD_API_KEY='test-only'):
