@@ -68,13 +68,13 @@ class RepeatLifecycle(unittest.TestCase):
     def test_repeat_launch_has_one_create_and_no_account_credentials(self):
         api=Mock();api.call.side_effect=RuntimeError('unknown create outcome')
         with patch.object(c,'authorization_guard'),patch.object(c,'preflight',return_value=self.evidence), \
-             patch.object(inputs,'signed_input_urls',return_value={'seed42':'scoped-read-url'}), \
              patch.object(c,'cleanup') as cleanup,patch('builtins.print'),self.assertRaises(RuntimeError):
             c.launch(api)
         self.assertEqual(api.call.call_count,1)
         payload=api.call.call_args.args[2]
         self.assertEqual(payload['env']['WAFER_EXPERIMENT'],'vlm-repeats')
         self.assertNotIn('WAFER_SEED',payload['env'])
+        self.assertNotIn('WAFER_INPUT_URLS',payload['env'])
         self.assertFalse({'GH_TOKEN','GITHUB_TOKEN','RUNPOD_API_KEY'} & payload['env'].keys())
         self.assertNotIn('scoped-read-url',(self.out/'provision.json').read_text())
         self.assertNotIn('scoped-read-url',(self.out/'launch-spec.json').read_text())

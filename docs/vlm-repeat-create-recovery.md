@@ -23,10 +23,20 @@ original 60-minute evaluation allowance, with the same 10-minute cleanup cap.
 The aggregate evaluation envelope has not increased. All 18 passes are still
 required, and the final holdout remains sealed.
 
-The retry compresses the reviewed bootstrap from approximately 75 KB to 21 KB.
+The retry compresses the reviewed bootstrap from approximately 75 KB to about 22 KB.
 A roundtrip test verifies every embedded file is byte-identical after decompression.
 This reduces request size; it is not a confirmed explanation for the HTTP 500.
 Model source, immutable image, checkpoint matrix, inference settings, GPU order
 and price ceilings are unchanged. There is still one create request per dispatch.
 Any additional failed paid attempt blocks further allocation until explicitly
 reconciled; no automatic retry loop is added.
+
+A separate pre-launch review found that [GitHub documents artifact redirect
+links as valid for only one minute](https://docs.github.com/en/rest/actions/artifacts#download-an-artifact).
+Links are now minted individually after the worker requests each archive,
+after startup and data preparation. The authenticated worker accepts only a
+bounded URL message matching the current archive key and random request nonce.
+Links never enter Pod environment variables, logs, result artifacts or model
+subprocesses. HTTP loopback tests cover delivery, authentication, nonce, replay,
+destination and size checks. This addresses a separate expiry risk, not the
+observed provider create error.

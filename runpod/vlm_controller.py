@@ -475,6 +475,20 @@ def worker_code():
             "runpy.run_module('runpod.vlm_repeat_worker',run_name='__main__')")
 
 
+def deliver_input_url(url, token, desired):
+    from runpod.vlm_repeat_inputs import inputs, signed_input_url
+    if (not isinstance(desired, dict) or set(desired) != {'key', 'nonce'}
+            or desired['key'] not in inputs()
+            or not re.fullmatch('[0-9a-f]{32}', desired['nonce'])):
+        raise ValueError('Invalid input URL request')
+    scoped = signed_input_url(desired['key'])
+    print('::add-mask::' + scoped, flush=True)
+    reply = request(url + '/input-url', token=token, method='POST',
+                    body={**desired, 'url': scoped})
+    if reply != {'status': 'accepted'}:
+        raise RuntimeError('Input URL delivery not acknowledged')
+
+
 def launch(api):
     authorization_guard()
     evidence = preflight(api)
@@ -482,14 +496,9 @@ def launch(api):
     spec = {"source_sha": SOURCE, "controller_sha": evidence["controller_sha"],
             "image": IMAGE, "gpu": evidence["gpu"],
             "gpu_hourly_usd": evidence["cost"]["gpu_hourly_usd"], "ledger": evidence["ledger"]}
-    input_urls = None
     if evaluation():
-        from runpod.vlm_repeat_inputs import signed_input_urls
         spec.update(phase='validation-repeats', config_sha256=evidence['config_sha256'],
                     input_manifest_sha256=evidence['inputs']['manifest_sha256'])
-        input_urls = signed_input_urls()
-        for value in input_urls.values():
-            print('::add-mask::' + value, flush=True)
     else:
         spec['seed'] = training_seed()
         launch_plan(spec)
@@ -547,8 +556,7 @@ def launch(api):
     }
     if evaluation():
         payload['env'].pop('WAFER_SEED')
-        payload['env'].update(WAFER_INPUT_URLS=json.dumps(input_urls),
-                              WAFER_INPUT_MANIFEST_SHA=spec['input_manifest_sha256'])
+        payload['env']['WAFER_INPUT_MANIFEST_SHA'] = spec['input_manifest_sha256']
     handlers = {
         s: signal.signal(s, interrupt) for s in (signal.SIGALRM, signal.SIGTERM, signal.SIGINT)
     }
@@ -593,6 +601,7 @@ def launch(api):
         last_progress = None
         next_inventory = time.time() + 60
         worker_seen = False
+        deliveries = {}
         while time.time() < deadline - 35:
             if time.time() >= next_inventory:
                 current = api.call("/pods/" + pod_id)
@@ -608,6 +617,18 @@ def launch(api):
                 time.sleep(10)
                 continue
             worker_seen = True
+            desired = result.get('input_request')
+            if evaluation() and desired is not None:
+                key = json.dumps(desired, sort_keys=True)
+                attempts = deliveries.get(key, 0)
+                if attempts != 'accepted':
+                    if attempts >= 3:
+                        raise RuntimeError('Input URL delivery failed three times')
+                    try:
+                        deliver_input_url(url, token, desired)
+                        deliveries[key] = 'accepted'
+                    except RuntimeError:
+                        deliveries[key] = attempts + 1
             phase = result.get("phase")
             if phase != last_phase and phase in {"starting", "data", "training", "inputs", "validation"}:
                 print("Worker phase: " + phase, flush=True)

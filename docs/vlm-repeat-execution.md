@@ -32,9 +32,11 @@ CPU thread counts, model kernels, generation and analysis recipe are unchanged.
 Before allocation, CPU CI and preflight re-download both fresh-seed archives and
 independent cleanup receipts, reconcile cumulative spend, and reconstruct all six
 full checkpoints from hash-pinned ZIPs. Missing, altered or reordered endpoints
-block allocation. The worker receives four short-lived artifact-scoped URLs,
-never the GitHub/RunPod account token; URLs are masked and are not persisted in
-artifacts or inherited by inference subprocesses. It rechecks each ZIP, training
+block allocation. The worker requests a fresh artifact-scoped URL immediately
+before each of the four downloads, never a GitHub/RunPod account token. Delivery
+is authenticated and bound to the requested archive and nonce. URLs are masked,
+not persisted in artifacts or environment variables, and not inherited by
+inference subprocesses. It rechecks each ZIP, training
 acceptance, released-state hashes and the same committed six-endpoint matrix.
 
 After retrieval, the controller validates the entire output tree and all 18
