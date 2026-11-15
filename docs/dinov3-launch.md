@@ -10,10 +10,10 @@ data hashes, validation selection and untouched holdout are unchanged.
 
 | Item | 4090 default | Explicit 5090 |
 |---|---:|---:|
-| Maximum GPU-only USD/hour | 0.89 | 1.19 |
+| Maximum GPU-only USD/hour | 0.89 | 1.39 |
 | Cumulative attempt ceiling, including prior spend | US$3.00 | US$3.50 |
 | Work + cleanup | 90 + 10 minutes | 90 + 10 minutes |
-| Maximum new compute + 60GB ephemeral disk estimate | US$1.49822 | US$1.99822 |
+| Maximum new compute + 60GB ephemeral disk estimate | US$1.49822 | US$2.33155 |
 | Minimum host CUDA | 12.8 | 12.8 |
 
 These are ceilings, not live quotes. Current price/capacity, account headroom,
@@ -22,6 +22,14 @@ worker must report the selected GPU and execute a CUDA BF16 matrix multiply
 before data preparation; the retrieved archive is checked against that GPU.
 Independent cleanup recovers the GPU/rate from the owned Pod's markers even
 without the original Actions input.
+
+The [read-only observation on 2026-11-15](https://github.com/jasonjiang8866/waferVLM/actions/runs/43675273588)
+verified the five historical receipts, then reported a 5090 secure-cloud quote
+of **US$1.39/hour** and four regions meeting the CUDA minimum. No Pod was created.
+The 5090 rate ceiling was adjusted to this observed quote within the unchanged
+US$3.50 cumulative attempt ceiling: US$0.10 prior spend + US$2.33155 maximum
+new compute/disk leaves more than US$1.06 for uncertainty. Availability and
+resource/account checks must still be repeated before allocation.
 
 Two previous paid transfer failures remain conservatively charged at **US$0.10
 and 360 seconds**. The [pre-allocation failure 43609129272](https://github.com/jasonjiang8866/waferVLM/actions/runs/43609129272)
