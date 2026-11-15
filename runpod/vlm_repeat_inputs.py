@@ -67,7 +67,6 @@ def signed_input_urls():
 def archives(output, urls=None, deadline=None):
     """Download bounded bytes and check the committed hash before any extraction."""
     from runpod.provider import NoRedirect
-    from wafervlm.core import sha256_file
     output = Path(output); output.mkdir(parents=True, exist_ok=True)
     pins = inputs()
     if urls is not None and set(urls) != set(pins):
@@ -91,7 +90,9 @@ def archives(output, urls=None, deadline=None):
                             raise TimeoutError('Input download size/deadline exceeded')
                         w.write(block)
             tmp.replace(path)
-        if path.stat().st_size > MAX_ZIP or sha256_file(path) != pin['zip_sha256']:
+        with path.open('rb') as stream:
+            digest = hashlib.file_digest(stream, 'sha256').hexdigest()
+        if path.stat().st_size > MAX_ZIP or digest != pin['zip_sha256']:
             raise ValueError('Input archive checksum mismatch: ' + key)
         paths[key] = path
     return paths
