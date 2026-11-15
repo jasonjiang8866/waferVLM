@@ -1,6 +1,51 @@
 # Bounded DINOv3 RunPod experiment
 
-## Current launch: explicit RTX 5090 test (2026-11-15)
+## Latest result: 5090 allocated, weight transport failed (2026-11-15)
+
+[Run 43676359795](https://github.com/jasonjiang8866/waferVLM/actions/runs/43676359795)
+used source `8b7bcd1368b284cd56d4f6f711acb0724ee91895` and image
+`ghcr.io/jasonjiang8866/wafervlm@sha256:2ca97f47ad409bd5fe7b728702a9440399a0aef8cbcb729ada40906379aeac64`.
+It allocated **one NVIDIA GeForce RTX 5090 in EUR-NO-1 at US$1.39/hour**.
+The latest pre-create checks re-queried capacity; the earlier read-only probe
+had returned EU-RO-1. The allocation matched the fresh pre-create region list.
+
+The worker reached `awaiting_weights` and acknowledged the 743-byte `config.json`.
+The first `model.safetensors` chunk (offset 0, 4,194,304 bytes of 86,406,384)
+returned **HTTP 404** on attempt 1. This terminal response was not retried.
+**CUDA/BF16 execution, data preparation, training and quality evaluation did not
+run.** This is a failed transport attempt, not a 5090 performance result.
+
+The worker's authenticated PUT handler emits 204/400/403/409, not 404, and the
+offline multi-chunk round-trip test passes. These facts narrow the next diagnosis
+to the external request path or worker reachability; they do not prove whether
+the 404 came from the provider proxy, a route change or a worker interruption.
+The current receipt lacks response-origin headers and a post-failure worker
+health snapshot. Capture bounded, sanitized diagnostics at that boundary before
+another paid attempt; do not infer a CUDA fault or blindly switch GPUs again.
+
+The controller verified Pod `wrjc8g514yqel6` absent in three consecutive checks.
+[Independent cleanup 43676869427](https://github.com/jasonjiang8866/waferVLM/actions/runs/43676869427)
+then verified absence in twelve consecutive checks. No persistent volume was
+created. The intent-to-absence billing bound was **324.372 seconds**, estimating
+**US$0.126048** including the conservative ephemeral-disk allowance. With the
+US$0.10 / 360-second prior ledger, cumulative estimated cost/runtime is
+**US$0.226048 / 684.372 seconds**. These are estimates, not a provider invoice.
+For future authorization accounting, round this attempt up to **US$0.13 / 330
+seconds**, giving **US$0.23 / 690 seconds** across three paid attempts, within the
+original **US$10 / 500-minute** approval.
+
+Verified receipts:
+
+| Receipt | Artifact | SHA-256 |
+|---|---|---|
+| Failed run, transfer/allocation/cost/cleanup | [14146537615](https://github.com/jasonjiang8866/waferVLM/actions/runs/43676359795/artifacts/14146537615) | `73a212183032ef2d5c4e16e949b87cb10035bfc3b82d9ace54341a109f22394f` |
+| Independent absence | [14146364868](https://github.com/jasonjiang8866/waferVLM/actions/runs/43676869427/artifacts/14146364868) | `dde1f33dee3b90c2f0d3b8b7858238c037391f8e1e1bf19a01c5fb278f93a3b1` |
+
+The executable history guard still intentionally rejects any new dispatch until
+this newly completed paid attempt and both receipts are reconciled. This report
+does not enable or launch another paid attempt.
+
+## 5090 launch preparation (before run 43676359795)
 
 The user requested a 5090 attempt under the existing **US$10 / 500-minute**
 aggregate DINO allowance. RTX 4090 remains the default; select
@@ -31,13 +76,14 @@ US$3.50 cumulative attempt ceiling: US$0.10 prior spend + US$2.33155 maximum
 new compute/disk leaves more than US$1.06 for uncertainty. Availability and
 resource/account checks must still be repeated before allocation.
 
-Two previous paid transfer failures remain conservatively charged at **US$0.10
+At launch, two previous paid transfer failures were conservatively charged at **US$0.10
 and 360 seconds**. The [pre-allocation failure 43609129272](https://github.com/jasonjiang8866/waferVLM/actions/runs/43609129272)
 is reconciled separately at zero GPU spend/runtime, using the exact skipped
 create steps plus SHA-verified result and independent absence artifacts in
 `runpod/dinov3-preflight-failure.json`. It does not consume a paid attempt.
-Exactly the known five historical dispatches plus one new dispatch are allowed;
-an unknown subsequent attempt still blocks. DINO training has not yet completed.
+The launch guard allowed exactly the known five historical dispatches plus one
+new dispatch; an unknown subsequent attempt still blocks. DINO training has not
+yet completed.
 
 ## Historical first-launch preparation
 
