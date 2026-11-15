@@ -1,6 +1,6 @@
 # DINOv3 visual baseline
 
-Status: implementation, CPU compatibility tests and [bounded launch integration](dinov3-launch.md); **no pretrained DINOv3 experiment has run**. No DINOv3 accuracy, cost, GPU speed or final-holdout result is available yet. This is separate from the Qwen seed-confirmation work.
+Status: the [six-trial seed-17 sweep completed on RTX 5090](dinov3-seed17-results.md) on 2026-11-15. Selected validation results are **83.750% accuracy / 0.836449 macro-F1** for linear and **86.875% / 0.867173** for LoRA. All trials completed 10 epochs; both selected exports were reloaded, and Pod absence was independently verified. These are development results: seeds 42/123 and final-holdout evaluation remain pending. This is separate from the Qwen seed-confirmation work.
 
 ## Question and fixed arms
 
@@ -29,6 +29,8 @@ The LoRA-minus-linear paired difference measures adaptation within DINOv3. DINOv
 ### Bounded development and confirmation
 
 Use seed **17** for a three-LR sweep per arm: linear `{0.001, 0.003, 0.01}`; LoRA `{0.00005, 0.0001, 0.0002}` with head LR 0.001. Freeze each arm's LR after that sweep; ties choose the lower LR. Then run seeds **42 and 123** at that frozen LR and epoch budget. This is at most ten training runs, not ten new spending allowances. Do not tune each confirmation seed separately.
+
+The completed sweep selects **linear LR 0.003** and **LoRA LR 0.0001 / head LR 0.001** for confirmation. See the [all-trial table and original prediction evidence](dinov3-seed17-results.md). Fresh-process batch-size-one reload changes 2/160 linear and 1/160 LoRA predictions; reported showcase metrics use the original batch-size-eight selected predictions consistently.
 
 Keep the existing Qwen independent-seed study distinct. Its historical tuning effort differs from the DINO sweep, so the Qwen comparison is exploratory. The six-run DINO summary requires all three seeds for both arms and an identical recipe within each arm; it reports all seeds, sample standard deviations and paired LoRA-minus-linear differences, never the best seed alone. Learning-rate selection is a recorded analysis decision before confirmation dispatch; the CLI does not autonomously select or launch trials.
 
@@ -82,7 +84,7 @@ For a GitHub-hosted CPU preflight, first obtain access on the official model pag
 
 Prefer **RTX 4090** and select host CUDA capability **>=12.8** through the existing numeric lower-bound logic. The worker image reuses a pinned CUDA environment; accepting a newer host does not change the container runtime. The CPU-tested image workflow builds on PRs and publishes only through explicit `workflow_dispatch` on main; it never creates a Pod.
 
-Before paid execution: complete official-weight access/preflight, freeze source and image digest, reconcile the experiment budget/current provider quote and active Pods, and use the dedicated [DINOv3 controller](dinov3-launch.md) with aggregate accounting and independently verified cleanup. The current GPU workflow still launches Qwen workloads; **do not dispatch it expecting DINOv3**. A local process timeout does not terminate a RunPod Pod or enforce the full experiment's spending cap. No existing authorization marker is reset by this change.
+Before another paid execution: freeze source and image digest, reconcile the experiment budget/current provider quote and active Pods, and use the dedicated [DINOv3 controller](dinov3-launch.md) with aggregate accounting and independently verified cleanup. The DINOv3 workflow is `dinov3-gpu.yml`; the separate `gpu.yml` launches Qwen workloads. The completed sweep used an image containing hash-verified official weights and ran with offline model loading. A local process timeout does not terminate a RunPod Pod or enforce the full experiment's spending cap. Publishing these results does not reset or reuse a consumed authorization marker.
 
 ## Verification
 

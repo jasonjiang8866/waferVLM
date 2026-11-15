@@ -1,10 +1,12 @@
 # waferVLM
 
-**Turn wafer test maps into defect-pattern labels with a small vision-language model.**
+**Turn wafer test maps into defect-pattern labels with compact vision and vision-language models.**
 
 A semiconductor wafer contains many individual chips, called **dies**. A **wafer map** records their test results at each location: **yellow = defective, blue = good, black = outside the wafer**. Failed dies can form recognizable spatial patterns, such as a ring, a local patch, or a scratch-like trace.
 
 waferVLM gives [`Qwen/Qwen3.5-0.8B`](https://huggingface.co/Qwen/Qwen3.5-0.8B) a map and a fixed classification question, then returns one of eight pattern labels. A small LoRA adapter teaches the model this task. The current experiment classifies appearance; it does not establish the manufacturing root cause.
+
+The new **DINOv3 ViT-S/16 comparison** reads the same maps with a vision encoder and an eight-class prediction head. A frozen-backbone linear baseline measures what its pretrained features already know; vision-side LoRA measures the benefit of adapting those features.
 
 ![Checkpoint-250 inference examples: one real scratch map correctly labeled scratch, and another misclassified as loc.](docs/showcase/checkpoint-250/inference.png)
 
@@ -16,7 +18,42 @@ These are **recorded checkpoint-250 validation predictions**, including a mistak
 
 The labels above are **dataset annotations**. These examples were selected for visible morphology, not prediction success. Normal (`none`) and unknown defects are outside this eight-class experiment.
 
-## Where does the model get confused?
+## Latest results: DINOv3 vision fine-tuning
+
+The [2026-11-15 RTX 5090 run](https://github.com/jasonjiang8866/waferVLM/actions/runs/43716864164) completed all six seed-17 trials: three learning rates per DINOv3 arm, **10 epochs / 990 optimizer updates each**. Both selected models were reloaded in fresh processes, and the temporary Pod was independently verified absent.
+
+| Model · same 160 validation maps | Correct | Accuracy | Macro-F1 |
+|---|---:|---:|---:|
+| Qwen3.5-0.8B · checkpoint 250 | 125/160 | 78.125% | 0.773992 |
+| DINOv3 · frozen backbone + linear head | 134/160 | 83.750% | 0.836449 |
+| **DINOv3 · Q/V LoRA + linear head** | **139/160** | **86.875%** | **0.867173** |
+
+LoRA adds **3.125 percentage points of accuracy / 0.030724 macro-F1** over the DINOv3 linear baseline. Against the recorded Qwen predictions it adds **8.750 points / 0.093180 macro-F1**. These are **single-seed, validation-selected development results**, not final test results or a compute-matched architecture comparison. DINOv3 seeds 42/123 and the reserved 148-map holdout evaluation have not run.
+
+Selected learning rates: linear **0.003** (epoch 10); LoRA **0.0001**, head **0.001** (epoch 5). The table and images use the original selected predictions at batch size 8. Fresh-process evaluation at batch size 1 changes 2 linear predictions and 1 LoRA prediction: accuracy is unchanged, while macro-F1 becomes **0.835856 / 0.867110**. Reloading therefore does not establish exact prediction parity.
+
+[Full six-trial results, reload differences and cost evidence](docs/dinov3-seed17-results.md) · [Download selected heads/adapters and complete run evidence](https://github.com/jasonjiang8866/waferVLM/actions/runs/43716864164/artifacts/14163676440) (Actions retention: 2027-02-13).
+
+## Where does DINOv3 get confused?
+
+Read **columns as true labels** and **rows as predicted labels**. Each column contains 20 maps; each non-empty cell shows a real input, the complete count and the percentage of its true class. The selected LoRA model gets **139/160** correct. Its weakest class is `loc` (**13/20 correct**), followed by `edge-loc` (**15/20**).
+
+[![DINOv3 LoRA wafer-map confusion matrix: X is true label, Y is predicted label; counts cover all 160 validation maps.](docs/showcase/dinov3-seed17/lora-image-confusion-matrix.png)](docs/showcase/dinov3-seed17/lora-image-confusion-matrix.png)
+
+[Full-size matrix](docs/showcase/dinov3-seed17/lora-image-confusion-matrix.png) · [Accessible count table and thumbnail IDs](docs/showcase/dinov3-seed17/README.md) · [Linear-baseline matrix](docs/showcase/dinov3-seed17/linear-image-confusion-matrix.png) · [Complete prediction artifact](https://github.com/jasonjiang8866/waferVLM/actions/runs/43716864164/artifacts/14163676440)
+
+Every validation map contributes to the counts. Thumbnails use the lowest sample ID in each cell, without confidence filtering. An eight-way classifier cannot produce an invalid label by construction; its zero-invalid row is not an additional quality gain.
+
+### Same wafer, two model predictions
+
+DINOv3 LoRA corrects **22** Qwen mistakes, but misses **8** maps that Qwen gets right. Both models get **117** right and **13** wrong. The examples below show up to three lowest IDs in each category, including regressions and shared mistakes.
+
+![Paired Qwen and DINOv3 LoRA predictions on real wafer maps: both correct, only Qwen correct, only DINOv3 correct and both wrong.](docs/showcase/dinov3-seed17/paired-examples.png)
+
+### Previous Qwen checkpoint-250 confusion matrix
+
+<details>
+<summary>Expand the Qwen validation matrix and its original interpretation</summary>
 
 **125 of 160 validation maps classified correctly · 78.125% accuracy · 0.773992 macro-F1 · 0 invalid outputs.**
 
@@ -28,9 +65,11 @@ Read **columns as true labels** and **rows as predicted labels**. Every column c
 
 Counts cover the **entire validation split**, not just the displayed thumbnails. Each matrix thumbnail is the lowest sample ID in its cell. Validation was used to select this checkpoint; this showcase is **not a test or final-holdout evaluation**.
 
-## Results and model download
+</details>
 
-**Latest development result:** validation selected **checkpoint-250** after continuing the released full checkpoint 200 to 300 at constant LR 5e-5. On the same 160 validation maps, step 250 reached **78.125% accuracy / 0.773992 macro-F1**, with **0 invalid outputs**. No new test or final-holdout inference ran. This is a single-seed development result requiring confirmation.
+## Qwen checkpoints and model download
+
+**Latest released Qwen development result:** validation selected **checkpoint-250** after continuing the released full checkpoint 200 to 300 at constant LR 5e-5. On the same 160 validation maps, step 250 reached **78.125% accuracy / 0.773992 macro-F1**, with **0 invalid outputs**. No new test or final-holdout inference ran. This is a single-seed development result requiring confirmation.
 
 **Download:** [continuation-300-v1 Release](https://github.com/jasonjiang8866/waferVLM/releases/tag/continuation-300-v1) — selected inference adapter, full resumable 250/300 checkpoints, raw predictions, reports and SHA256 checks. See [results and recovery instructions](docs/continuation-300-results.md). The earlier [checkpoint-200 Release](https://github.com/jasonjiang8866/waferVLM/releases/tag/checkpoint-200-v1) remains available.
 
@@ -61,7 +100,7 @@ The unchanged step-200 adapter changed five predictions relative to its historic
 
 ## What is included
 
-- [DINOv3 visual comparison](docs/dinov3-baseline.md): frozen linear probe and vision LoRA, fixed-data validation, three-seed summaries, and paired wafer-map visualizations. Implementation available; pretrained DINOv3/GPU results are **not run**.
+- [DINOv3 visual comparison](docs/dinov3-baseline.md): frozen linear probe and vision LoRA, fixed-data validation, and paired wafer-map visualizations. The [six-trial seed-17 GPU sweep is complete](docs/dinov3-seed17-results.md); independent-seed confirmation remains pending.
 - WM-811K import with source checksum verification, deterministic rendering, whole-lot splitting, duplicate-map isolation, and artifact auditing.
 - Qwen3.5's pinned processor and model revision; answer-only loss; vision tower frozen; LoRA on language projections including Gated DeltaNet layers.
 - Zero-shot evaluation, fixed-budget SFT, adapted-model evaluation, and paired accuracy / macro-F1 comparison.
@@ -146,6 +185,8 @@ Individual stages are available through `wafervlm evaluate`, `train` and `compar
 `comparison/comparison.json` contains paired scores. `base/` and `tuned/` include raw responses and per-example generation times; `train/` contains adapter weights and gradient diagnostics. Latencies include the first generation and exclude model loading and image preprocessing. A completed worker is **not** a quality acceptance decision. Test-set results must not drive hyperparameter tuning.
 
 ## RunPod
+
+**DINOv3 has a separate US$10 / 500-minute authorization.** Its completed seed-17 sweep used an estimated **US$0.418122 / 17.933 minutes** from create intent through verified absence, including temporary disk. With the three earlier failed attempts, cumulative DINO usage is **US$0.648122 / 29.433 minutes**. These are conservative lifecycle estimates, not provider invoices. The Pod is verified absent and no persistent volume was created; see [DINO cost and cleanup evidence](docs/dinov3-seed17-results.md#cost-and-cleanup).
 
 See [runpod/README.md](runpod/README.md) for the extended US$30 /1,100-minute total experiment authorization, per-GPU price caps, pinned published image, data verification and cleanup design. `RUNPOD_API_KEY` stays in the Actions controller; neither the training code nor the worker receives it. Host filtering uses `minCudaVersion=12.8`, never an exact 12.8 requirement. The Broker remains GET-only; the separate waferVLM controller implements the paid lifecycle. Merging code does not launch compute: the GPU workflow requires a manual dispatch, exact main SHA and an unused authorization marker. The lower-LR continuation completed step 200 and its temporary Pod deletion was independently verified. Results and full recovery files are preserved in the [checkpoint-200 Release](https://github.com/jasonjiang8866/waferVLM/releases/tag/checkpoint-200-v1). After both diagnostics and the completed 200→300 continuation, conservative cumulative usage is **US$5.903039 / 491.911 minutes** within **US$30 / 1,100 minutes**. The continuation Pod is verified absent by primary and independent cleanup. See the [latest cost and cleanup evidence](docs/continuation-300-results.md#cleanup-and-cost-ledger). The consumed authorization marker remains guarded; publishing results does not launch compute.
 
