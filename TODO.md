@@ -17,7 +17,7 @@ are not completed experiments or new paid-launch authorization.
 - [x] Update README/results/recovery instructions and verify temporary Pod
   deletion. See [the completed-run report](docs/checkpoint-200-release.md).
 
-**Current status:** the [200→300 continuation](docs/continuation-300-results.md) completed and validation selected checkpoint 250 (78.125% accuracy / 0.773992 macro-F1 / 0 invalid outputs). Full checkpoints, raw predictions and evidence are preserved in [continuation-300-v1](https://github.com/jasonjiang8866/waferVLM/releases/tag/continuation-300-v1). Both cleanup paths verified Pod absence. No new test or holdout inference ran. The earlier diagnostic parity failures remain rejected; the unchanged unprofiled implementation was retained. The [seed confirmation plan](docs/seed-confirmation-plan.md) is prepared; its new training and holdout evaluation are not executed.
+**Current status:** the [200→300 continuation](docs/continuation-300-results.md) completed and validation selected checkpoint 250 (78.125% accuracy / 0.773992 macro-F1 / 0 invalid outputs). Full checkpoints, raw predictions and evidence are preserved in [continuation-300-v1](https://github.com/jasonjiang8866/waferVLM/releases/tag/continuation-300-v1). Both cleanup paths verified Pod absence. No new test or holdout inference ran. The earlier diagnostic parity failures remain rejected; the unchanged unprofiled implementation was retained. Fresh seeds [42](docs/vlm-seed42-results.md) and [123](docs/vlm-seed123-results.md) have completed 250 steps and passed independent full-state verification. Six endpoints are frozen; [18 validation repeats](docs/vlm-repeat-execution.md) and the final holdout study remain pending.
 
 ## P1 — diagnose performance before more training
 
@@ -116,7 +116,9 @@ Completed in [run 42682266526](https://github.com/jasonjiang8866/waferVLM/action
   selection. Do not treat a new split seed over previously seen images as an
   untouched test set. Record any limits in available lot/metadata coverage.
 - [x] Prepare a [paired independent-seed plan](docs/seed-confirmation-plan.md), fixed steps 200/250, repeated fixed-weight evaluation and a separate compute estimate.
-- [ ] Implement and run the two new seeds (42/123), preserving the data protocol, resume states, full evidence and cleanup. Existing single-seed gains remain exploratory.
+- [x] Implement and run seeds 42/123, preserving the data protocol, full resume states, original artifacts and verified cleanup.
+- [x] Reconstruct and freeze all six step-200/250 checkpoints from the four original ZIPs.
+- [ ] Run and independently analyze all 18 fresh-process validation passes; report the first pass and every repeat. Existing single-seed gains remain exploratory.
 - [ ] Freeze the final models/comparisons, then evaluate the new holdout once
   per predeclared model/seed. Report accuracy, macro-F1, per-class recall,
   invalid rate, uncertainty across lots/seeds, inference time and peak memory.
@@ -140,7 +142,9 @@ outside this eight-label experiment.
 User extension on 2026-11-09 (SGT): **+US$10 / +600 minutes**.
 After the completed continuation, conservative cumulative usage is **US$5.903039 / 491.911 minutes**, including prior upward-rounded reserves. The continuation added **US$0.523039 / 34.911 lifecycle minutes**. Total authorization remains **US$30 / 1,100 minutes**; estimates include ephemeral disk and are not provider invoices or a hard cap. Both cleanup paths verified the owned Pod absent.
 
-The [seed confirmation plan](docs/seed-confirmation-plan.md) allocates at most **460 additional minutes**, giving **951.911 cumulative minutes** and approximately **US$15.095 cumulative** at the highest previously approved rate including disk. This is a plan, not an executed experiment or a fresh allowance per dispatch. Reconcile the current consumed marker only together with reviewed next-stage implementation, pinned images and current price/capacity evidence.
+After both fresh seeds, the cumulative estimate is **US$8.132282 / 640.704 minutes**. The [repeat phase](docs/vlm-repeat-execution.md) reserves 60 work + 10 cleanup minutes from that same allowance.
+
+The original [seed confirmation plan](docs/seed-confirmation-plan.md) allocated at most **460 additional minutes**, giving **951.911 cumulative minutes** and approximately **US$15.095 cumulative** at the highest previously approved rate including disk. This is a plan, not an executed experiment or a fresh allowance per dispatch. Reconcile the current consumed marker only together with reviewed next-stage implementation, pinned images and current price/capacity evidence.
 
 - Keep GPU choices and price ceilings within existing authorization; obtain
   fresh capacity/price evidence at launch. Prefer RTX 4090 when it fits;

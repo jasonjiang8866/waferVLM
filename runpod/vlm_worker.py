@@ -79,6 +79,16 @@ def cpu_snapshot(cgroup=Path('/sys/fs/cgroup')):
 def progress_snapshot():
     """Read only bounded progress, never serve subprocess logs or credentials."""
     snapshot = dict(RESULT)
+    if snapshot.get('status') == 'running' and snapshot.get('phase') == 'validation':
+        try:
+            path = OUT / 'repeats/passes.json'
+            if path.stat().st_size <= 32000:
+                records = json.loads(path.read_text())
+                if isinstance(records, list) and len(records) <= 18:
+                    snapshot['progress'] = {'completed_passes': len(records), 'total_passes': 18}
+        except (OSError, ValueError):
+            pass
+        return snapshot
     if snapshot.get('status') != 'running' or snapshot.get('phase') != 'training':
         return snapshot
     for total in (250, 200, 150, 100):

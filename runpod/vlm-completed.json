@@ -69,5 +69,76 @@
       "creation_confirmed": false,
       "cost": "unverified_no_local_intent"
     }
+  },
+  {
+    "seed": 123,
+    "run_id": 43609894428,
+    "controller_sha": "a583f29ee997b64acd27f3cef3024bb3ba130a0a",
+    "marker_artifact_id": 14119796441,
+    "marker_sha256": "d2e698dd9fc4b8dbb605c8355693c56d75ff679ffd827918e884be389a37ef9e",
+    "result_artifact_id": 14121578675,
+    "result_sha256": "e1b54d8e9d89dd989aceb06daee3eb234de46ea7705b0cf0cf7bd6299cddbdb2",
+    "independent_cleanup_run_id": 43615153978,
+    "independent_cleanup_artifact_id": 14121666775,
+    "independent_cleanup_sha256": "eb31e9370e8c7c616e7c34761bfba73a974339f0e18859d84a23631958db2480",
+    "acceptance": {
+      "status": "accepted",
+      "seed": 123,
+      "endpoints": [
+        {
+          "seed": 123,
+          "step": 200,
+          "files": {
+            "adapter_config.json": "71087778e9140e8d82790a6586f60823425694974045351354a273bf9afdad90",
+            "adapter_model.safetensors": "3e55637fc4a5294cb37610e1adaffb8ec8c4e748d047b0ac789812a3fb7a82fa",
+            "optimizer.pt": "c618a09c8a1873d9e7bcabd1745951e230b64e502d97bce6af432cd9d68f6b18",
+            "rng_state.pth": "28f7557cf8ee3b1f49cfda545327676114f717e4d3f4903369d15df32ed2d4b4",
+            "scheduler.pt": "37c9346d225deccff771594bb8343dc5fe37100b59d484fb90194174b473c854",
+            "trainer_state.json": "6e3eb7b55e57c6a404bf8ecaedcbe12c9ce7801f4cb2b0e899ea713c46d43d68",
+            "training_args.bin": "26a8f5738f747f795adbedce9db94fe7f8a7426d0ab08a82dc421a94377ef9ad"
+          },
+          "run_sha256": "b46840381db5c72a1b2d2ac85c0697af626d747b1169f672f52fda100295c010"
+        },
+        {
+          "seed": 123,
+          "step": 250,
+          "files": {
+            "adapter_config.json": "71087778e9140e8d82790a6586f60823425694974045351354a273bf9afdad90",
+            "adapter_model.safetensors": "1c7320fe2ee276fb873a69b8fc26dbfc026df817fedf7cf9d6e35cc59fc47a1a",
+            "optimizer.pt": "d49c063b321d2303284980604fe559bc700b26ac2dc7476f34145ed08346c216",
+            "rng_state.pth": "28f7557cf8ee3b1f49cfda545327676114f717e4d3f4903369d15df32ed2d4b4",
+            "scheduler.pt": "3fba097194f6407bf8d2166ee08e5800211d030ca2bf6ec1c0e3dab68f30706e",
+            "trainer_state.json": "6856825faeb59f95d365505b8cedfc8c91e58954ac3164d52cb4fb7975668a11",
+            "training_args.bin": "ccab5a81210de850b5a120d778793897df4a58670f0aaae090c2cea7414f5158"
+          },
+          "run_sha256": "cb80e2afab12a9867757ca9ec98dc19c60abf0b6c854e779f4d72fea5544e761"
+        }
+      ],
+      "archive_sha256": "f01b0f361a8a22b5b4433de8f2fad7c3716fd6f18af25bd4011c28a4d64d6872",
+      "quality_accepted": false,
+      "holdout_accessed": false
+    },
+    "cleanup": {
+      "status": "verified_absent",
+      "name": "wafer-20261107-usd20-vlm123-43609894428",
+      "checked_epoch": 1794673263.2781186,
+      "consecutive_absent_checks": 3,
+      "creation_confirmed": true,
+      "elapsed_billing_bound_s": 3403.233545780182,
+      "estimated_total_usd": 8.132281676712218,
+      "within_budget": true,
+      "estimated_total_seconds": 38442.25880065918,
+      "within_runtime": true,
+      "persistent_volumes_created": false,
+      "cost_basis": "conservative_intent_to_absence_estimate_not_invoice"
+    },
+    "independent_cleanup": {
+      "status": "verified_absent",
+      "name": "wafer-20261107-usd20-vlm123-43609894428",
+      "checked_epoch": 1794673307.8847098,
+      "consecutive_absent_checks": 3,
+      "creation_confirmed": false,
+      "cost": "unverified_no_local_intent"
+    }
   }
 ]

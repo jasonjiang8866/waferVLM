@@ -21,14 +21,20 @@ jobs:
         with:
           python-version: '3.12'
       - run: python -m pip install -e .
-      - name: Reverify original seed-42 archive and independent cleanup without a GPU
+      - name: Reverify both fresh-seed archives and independent cleanup without a GPU
         env:
           GH_TOKEN: ${{ github.token }}
         run: python -m runpod.vlm_ledger verify-completed
+      - name: Stage and verify all six real checkpoint inputs without a GPU
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python -m runpod.vlm_repeat_inputs --output vlm-receipt-check
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: vlm-receipt-verification-${{ github.run_id }}
-          path: vlm-receipt-check/receipt-summary.json
+          path: |
+            vlm-receipt-check/receipt-summary.json
+            vlm-receipt-check/input-verification.json
           if-no-files-found: error
   protocol:
     runs-on: ubuntu-24.04
@@ -44,6 +50,7 @@ jobs:
       - run: uv run --frozen python -m unittest discover -s tests -p test_showcase.py -v
       - run: uv run --frozen python -m unittest discover -s tests -p test_confirmation.py -v
       - run: uv run --frozen python -m unittest discover -s tests -p test_confirmation_archive.py -v
+      - run: uv run --frozen python -m unittest discover -s tests -p test_vlm_repeat_archive.py -v
       - run: uv run --frozen python -m unittest discover -s tests -p test_dinov3_protocol.py -v
       - run: uv run --frozen python -m unittest discover -s tests -p test_dinov3_archive.py -v
       - run: uv run --frozen wafervlm --help
