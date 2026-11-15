@@ -1,6 +1,8 @@
 """Run the frozen 18-pass evaluator in the existing pinned confirmation image."""
 import json
+import hmac
 import os
+import secrets
 import signal
 import subprocess
 import sys
@@ -11,7 +13,61 @@ from pathlib import Path
 from http.server import ThreadingHTTPServer
 
 from runpod import vlm_worker as w
-from runpod.vlm_repeat_inputs import FROZEN, archives, prepare
+from runpod.vlm_repeat_inputs import FROZEN, archives, prepare, validated_url
+
+INPUT_LOCK = threading.Lock()
+INPUT_READY = threading.Event()
+INPUT_URL = None
+
+
+def request_input_url(key):
+    global INPUT_URL
+    request = dict(key=key, nonce=secrets.token_hex(16))
+    with INPUT_LOCK:
+        INPUT_URL = None
+        INPUT_READY.clear()
+        w.RESULT['input_request'] = request
+    try:
+        wait = min(90, float(os.environ['WAFER_DEADLINE']) - time.time() - 60)
+        if wait <= 0 or not INPUT_READY.wait(wait):
+            raise TimeoutError('Fresh input URL delivery timed out')
+        with INPUT_LOCK:
+            return INPUT_URL
+    finally:
+        with INPUT_LOCK:
+            INPUT_URL = None
+            w.RESULT.pop('input_request', None)
+
+
+class InputHandler(w.Handler):
+    def do_POST(self):
+        global INPUT_URL
+        if not hmac.compare_digest(self.headers.get('Authorization', ''), 'Bearer ' + w.TOKEN):
+            self.send_error(403); return
+        if self.path != '/input-url':
+            self.send_error(404); return
+        try:
+            length = int(self.headers.get('Content-Length', '0'))
+            if not 0 < length <= 16000:
+                raise ValueError('Invalid input size')
+            self.connection.settimeout(10)
+            data = json.loads(self.rfile.read(length))
+            if set(data) != {'key', 'nonce', 'url'}:
+                raise ValueError('Unexpected input fields')
+            url = validated_url(data['url'])
+            with INPUT_LOCK:
+                if w.RESULT.get('input_request') != {k: data[k] for k in ('key', 'nonce')}:
+                    self.send_error(409); return
+                if INPUT_URL is None:
+                    INPUT_URL = url
+                    INPUT_READY.set()
+            payload = b'{"status":"accepted"}'
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.send_header('Content-Length', str(len(payload)))
+            self.end_headers(); self.wfile.write(payload)
+        except (ValueError, TypeError, KeyError, TimeoutError):
+            self.send_error(400)
 
 
 def work():
@@ -23,7 +79,6 @@ def work():
     try:
         w.OUT.mkdir(parents=True, exist_ok=False)
         w.write('cpu-start.json', w.cpu_snapshot())
-        urls = json.loads(os.environ.pop('WAFER_INPUT_URLS'))
         if (os.environ.get('WAFERVLM_SOURCE_SHA') != result['source_sha']
                 or w.digest(w.ROOT / 'configs/seed-confirmation.json') != result['config_sha256']
                 or w.digest(FROZEN) != result['input_manifest_sha256']):
@@ -65,9 +120,7 @@ def work():
         w.write('acquisition.json', json.loads((dataset / 'acquisition.json').read_text()))
         w.RESULT['phase'] = 'inputs'
         started = time.time()
-        paths = archives('/workspace/repeat-archives', urls, deadline - 180)
-        # URLs are never persisted in the result or inherited by evaluation processes.
-        del urls
+        paths = archives('/workspace/repeat-archives', request_input_url, deadline - 180)
         rows = prepare(paths, '/workspace/repeat-inputs', dataset, json.loads(FROZEN.read_text()))
         endpoints = Path('/workspace/frozen-endpoints.json')
         endpoints.write_text(json.dumps(rows, indent=2))
@@ -104,7 +157,7 @@ def work():
 
 def main():
     w.TOKEN = os.environ.pop('WAFER_RESULT_TOKEN')
-    server = ThreadingHTTPServer(('0.0.0.0', 8888), w.Handler)
+    server = ThreadingHTTPServer(('0.0.0.0', 8888), InputHandler)
     threading.Thread(target=work, daemon=True).start()
     server.serve_forever()
 

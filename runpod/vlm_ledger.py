@@ -23,6 +23,7 @@ RESULT_SHA = '32024461ade6dcd34398e96a78b537c5a274e9da636ebda9a655b6618e32a250'
 PAID_STEP = 'Train seed 42, verify full states, retrieve evidence, delete Pod'
 PRECREATE = json.loads((ROOT / 'runpod/vlm-precreate.json').read_text())
 COMPLETED = json.loads((ROOT / 'runpod/vlm-completed.json').read_text())
+REPEAT_ATTEMPTS = json.loads((ROOT / 'runpod/vlm-repeat-attempts.json').read_text())
 DINO_MARKER = 'runpod-authorization-wafervlm-dinov3-seed17-v1'
 
 
@@ -248,6 +249,66 @@ def separate_dino_authorization(artifact):
     return True
 
 
+def repeat_failures(output, prior_usd, prior_seconds):
+    """Accept only a reviewed failed create with both exact absence receipts."""
+    from runpod.provider import finite
+    verified = []
+    for p in REPEAT_ATTEMPTS:
+        run = request(f"{BASE}/actions/runs/{p['run_id']}", token=os.environ['GH_TOKEN'])
+        if (p['seed'] != 'repeat' or any(x['run_id'] == p['run_id'] for x in verified)
+                or run.get('head_sha') != p['controller_sha'] or run.get('run_attempt') != 1
+                or run.get('status') != 'completed' or run.get('conclusion') != 'failure'
+                or run.get('event') != 'workflow_dispatch' or run.get('head_branch') != 'main'
+                or run.get('path') != '.github/workflows/vlm-repeats.yml'):
+            raise RuntimeError('Failed repeat dispatch identity changed')
+        raw = artifact_bytes(p['result_artifact_id'], p['result_sha256'], 100_000)
+        with zipfile.ZipFile(io.BytesIO(raw)) as z:
+            if sorted(z.namelist()) != sorted(['cleanup.json', 'create-error.json',
+                    'dataset-metadata/dataset.json', 'input-verification.json',
+                    'launch-spec.json', 'ledger.json', 'preflight.json', 'provision.json']):
+                raise RuntimeError('Unexpected failed-create evidence')
+        for name in ('cleanup', 'create-error', 'provision', 'launch-spec'):
+            if zip_json(raw, name + '.json') != p[name.replace('-', '_')]:
+                raise RuntimeError('Failed repeat receipt changed')
+        clean, spec, intent, error = (p[k] for k in ('cleanup', 'launch_spec', 'provision', 'create_error'))
+        expected_name = f"wafer-20261107-usd20-vlmrepeats-{p['run_id']}"
+        if (error.get('status') != 'create_not_confirmed' or error.get('http_status') != 500
+                or intent.get('pod_id') is not None or intent.get('name') != expected_name
+                or intent.get('run_id') != str(p['run_id'])
+                or spec.get('phase') != 'validation-repeats' or spec.get('controller_sha') != p['controller_sha']
+                or spec.get('ledger', {}).get('usd') != prior_usd
+                or spec.get('ledger', {}).get('seconds') != prior_seconds
+                or intent.get('cost', {}).get('prior_spend_reserve_usd') != prior_usd
+                or intent.get('cost', {}).get('prior_runtime_reserve_seconds') != prior_seconds
+                or clean.get('status') != 'verified_absent' or clean.get('name') != expected_name
+                or clean.get('creation_confirmed') is not False or clean.get('consecutive_absent_checks', 0) < 8
+                or clean.get('within_budget') is not True or clean.get('within_runtime') is not True
+                or clean.get('persistent_volumes_created') is not False):
+            raise RuntimeError('Failed create lacks exact ownership, cost or cleanup evidence')
+        independent = artifact_bytes(p['independent_cleanup_artifact_id'], p['independent_cleanup_sha256'], 64_000)
+        check = zip_json(independent, 'cleanup.json')
+        if (check != p['independent_cleanup'] or check.get('status') != 'verified_absent'
+                or check.get('name') != expected_name or check.get('consecutive_absent_checks', 0) < 3
+                or check.get('checked_epoch', 0) < clean['checked_epoch']):
+            raise RuntimeError('Independent failed-create cleanup changed')
+        verify_marker(artifact_bytes(p['marker_artifact_id'], p['marker_sha256'], 64_000), p['run_id'],
+                      current=True, controller_sha=p['controller_sha'], seed='repeat')
+        usd, seconds = clean.get('estimated_total_usd'), clean.get('estimated_total_seconds')
+        elapsed = clean.get('elapsed_billing_bound_s')
+        rate = intent.get('cost', {}).get('gpu_hourly_usd')
+        disk = intent.get('cost', {}).get('disk_hourly_usd')
+        if (not finite(usd) or not finite(seconds) or not finite(elapsed, 0.001)
+                or not finite(rate, 0.001) or not finite(disk)
+                or usd <= prior_usd or seconds <= prior_seconds or usd > 30 or seconds > 66000
+                or abs(seconds - prior_seconds - elapsed) > 1e-6
+                or abs(clean['checked_epoch'] - intent['started_epoch'] - elapsed) > 0.01
+                or abs(usd - prior_usd - elapsed / 3600 * (rate + disk)) > 1e-9):
+            raise RuntimeError('Invalid failed-create cumulative consumption')
+        prior_usd, prior_seconds = usd, seconds
+        verified.append(p)
+    return verified, prior_usd, prior_seconds
+
+
 def reconcile(run, require_current, output, seed=42):
     """Unknown/missing/expired attempts block launch, including another agent's attempt."""
     output = Path(output)
@@ -256,6 +317,8 @@ def reconcile(run, require_current, output, seed=42):
         raise RuntimeError('Unsupported ledger seed')
     precreate = reconciled_precreate()
     completed, total_usd, total_seconds = completed_receipts(output)
+    training_seconds = total_seconds
+    failed_repeats, total_usd, total_seconds = repeat_failures(output, total_usd, total_seconds)
     # Run history survives deleted/expired artifacts. A previous paid step must
     # be reconciled explicitly; only visibly skipped paid steps are read-only.
     for page in range(1, 101):
@@ -319,7 +382,7 @@ def reconcile(run, require_current, output, seed=42):
         if not isinstance(runs, list):
             raise RuntimeError('Cannot verify repeat dispatch history')
         for previous in runs:
-            if str(previous.get('id')) == str(run):
+            if str(previous.get('id')) == str(run) or any(previous.get('id') == p['run_id'] for p in failed_repeats):
                 continue
             if previous.get('status') != 'completed' or previous.get('run_attempt') != 1:
                 raise RuntimeError('Unreconciled repeat dispatch')
@@ -332,7 +395,7 @@ def reconcile(run, require_current, output, seed=42):
             break
     else:
         raise RuntimeError('Incomplete repeat dispatch history')
-    expected = {str(x['run_id']): x for x in HISTORY + ([precreate] if precreate else []) + completed}
+    expected = {str(x['run_id']): x for x in HISTORY + ([precreate] if precreate else []) + completed + failed_repeats}
     observed, current, attempts = set(), False, []
     for page in range(1, 101):
         data = request(f'{BASE}/actions/artifacts?per_page=100&page={page}', token=os.environ['GH_TOKEN'])
@@ -389,6 +452,7 @@ def reconcile(run, require_current, output, seed=42):
             or cleanup['estimated_total_seconds'] > 491.911 * 60):
         raise RuntimeError('Historical cumulative consumption/cleanup mismatch')
     ledger = dict(usd=total_usd, seconds=total_seconds, attempts=sorted(attempts, key=lambda a:a['run_id']))
+    ledger['repeat_seconds'] = total_seconds - training_seconds
     (output / 'ledger.json').write_text(json.dumps(ledger, indent=2) + '\n')
     return ledger
 
@@ -413,7 +477,9 @@ def main():
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=True)
     pins, usd, seconds = completed_receipts(args.output)
+    failures, usd, seconds = repeat_failures(args.output, usd, seconds)
     summary = dict(status='verified', runs=[p['run_id'] for p in pins],
+                   reconciled_repeat_failures=[p['run_id'] for p in failures],
                    cumulative_estimated_usd=usd, cumulative_seconds=seconds,
                    quality_accepted=False, holdout_accessed=False)
     (args.output/'receipt-summary.json').write_text(json.dumps(summary, indent=2)+'\n')

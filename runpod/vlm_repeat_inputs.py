@@ -45,23 +45,21 @@ def validated_url(url):
     return url
 
 
-def signed_input_urls():
-    """Only artifact-scoped download URLs enter the Pod; never a GitHub token."""
+def signed_input_url(key):
+    """Mint one link only when the worker is ready; GitHub guarantees one minute."""
     from runpod.provider import NoRedirect, REPOSITORY
-    urls = {}
-    for key, pin in inputs().items():
-        req = urllib.request.Request(
-            f"https://api.github.com/repos/{REPOSITORY}/actions/artifacts/{pin['artifact_id']}/zip",
-            headers={'Authorization': 'Bearer ' + os.environ['GH_TOKEN'],
-                     'User-Agent': 'wafervlm-actions/0.1'})
-        try:
-            with urllib.request.build_opener(NoRedirect).open(req, timeout=30):
-                raise RuntimeError('Expected a scoped artifact redirect')
-        except urllib.error.HTTPError as exc:
-            if exc.code != 302:
-                raise RuntimeError('Cannot acquire scoped artifact download') from None
-            urls[key] = validated_url(exc.headers.get('Location', ''))
-    return urls
+    pin = inputs()[key]
+    req = urllib.request.Request(
+        f"https://api.github.com/repos/{REPOSITORY}/actions/artifacts/{pin['artifact_id']}/zip",
+        headers={'Authorization': 'Bearer ' + os.environ['GH_TOKEN'],
+                 'User-Agent': 'wafervlm-actions/0.1'})
+    try:
+        with urllib.request.build_opener(NoRedirect).open(req, timeout=30):
+            raise RuntimeError('Expected a scoped artifact redirect')
+    except urllib.error.HTTPError as exc:
+        if exc.code != 302:
+            raise RuntimeError('Cannot acquire scoped artifact download') from None
+        return validated_url(exc.headers.get('Location', ''))
 
 
 def archives(output, urls=None, deadline=None):
@@ -69,7 +67,7 @@ def archives(output, urls=None, deadline=None):
     from runpod.provider import NoRedirect
     output = Path(output); output.mkdir(parents=True, exist_ok=True)
     pins = inputs()
-    if urls is not None and set(urls) != set(pins):
+    if urls is not None and not callable(urls) and set(urls) != set(pins):
         raise ValueError('Exactly four pinned input archives are required')
     paths = {}
     for key, pin in pins.items():
@@ -80,7 +78,8 @@ def archives(output, urls=None, deadline=None):
                 from runpod.vlm_ledger import artifact_bytes
                 tmp.write_bytes(artifact_bytes(pin['artifact_id'], pin['zip_sha256'], MAX_ZIP))
             else:
-                req = urllib.request.Request(validated_url(urls[key]),
+                url = urls(key) if callable(urls) else urls[key]
+                req = urllib.request.Request(validated_url(url),
                                              headers={'User-Agent': 'wafervlm-actions/0.1'})
                 count = 0
                 with urllib.request.build_opener(NoRedirect).open(req, timeout=60) as r, tmp.open('wb') as w:

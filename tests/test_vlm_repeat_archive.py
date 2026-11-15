@@ -109,7 +109,6 @@ class RepeatArchive(unittest.TestCase):
                          patch.object(controller,'IMAGE',self.spec['image']),patch.object(controller,'authorization_guard'), \
                          patch.object(controller,'preflight',return_value=evidence), \
                          patch.object(controller,'worker_code',return_value='pass'), \
-                         patch.object(inputs,'signed_input_urls',return_value={}), \
                          patch.object(controller,'request',return_value=result), \
                          patch.object(controller,'download',side_effect=lambda *a:shutil.copyfile(archive,out/'experiment.tar.gz')), \
                          patch.object(controller.time,'sleep'),patch('builtins.print'):

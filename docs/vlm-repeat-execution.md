@@ -7,6 +7,10 @@ was reconstructed from all four original ZIPs, including optimizer/scheduler/RNG
 states, before starting any new inference. Its SHA256 is
 `81c048fbb25396a9c2d937a94d9c055989b032d76d51446cc104f2641fd25a62`.
 
+Launch update: the first dispatch failed at the provider's create API (HTTP 500),
+with both cleanup paths verifying absence and no inference performed. See the
+[recovery receipt and reduced retry allowance](vlm-repeat-create-recovery.md).
+
 ## Workload and interpretation
 
 The existing fixed runner performs **3 seeds × 2 checkpoints × 3 fresh processes
@@ -28,9 +32,11 @@ CPU thread counts, model kernels, generation and analysis recipe are unchanged.
 Before allocation, CPU CI and preflight re-download both fresh-seed archives and
 independent cleanup receipts, reconcile cumulative spend, and reconstruct all six
 full checkpoints from hash-pinned ZIPs. Missing, altered or reordered endpoints
-block allocation. The worker receives four short-lived artifact-scoped URLs,
-never the GitHub/RunPod account token; URLs are masked and are not persisted in
-artifacts or inherited by inference subprocesses. It rechecks each ZIP, training
+block allocation. The worker requests a fresh artifact-scoped URL immediately
+before each of the four downloads, never a GitHub/RunPod account token. Delivery
+is authenticated and bound to the requested archive and nonce. URLs are masked,
+not persisted in artifacts or environment variables, and not inherited by
+inference subprocesses. It rechecks each ZIP, training
 acceptance, released-state hashes and the same committed six-endpoint matrix.
 
 After retrieval, the controller validates the entire output tree and all 18
