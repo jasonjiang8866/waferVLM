@@ -1,6 +1,19 @@
 # Bounded DINOv3 RunPod experiment
 
-## Resume with embedded weights (2026-11-15)
+## Latest result: seed-17 sweep completed (2026-11-15)
+
+[Run 43716864164](https://github.com/jasonjiang8866/waferVLM/actions/runs/43716864164)
+completed all six trials using the embedded-weight image on RTX 5090. Selected
+LoRA validation accuracy is **86.875%**, macro-F1 **0.867173**; linear is
+**83.750% / 0.836449**. Both exports were reloaded and the Pod was independently
+verified absent. See [full results, reload differences and costs](dinov3-seed17-results.md).
+This is a single-seed development result, with quality confirmation pending.
+
+The launch procedure below is the historical specification for that completed
+run, not an unused dispatch allowance. Its authorization marker is consumed.
+Reconcile the new result/cleanup receipts before any subsequent paid launch.
+
+## Completed embedded-weight launch specification (2026-11-15)
 
 The user authorized starting fine-tuning after the embedded-weight fix in
 [PR #37](https://github.com/jasonjiang8866/waferVLM/pull/37). The three prior paid
@@ -56,7 +69,7 @@ Changing the base checkpoint requires rebuilding the image. This tradeoff is
 small for this fixed 86 MB backbone and removes the failed runtime upload path.
 Offline image validation does not establish CUDA compatibility or model quality.
 
-## Latest result: 5090 allocated, weight transport failed (2026-11-15)
+## Earlier attempt: 5090 allocated, weight transport failed (2026-11-15)
 
 [Run 43676359795](https://github.com/jasonjiang8866/waferVLM/actions/runs/43676359795)
 used source `8b7bcd1368b284cd56d4f6f711acb0724ee91895` and image

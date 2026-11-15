@@ -1,0 +1,364 @@
+{
+  "accuracy_delta": 0.08750000000000002,
+  "axes": {
+    "x": "true_label",
+    "y": "predicted_label"
+  },
+  "dinov3": {
+    "accuracy": 0.86875,
+    "confusion_matrix": {
+      "center": {
+        "center": 18,
+        "donut": 1,
+        "edge-loc": 0,
+        "edge-ring": 0,
+        "invalid": 0,
+        "loc": 0,
+        "near-full": 1,
+        "random": 0,
+        "scratch": 0
+      },
+      "donut": {
+        "center": 0,
+        "donut": 19,
+        "edge-loc": 0,
+        "edge-ring": 0,
+        "invalid": 0,
+        "loc": 1,
+        "near-full": 0,
+        "random": 0,
+        "scratch": 0
+      },
+      "edge-loc": {
+        "center": 0,
+        "donut": 1,
+        "edge-loc": 15,
+        "edge-ring": 0,
+        "invalid": 0,
+        "loc": 2,
+        "near-full": 0,
+        "random": 0,
+        "scratch": 2
+      },
+      "edge-ring": {
+        "center": 0,
+        "donut": 0,
+        "edge-loc": 0,
+        "edge-ring": 19,
+        "invalid": 0,
+        "loc": 0,
+        "near-full": 0,
+        "random": 0,
+        "scratch": 1
+      },
+      "loc": {
+        "center": 2,
+        "donut": 1,
+        "edge-loc": 1,
+        "edge-ring": 0,
+        "invalid": 0,
+        "loc": 13,
+        "near-full": 1,
+        "random": 0,
+        "scratch": 2
+      },
+      "near-full": {
+        "center": 0,
+        "donut": 0,
+        "edge-loc": 0,
+        "edge-ring": 0,
+        "invalid": 0,
+        "loc": 0,
+        "near-full": 20,
+        "random": 0,
+        "scratch": 0
+      },
+      "random": {
+        "center": 0,
+        "donut": 1,
+        "edge-loc": 0,
+        "edge-ring": 0,
+        "invalid": 0,
+        "loc": 0,
+        "near-full": 1,
+        "random": 18,
+        "scratch": 0
+      },
+      "scratch": {
+        "center": 0,
+        "donut": 0,
+        "edge-loc": 2,
+        "edge-ring": 0,
+        "invalid": 0,
+        "loc": 1,
+        "near-full": 0,
+        "random": 0,
+        "scratch": 17
+      }
+    },
+    "invalid_rate": 0.0,
+    "macro_f1": 0.8671726350275922,
+    "n": 160,
+    "per_class": {
+      "center": {
+        "f1": 0.9,
+        "precision": 0.9,
+        "recall": 0.9,
+        "support": 20
+      },
+      "donut": {
+        "f1": 0.8837209302325583,
+        "precision": 0.8260869565217391,
+        "recall": 0.95,
+        "support": 20
+      },
+      "edge-loc": {
+        "f1": 0.7894736842105262,
+        "precision": 0.8333333333333334,
+        "recall": 0.75,
+        "support": 20
+      },
+      "edge-ring": {
+        "f1": 0.9743589743589743,
+        "precision": 1.0,
+        "recall": 0.95,
+        "support": 20
+      },
+      "loc": {
+        "f1": 0.7027027027027027,
+        "precision": 0.7647058823529411,
+        "recall": 0.65,
+        "support": 20
+      },
+      "near-full": {
+        "f1": 0.9302325581395349,
+        "precision": 0.8695652173913043,
+        "recall": 1.0,
+        "support": 20
+      },
+      "random": {
+        "f1": 0.9473684210526316,
+        "precision": 1.0,
+        "recall": 0.9,
+        "support": 20
+      },
+      "scratch": {
+        "f1": 0.8095238095238095,
+        "precision": 0.7727272727272727,
+        "recall": 0.85,
+        "support": 20
+      }
+    }
+  },
+  "dinov3_config": {
+    "batch_size": 8,
+    "dataset_sha256": "c588b3ef59d9dba57cfc745ec20db903e6ff2dcc75504112348f8b9f1ad3ab68",
+    "device": "cuda",
+    "epochs": 10,
+    "image_mean": [
+      0.485,
+      0.456,
+      0.406
+    ],
+    "image_size": 256,
+    "image_std": [
+      0.229,
+      0.224,
+      0.225
+    ],
+    "learning_rate": 0.0001,
+    "linear_learning_rates": [
+      0.001,
+      0.003,
+      0.01
+    ],
+    "lora_head_learning_rate": 0.001,
+    "lora_learning_rates": [
+      5e-05,
+      0.0001,
+      0.0002
+    ],
+    "max_grad_norm": 1.0,
+    "max_work_seconds": 3600,
+    "mode": "lora",
+    "model_id": "facebook/dinov3-vits16-pretrain-lvd1689m",
+    "model_revision": "114c1379950215c8b35dfcd4e90a5c251dde0d32",
+    "modes": [
+      "linear",
+      "lora"
+    ],
+    "pooling": "cls_and_mean_patch_without_registers",
+    "preferred_gpu": "NVIDIA GeForce RTX 4090",
+    "qwen_predictions_sha256": "3f220cdf1a5e29e93ea5203d0471dd3d9db7fd337aca90c8bc3e3168d7caf9ec",
+    "rank": 8,
+    "required_min_cuda": "12.8",
+    "seed": 17,
+    "seeds": [
+      17,
+      42,
+      123
+    ],
+    "selection": "highest_validation_macro_f1_then_earliest_epoch",
+    "split": "validation",
+    "timeout_seconds": 3600,
+    "validation_sha256": "3243e450163721eecac5ce5f4667f9a93599674337fed46e5e40ddeb940ab54f",
+    "weight_decay": 0.0
+  },
+  "dinov3_prediction_sha256": "9332e3723d354f9e84de47ddfa1e5caf17e014330da31d079031ba2fbd8461d9",
+  "interpretation": "Paired validation comparison; architecture/pretraining/adaptation differ. Not a holdout result.",
+  "macro_f1_delta": 0.09318089749778602,
+  "qwen": {
+    "accuracy": 0.78125,
+    "confusion_matrix": {
+      "center": {
+        "center": 17,
+        "donut": 2,
+        "edge-loc": 0,
+        "edge-ring": 0,
+        "invalid": 0,
+        "loc": 0,
+        "near-full": 1,
+        "random": 0,
+        "scratch": 0
+      },
+      "donut": {
+        "center": 1,
+        "donut": 17,
+        "edge-loc": 0,
+        "edge-ring": 0,
+        "invalid": 0,
+        "loc": 2,
+        "near-full": 0,
+        "random": 0,
+        "scratch": 0
+      },
+      "edge-loc": {
+        "center": 0,
+        "donut": 1,
+        "edge-loc": 13,
+        "edge-ring": 1,
+        "invalid": 0,
+        "loc": 2,
+        "near-full": 1,
+        "random": 1,
+        "scratch": 1
+      },
+      "edge-ring": {
+        "center": 0,
+        "donut": 0,
+        "edge-loc": 1,
+        "edge-ring": 19,
+        "invalid": 0,
+        "loc": 0,
+        "near-full": 0,
+        "random": 0,
+        "scratch": 0
+      },
+      "loc": {
+        "center": 3,
+        "donut": 2,
+        "edge-loc": 2,
+        "edge-ring": 0,
+        "invalid": 0,
+        "loc": 9,
+        "near-full": 1,
+        "random": 0,
+        "scratch": 3
+      },
+      "near-full": {
+        "center": 0,
+        "donut": 0,
+        "edge-loc": 0,
+        "edge-ring": 0,
+        "invalid": 0,
+        "loc": 0,
+        "near-full": 20,
+        "random": 0,
+        "scratch": 0
+      },
+      "random": {
+        "center": 1,
+        "donut": 1,
+        "edge-loc": 1,
+        "edge-ring": 0,
+        "invalid": 0,
+        "loc": 0,
+        "near-full": 3,
+        "random": 14,
+        "scratch": 0
+      },
+      "scratch": {
+        "center": 1,
+        "donut": 1,
+        "edge-loc": 0,
+        "edge-ring": 1,
+        "invalid": 0,
+        "loc": 1,
+        "near-full": 0,
+        "random": 0,
+        "scratch": 16
+      }
+    },
+    "invalid_rate": 0.0,
+    "macro_f1": 0.7739917375298062,
+    "n": 160,
+    "per_class": {
+      "center": {
+        "f1": 0.7906976744186046,
+        "precision": 0.7391304347826086,
+        "recall": 0.85,
+        "support": 20
+      },
+      "donut": {
+        "f1": 0.7727272727272727,
+        "precision": 0.7083333333333334,
+        "recall": 0.85,
+        "support": 20
+      },
+      "edge-loc": {
+        "f1": 0.7027027027027027,
+        "precision": 0.7647058823529411,
+        "recall": 0.65,
+        "support": 20
+      },
+      "edge-ring": {
+        "f1": 0.9268292682926829,
+        "precision": 0.9047619047619048,
+        "recall": 0.95,
+        "support": 20
+      },
+      "loc": {
+        "f1": 0.5294117647058824,
+        "precision": 0.6428571428571429,
+        "recall": 0.45,
+        "support": 20
+      },
+      "near-full": {
+        "f1": 0.8695652173913044,
+        "precision": 0.7692307692307693,
+        "recall": 1.0,
+        "support": 20
+      },
+      "random": {
+        "f1": 0.8,
+        "precision": 0.9333333333333333,
+        "recall": 0.7,
+        "support": 20
+      },
+      "scratch": {
+        "f1": 0.8000000000000002,
+        "precision": 0.8,
+        "recall": 0.8,
+        "support": 20
+      }
+    }
+  },
+  "qwen_prediction_sha256": "3f220cdf1a5e29e93ea5203d0471dd3d9db7fd337aca90c8bc3e3168d7caf9ec",
+  "thumbnail_rule": "lowest sample IDs per category/cell; no confidence selection",
+  "group_counts": {
+    "both_correct": 117,
+    "both_wrong": 13,
+    "dinov3_only_correct": 22,
+    "qwen_only_correct": 8
+  }
+}
