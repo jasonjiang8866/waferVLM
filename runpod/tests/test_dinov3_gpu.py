@@ -13,14 +13,14 @@ GPU5090 = 'NVIDIA GeForce RTX 5090'
 class GPUSelectionTests(unittest.TestCase):
     def test_explicit_gpu_price_and_aggregate_budget(self):
         with patch.dict(os.environ, DINO_GPU=GPU5090):
-            q = c.cost(1.19)
+            q = c.cost(1.39)
             self.assertEqual(c.selected_gpu(), GPU5090)
             self.assertEqual(q['total_cap_usd'], 3.5)
             self.assertEqual(q['prior_spend_usd'], .1)
             self.assertEqual(q['prior_runtime_seconds'], 360)
-            self.assertLess(q['estimated_max_usd'], 2)
+            self.assertLess(q['estimated_max_usd'], 2.332)
             self.assertGreater(q['reserve_usd'], 1)
-            with self.assertRaises(ValueError): c.cost(1.20)
+            with self.assertRaises(ValueError): c.cost(1.40)
         with patch.dict(os.environ, DINO_GPU=''):
             self.assertEqual(c.selected_gpu(), c.GPU)
             with self.assertRaises(ValueError): c.cost(.90)
@@ -30,7 +30,7 @@ class GPUSelectionTests(unittest.TestCase):
     def test_5090_is_quoted_and_created_without_exact_cuda_filter(self):
         api = Mock()
         api.listing.return_value = []
-        api.call.return_value = dict(price={'secure':1.19},dataCenters=[{'id':'US-NC-1','availability':'HIGH'}])
+        api.call.return_value = dict(price={'secure':1.39},dataCenters=[{'id':'US-NC-1','availability':'HIGH'}])
         with tempfile.TemporaryDirectory() as tmp, patch.object(c,'OUT',Path(tmp)), \
                 patch.dict(os.environ,DINO_GPU=GPU5090,PARALLEL_VLM_RUN_ID=''), \
                 patch.object(c,'manual_guard',return_value=('a'*40,'fake')), \
@@ -59,7 +59,7 @@ class GPUSelectionTests(unittest.TestCase):
         api = Mock()
         pod = dict(id='owned',name=c.AUTH+'-7',mounts=[],env={
             'WAFER_MANAGED_BY':c.REPOSITORY,'DINO_RUN_ID':'7','DINO_AUTH':c.AUTH,
-            'DINO_STARTED':'900','DINO_RATE':'1.19','DINO_GPU':GPU5090})
+            'DINO_STARTED':'900','DINO_RATE':'1.39','DINO_GPU':GPU5090})
         api.listing.side_effect = [[pod],[],[],[]]
         with tempfile.TemporaryDirectory() as tmp, patch.object(c,'OUT',Path(tmp)), \
                 patch.dict(os.environ,DINO_GPU=''), patch.object(c,'identity',return_value='7'), \
