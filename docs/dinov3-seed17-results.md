@@ -7,6 +7,7 @@ Completed **2026-11-15, 21:21 Singapore time** on one RTX 5090. The six-trial sw
 - [Complete result ZIP, including selected inference heads/adapters](https://github.com/jasonjiang8866/waferVLM/actions/runs/43716864164/artifacts/14163676440) — Actions artifact retention ends 2027-02-13. Base DINOv3 weights and resumable optimizer state are not included.
 - [Machine-readable evidence: six histories, recipe, provenance, cost and cleanup](evidence/dinov3-seed17-43716864164.json)
 - [Wafer-map matrices, accessible counts and sample IDs](showcase/dinov3-seed17/README.md)
+- [All eight complete prediction/probability files and validation manifest in Git](showcase/dinov3-seed17/README.md#complete-predictions-and-probabilities) — six selected-epoch trial outputs plus two reloads, each covering the same 160 validation maps. These records remain available independently of Actions artifact retention.
 
 ## Same-validation comparison
 
@@ -60,7 +61,7 @@ Both selected exports were reloaded in fresh CUDA processes, with the same base-
 | Linear | `f5ca2de48af4e569a3ce1c2b` | edge-ring | edge-ring | center |
 | LoRA | `f5ca2de48af4e569a3ce1c2b` | edge-ring | scratch | edge-loc |
 
-The changed batch shape and fresh process are observed conditions; this run does not isolate the numerical cause. README tables and matrices consistently use the **selected** prediction set, and the separate reload predictions remain available in the existing result artifact. No exact-parity claim is made.
+The changed batch shape and fresh process are observed conditions; this run does not isolate the numerical cause. README tables and matrices consistently use the **selected** prediction set. Complete [linear reload](showcase/dinov3-seed17/linear-reload-predictions.jsonl) and [LoRA reload](showcase/dinov3-seed17/lora-reload-predictions.jsonl) predictions are preserved separately in Git. No exact-parity claim is made.
 
 ## Cost and cleanup
 

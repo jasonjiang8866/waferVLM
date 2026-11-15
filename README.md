@@ -32,7 +32,7 @@ LoRA adds **3.125 percentage points of accuracy / 0.030724 macro-F1** over the D
 
 Selected learning rates: linear **0.003** (epoch 10); LoRA **0.0001**, head **0.001** (epoch 5). The table and images use the original selected predictions at batch size 8. Fresh-process evaluation at batch size 1 changes 2 linear predictions and 1 LoRA prediction: accuracy is unchanged, while macro-F1 becomes **0.835856 / 0.867110**. Reloading therefore does not establish exact prediction parity.
 
-[Full six-trial results, reload differences and cost evidence](docs/dinov3-seed17-results.md) · [Download selected heads/adapters and complete run evidence](https://github.com/jasonjiang8866/waferVLM/actions/runs/43716864164/artifacts/14163676440) (Actions retention: 2027-02-13).
+[Full six-trial results, reload differences and cost evidence](docs/dinov3-seed17-results.md) · [Complete predictions and class probabilities in Git](docs/showcase/dinov3-seed17/README.md#complete-predictions-and-probabilities) · [Download selected heads/adapters and complete run evidence](https://github.com/jasonjiang8866/waferVLM/actions/runs/43716864164/artifacts/14163676440) (Actions retention: 2027-02-13).
 
 ## Where does DINOv3 get confused?
 
@@ -40,7 +40,7 @@ Read **columns as true labels** and **rows as predicted labels**. Each column co
 
 [![DINOv3 LoRA wafer-map confusion matrix: X is true label, Y is predicted label; counts cover all 160 validation maps.](docs/showcase/dinov3-seed17/lora-image-confusion-matrix.png)](docs/showcase/dinov3-seed17/lora-image-confusion-matrix.png)
 
-[Full-size matrix](docs/showcase/dinov3-seed17/lora-image-confusion-matrix.png) · [Accessible count table and thumbnail IDs](docs/showcase/dinov3-seed17/README.md) · [Linear-baseline matrix](docs/showcase/dinov3-seed17/linear-image-confusion-matrix.png) · [Complete prediction artifact](https://github.com/jasonjiang8866/waferVLM/actions/runs/43716864164/artifacts/14163676440)
+[Full-size matrix](docs/showcase/dinov3-seed17/lora-image-confusion-matrix.png) · [Accessible count table and thumbnail IDs](docs/showcase/dinov3-seed17/README.md) · [Linear-baseline matrix](docs/showcase/dinov3-seed17/linear-image-confusion-matrix.png) · [All 160 LoRA predictions and probabilities](docs/showcase/dinov3-seed17/predictions.jsonl)
 
 Every validation map contributes to the counts. Thumbnails use the lowest sample ID in each cell, without confidence filtering. An eight-way classifier cannot produce an invalid label by construction; its zero-invalid row is not an additional quality gain.
 
