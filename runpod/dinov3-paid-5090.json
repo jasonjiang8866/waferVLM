@@ -1,0 +1,157 @@
+{
+  "run_id": "43676359795",
+  "source_sha": "8b7bcd1368b284cd56d4f6f711acb0724ee91895",
+  "job_id": 132697274531,
+  "accounted_usd": 0.13,
+  "accounted_seconds": 330,
+  "required_steps": {
+    "Load and fingerprint official weights on CPU": "success",
+    "Offline DINO lifecycle and model tests": "success",
+    "Current image, catalog, inventory and cost checks": "success",
+    "Run six trials, reload selected models, retrieve evidence and delete Pod": "failure",
+    "Independent inventory check": "success"
+  },
+  "result": {
+    "artifact_id": 14146537615,
+    "name": "dinov3-seed17-43676359795",
+    "sha256": "73a212183032ef2d5c4e16e949b87cb10035bfc3b82d9ace54341a109f22394f",
+    "run_id": "43676359795",
+    "source_sha": "8b7bcd1368b284cd56d4f6f711acb0724ee91895",
+    "entries": {
+      "catalog.json": {
+        "gpu": "NVIDIA GeForce RTX 5090",
+        "required_min_cuda": "12.8",
+        "secure_hourly_usd": 1.39,
+        "available_region_count": 3
+      },
+      "cleanup.json": {
+        "status": "verified_absent",
+        "run_id": "43676359795",
+        "checks": 3,
+        "persistent_volumes_created": false,
+        "checked_epoch": 1794716858.7583523,
+        "elapsed_billing_bound_s": 324.3723862171173,
+        "estimated_usd": 0.12604827746155242,
+        "cost_basis": "intent_to_absence_estimate_not_invoice",
+        "cumulative_estimated_usd": 0.22604827746155243,
+        "cumulative_runtime_bound_s": 684.3723862171173,
+        "within_cap": true
+      },
+      "allocation.json": {
+        "pod_id": "wrjc8g514yqel6",
+        "gpu": "NVIDIA GeForce RTX 5090",
+        "data_center": "EUR-NO-1",
+        "hourly_usd": 1.39
+      },
+      "error.json": {
+        "mode": "run",
+        "error_type": "HTTPError"
+      },
+      "preflight-progress.json": {
+        "stage": "account_budget",
+        "status": "passed"
+      },
+      "provision.json": {
+        "pod_id": "wrjc8g514yqel6",
+        "started_epoch": 1794716534.3859687,
+        "rate": 1.39,
+        "gpu": "NVIDIA GeForce RTX 5090"
+      },
+      "preflight.json": {
+        "status": "preflight_passed",
+        "source_sha": "8b7bcd1368b284cd56d4f6f711acb0724ee91895",
+        "image": "ghcr.io/jasonjiang8866/wafervlm@sha256:2ca97f47ad409bd5fe7b728702a9440399a0aef8cbcb729ada40906379aeac64",
+        "weights": {
+          "files_sha256": {
+            "config.json": "9481247be9f95a134a5599402b4bfc838eecdf9a7fffbf4debd1c70ec213898b",
+            "model.safetensors": "4610ad75edef83e75afdebf162d148dc628045ea6cbb83d67d4708c709c4f91d"
+          },
+          "model_id": "facebook/dinov3-vits16-pretrain-lvd1689m",
+          "model_revision": "114c1379950215c8b35dfcd4e90a5c251dde0d32",
+          "paid_compute_started": false,
+          "parameters": 21596544,
+          "status": "weights-access-and-load-verified"
+        },
+        "gpu": "NVIDIA GeForce RTX 5090",
+        "min_cuda_version": "12.8",
+        "regions": [
+          "EU-RO-1",
+          "EUR-IS-1",
+          "EUR-NO-1"
+        ],
+        "cost": {
+          "gpu_hourly_usd": 1.39,
+          "disk_hourly_usd": 0.008928571428571428,
+          "work_seconds": 5400,
+          "cleanup_seconds": 600,
+          "estimated_max_usd": 2.331547619047619,
+          "total_cap_usd": 3.5,
+          "reserve_usd": 1.068452380952381,
+          "approved_total_usd": 10.0,
+          "approved_total_seconds": 30000,
+          "prior_spend_usd": 0.1,
+          "prior_runtime_seconds": 360
+        },
+        "companion": {
+          "run_id": null,
+          "active_pod": false,
+          "account_reserve_usd": 0.0
+        },
+        "budget": {
+          "reserve_usd": 3.5,
+          "monthly_budget_usd": 500,
+          "balance_sufficient": true,
+          "month_headroom_sufficient": true,
+          "month_basis": "UTC",
+          "checked_utc": "2026-11-15T04:22:14.138458+00:00",
+          "scope": "reported charges; billing may lag; storage/request fees additional"
+        },
+        "checked_epoch": 1794716534.3326902
+      },
+      "transfer.json": {
+        "file": "model.safetensors",
+        "offset": 0,
+        "size": 4194304,
+        "total": 86406384,
+        "attempt": 1,
+        "status": "failed",
+        "http_status": 404,
+        "error_type": "HTTPError"
+      },
+      "weights/checksums.json": {
+        "weights.json": "e5448aa6d6fb171e05e6840c09cac3af7a533ebf202f4572f37567a48ea19557"
+      },
+      "weights/weights.json": {
+        "files_sha256": {
+          "config.json": "9481247be9f95a134a5599402b4bfc838eecdf9a7fffbf4debd1c70ec213898b",
+          "model.safetensors": "4610ad75edef83e75afdebf162d148dc628045ea6cbb83d67d4708c709c4f91d"
+        },
+        "model_id": "facebook/dinov3-vits16-pretrain-lvd1689m",
+        "model_revision": "114c1379950215c8b35dfcd4e90a5c251dde0d32",
+        "paid_compute_started": false,
+        "parameters": 21596544,
+        "status": "weights-access-and-load-verified"
+      },
+      "worker-status.json": {
+        "status": "running",
+        "phase": "awaiting_weights"
+      }
+    }
+  },
+  "independent": {
+    "artifact_id": 14146364868,
+    "name": "dinov3-cleanup-43676359795",
+    "sha256": "dde1f33dee3b90c2f0d3b8b7858238c037391f8e1e1bf19a01c5fb278f93a3b1",
+    "run_id": "43676869427",
+    "source_sha": "8b7bcd1368b284cd56d4f6f711acb0724ee91895",
+    "entries": {
+      "cleanup.json": {
+        "status": "verified_absent",
+        "run_id": "43676359795",
+        "checks": 12,
+        "persistent_volumes_created": false,
+        "checked_epoch": 1794716983.8536873
+      }
+    }
+  }
+}
