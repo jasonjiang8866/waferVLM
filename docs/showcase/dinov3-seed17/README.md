@@ -28,7 +28,7 @@ Every column has 20 maps. Cell percentages divide by that true-class total; teal
 
 ## Thumbnail sample IDs
 
-Full IDs refer to the checksummed [validation manifest in the existing result artifact](https://github.com/jasonjiang8866/waferVLM/actions/runs/43716864164/artifacts/14163676440). The PNG shows abbreviated IDs.
+Full IDs refer to the checksummed [validation manifest](validation.jsonl). The PNG shows abbreviated IDs.
 
 | True label | Predicted label | Count | Thumbnail ID |
 |---|---|---:|---|
@@ -63,15 +63,38 @@ The selected frozen-backbone linear trial is `linear-1`, LR 0.003, epoch 10: **1
 
 ![Frozen DINOv3 linear baseline confusion matrix](linear-image-confusion-matrix.png)
 
-The LoRA comparison with Qwen checkpoint 250 contains **117 both correct, 8 only Qwen correct, 22 only DINOv3 correct, and 13 both wrong**. Up to three lowest IDs per category are shown; counts are preserved in [comparison-summary.json](comparison-summary.json); the existing [result artifact](https://github.com/jasonjiang8866/waferVLM/actions/runs/43716864164/artifacts/14163676440) retains the complete category membership.
+The LoRA comparison with Qwen checkpoint 250 contains **117 both correct, 8 only Qwen correct, 22 only DINOv3 correct, and 13 both wrong**. Up to three lowest IDs per category are shown. Counts are preserved in [comparison-summary.json](comparison-summary.json); complete category membership and paired metrics are in [comparison.json](comparison.json). The corresponding frozen-linear comparison is in [linear-comparison.json](linear-comparison.json).
 
 ![Real wafer maps grouped by Qwen and DINOv3 correctness](paired-examples.png)
 
+## Complete predictions and probabilities
+
+All eight saved prediction sets are available directly in Git: the selected-epoch outputs from all six trials, plus both fresh-process reloads. Each file covers the **same 160 validation maps exactly once** (1,280 prediction records across eight files, not 1,280 distinct maps). These are the recorded selected-epoch outputs, not per-example predictions for every training epoch. No new inference was run for publication.
+
+| Recorded output | LR | Selected epoch | Evaluation batch size | Complete JSONL |
+|---|---:|---:|---:|---|
+| linear-0 | 0.001 | 8 | 8 | [linear-0-predictions.jsonl](linear-0-predictions.jsonl) |
+| **linear-1 (selected linear arm)** | **0.003** | **10** | **8** | [linear-predictions.jsonl](linear-predictions.jsonl) |
+| linear-2 | 0.01 | 8 | 8 | [linear-2-predictions.jsonl](linear-2-predictions.jsonl) |
+| lora-0 | 0.00005 | 6 | 8 | [lora-0-predictions.jsonl](lora-0-predictions.jsonl) |
+| **lora-1 (selected LoRA arm)** | **0.0001** | **5** | **8** | [predictions.jsonl](predictions.jsonl) |
+| lora-2 | 0.0002 | 6 | 8 | [lora-2-predictions.jsonl](lora-2-predictions.jsonl) |
+| linear-1 reloaded | 0.003 | 10 | 1 | [linear-reload-predictions.jsonl](linear-reload-predictions.jsonl) |
+| lora-1 reloaded | 0.0001 | 5 | 1 | [lora-reload-predictions.jsonl](lora-reload-predictions.jsonl) |
+
+Each record retains its sample `id`, true `label`, `image_sha256`, predicted class, recorded response and eight class `probabilities`. Probability positions use this fixed label order:
+
+```text
+center, donut, edge-loc, edge-ring, loc, near-full, random, scratch
+```
+
+The probabilities sum to one within numerical tolerance, and the argmax class must agree with `prediction`. They are model softmax outputs, not a calibrated confidence guarantee. Join to [validation.jsonl](validation.jsonl) by sample ID and image hash. The manifest contains sample metadata and relative image paths, not image bytes; prepare the pinned dataset to resolve those paths.
+
+The frozen Qwen comparison inputs remain in [the checkpoint-250 showcase](../checkpoint-250/predictions.jsonl). The [full report](../../dinov3-seed17-results.md#reload-verification-and-prediction-changes) documents the two linear and one LoRA prediction changes during reload. Keep selected and reloaded files distinct when recomputing a table or matrix.
+
 ## Provenance and reproduction
 
-The three PNGs are copied byte-for-byte from the verified worker archive, not synthesized or redrawn from estimates. Their SHA256 digests are in [checksums.json](checksums.json). The existing [result artifact](https://github.com/jasonjiang8866/waferVLM/actions/runs/43716864164/artifacts/14163676440) retains complete predictions, probabilities, sample IDs and image hashes. They are not copied into this documentation update.
-
-In the existing [result artifact](https://github.com/jasonjiang8866/waferVLM/actions/runs/43716864164/artifacts/14163676440), selected predictions are in `results/lora-1/predictions.jsonl` and `results/linear-1/predictions.jsonl`; fresh-process predictions are in `results/lora-reload/predictions.jsonl` and `results/linear-reload/predictions.jsonl`. The frozen Qwen inputs remain in [the checkpoint-250 showcase](../checkpoint-250/predictions.jsonl).
+The three PNGs, eight prediction files, validation manifest and two complete comparison reports are copied byte-for-byte from the verified worker archive. Their SHA256 digests are in [checksums.json](checksums.json); the six trial and two reload prediction hashes also match the original manifests retained in [the experiment evidence](../../evidence/dinov3-seed17-43716864164.json). The publication retains the original values and row order. The [result ZIP](https://github.com/jasonjiang8866/waferVLM/actions/runs/43716864164/artifacts/14163676440) additionally contains selected weights and the complete training output.
 
 To reproduce on CPU, prepare the pinned dataset as documented in the repository README, download and verify the [result ZIP](https://github.com/jasonjiang8866/waferVLM/actions/runs/43716864164/artifacts/14163676440) and nested archive against the report hashes, then use the extracted `results/lora-1` directory:
 

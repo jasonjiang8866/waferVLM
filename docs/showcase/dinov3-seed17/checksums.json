@@ -1,7 +1,18 @@
 {
-  "README.md": "75f283b10583234dde2e22b13502a860153d380180bf4c7c9d5321c06ccdf6bd",
+  "README.md": "9c7f65f8123201474d5c2cbc1633be6a3b864892cd3cf1cc85a866456e08f655",
   "comparison-summary.json": "2aba33436b3ece4ad8eddec99a899b6ff717d5db3fa26ee5eda1c6043309c2f8",
+  "comparison.json": "29c9e48ce2edec67dd1de333a2d5cab2fa35f42edd79b516eb8496058dc1e8df",
+  "linear-0-predictions.jsonl": "7565b5ae3688d5e5b4fbbcebc4544d5a55d34189376ae29eaef937b8fba8f7a8",
+  "linear-2-predictions.jsonl": "b6a668f2183095d04758b3c3100042236205f49cd5c88fac245d1a54e90096cc",
+  "linear-comparison.json": "4fa0a0920227575f6c99b64b38bf75231b865b332f2cc86336a06236135e89e0",
   "linear-image-confusion-matrix.png": "84145c7e969ee7bab6d9040e7689d392838b5b744f45b7ca524c4e804fa173fe",
+  "linear-predictions.jsonl": "91c22bf1c0d84e8fb0b40b7a3fbf0de61137ecadc0de7d129d9db8f3e711806b",
+  "linear-reload-predictions.jsonl": "445a52fa35a4e17a30ac4bcda80fb7fa085bf7ea8868f64032668ab66f2b8d0b",
+  "lora-0-predictions.jsonl": "5079412654efd3b0570dcf831a1fce88bc5082c1db3f4839a641433e32df1590",
+  "lora-2-predictions.jsonl": "10d37a20a4c634ca270b10d3dcfc8993f1943759c2ba2d0d1c802629f83b9ce1",
   "lora-image-confusion-matrix.png": "12c58ee44e4fcade03f95cb700b6fec5d5dff65f9770140874914f90048bf7aa",
-  "paired-examples.png": "46bb1f20aae53a75ba878c67fc139ede89b5924babb30a7449f34b291954a213"
+  "lora-reload-predictions.jsonl": "70a18a9a256bb65c64e012527d4afbf502ebcf49f5f2f5a8899c85a18e49a08c",
+  "paired-examples.png": "46bb1f20aae53a75ba878c67fc139ede89b5924babb30a7449f34b291954a213",
+  "predictions.jsonl": "9332e3723d354f9e84de47ddfa1e5caf17e014330da31d079031ba2fbd8461d9",
+  "validation.jsonl": "3243e450163721eecac5ce5f4667f9a93599674337fed46e5e40ddeb940ab54f"
 }
