@@ -1,5 +1,5 @@
 # Reuse the pinned, tested CUDA/Transformers environment without dependency changes.
-FROM ghcr.io/jasonjiang8866/wafervlm@sha256:b13a9807ae05698f0813e0d1ab7f25548e782f65729d2b2aec5e66de6de24cd1
+FROM ghcr.io/jasonjiang8866/wafervlm@sha256:b13a9807ae05698f0813e0d1ab7f25548e782f65729d2b2aec5e66de6de24cd1 AS runtime
 ARG SOURCE_SHA
 ENV WAFERVLM_SOURCE_SHA=${SOURCE_SHA}
 WORKDIR /app
@@ -12,3 +12,13 @@ COPY docs/evidence/wm811k-lot17.json ./docs/evidence/wm811k-lot17.json
 COPY docs/showcase/checkpoint-250 ./docs/showcase/checkpoint-250
 RUN python -m unittest discover -s tests -p 'test_dinov3*.py' -v && python -m unittest discover -s runpod/tests -p 'test_dinov3*.py' -v
 ENTRYPOINT ["python", "scripts/run_dinov3.py"]
+
+# The publishable target contains the fixed 86 MB backbone and its original
+# license. Secrets/download metadata are mounted only for this build step.
+FROM runtime AS weighted
+ENV HF_HOME=/opt/dinov3-hf DINO_WEIGHTS_MODE=embedded
+RUN --mount=type=secret,id=hf_token,required=true --mount=type=tmpfs,target=/tmp/dino-download \
+    python -m runpod.dinov3_image_weights stage
+ENV HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1
+# A real CPU load with no network and no secret mount, not just file existence.
+RUN --network=none python -m runpod.dinov3_image_weights verify

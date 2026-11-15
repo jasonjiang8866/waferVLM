@@ -1,5 +1,37 @@
 # Bounded DINOv3 RunPod experiment
 
+## Weight delivery: embed the fixed backbone in the image
+
+The current worker requires a **weighted DINO image**. The old route was
+Hugging Face → Actions CPU cache → 4 MiB PUT chunks through the RunPod HTTPS
+proxy → Pod cache. The new route is Hugging Face → BuildKit on Actions →
+GHCR image → RunPod image pull → local offline cache. No weight PUT is issued
+by the production controller; an old `awaiting_weights` worker is rejected.
+
+`runpod/Dockerfile.dinov3` has a secret-free `runtime` test target and a
+publishable `weighted` target. The latter includes the pinned 86,406,384-byte
+`model.safetensors`, 743-byte `config.json`, original DINOv3 license and a hash
+manifest. Both model files must match the previously verified CPU fingerprints.
+`HF_TOKEN` is a BuildKit secret for downloading only; download metadata resides
+on tmpfs and is not copied into an image layer. A subsequent `RUN --network=none`
+step, without that secret, fully loads all 21,596,544 parameters on CPU.
+Trusted same-repository PRs run this real offline build without publishing or
+renting a GPU; forks run the secret-free tests.
+
+The [official DINOv3 license](https://huggingface.co/facebook/dinov3-vits16-pretrain-lvd1689m/blob/114c1379950215c8b35dfcd4e90a5c251dde0d32/LICENSE.md)
+permits distribution subject to its terms, including providing the agreement.
+Its gated download does not itself require a private image. The original
+agreement is installed at `/opt/dinov3-license/LICENSE.md`; model files are in
+`/opt/dinov3-hf`. The Pod receives no HF, GitHub or RunPod account credentials.
+
+At startup the worker verifies the embedded bytes against the independent
+Actions CPU report and writes `weight-delivery.json` into the result archive.
+This receipt is required by the archive verifier. Base weights remain outside
+the result archive; trained head/adapter checkpoints are still saved separately.
+Changing the base checkpoint requires rebuilding the image. This tradeoff is
+small for this fixed 86 MB backbone and removes the failed runtime upload path.
+Offline image validation does not establish CUDA compatibility or model quality.
+
 ## Latest result: 5090 allocated, weight transport failed (2026-11-15)
 
 [Run 43676359795](https://github.com/jasonjiang8866/waferVLM/actions/runs/43676359795)
@@ -20,8 +52,9 @@ offline multi-chunk round-trip test passes. These facts narrow the next diagnosi
 to the external request path or worker reachability; they do not prove whether
 the 404 came from the provider proxy, a route change or a worker interruption.
 The current receipt lacks response-origin headers and a post-failure worker
-health snapshot. Capture bounded, sanitized diagnostics at that boundary before
-another paid attempt; do not infer a CUDA fault or blindly switch GPUs again.
+health snapshot. The precise origin of that response remains unresolved. The
+weighted image removes this request path from future runs; it does not prove
+the proxy itself was faulty or establish a CUDA result.
 
 The controller verified Pod `wrjc8g514yqel6` absent in three consecutive checks.
 [Independent cleanup 43676869427](https://github.com/jasonjiang8866/waferVLM/actions/runs/43676869427)
@@ -128,8 +161,9 @@ deadline. No automatic Pod-create retry or confirmation-seed launch exists.
    secret `HF_TOKEN`; never paste it into a workflow input or commit.
 2. Run `dinov3-preflight.yml` on main to verify official checkpoint access/load.
 3. Merge this reviewed integration, then publish `dinov3-image.yml` on the exact
-   resulting main SHA with `publish=true`. It contains code only, not gated
-   weights. Record the resulting immutable GHCR digest.
+   resulting main SHA with `publish=true`. It contains the pinned base weights
+   and their original license, and must pass the network-disabled CPU load.
+   Record the resulting immutable GHCR digest.
 4. Using the approval above, dispatch `dinov3-gpu.yml` on main:
    `confirm_paid=true`, `expected_sha=<that full main SHA>`, and
    `image=ghcr.io/jasonjiang8866/wafervlm@sha256:<published digest>`.
@@ -137,16 +171,15 @@ deadline. No automatic Pod-create retry or confirmation-seed launch exists.
 The paid workflow downloads and loads weights on CPU again **before** allocating
 compute. `HF_TOKEN` is scoped only to that step. The controller verifies both
 cached file hashes, the immutable image manifest/config and its embedded source
-SHA, current main, current GPU quote/capacity, account headroom and owned-Pod
+SHA and offline-weight mode, current main, current GPU quote/capacity, account headroom and owned-Pod
 absence. By default the shared project concurrency group serializes Qwen and
 DINO launches. The optional narrowly scoped parallel mode is described below.
 
-Only `config.json` and `model.safetensors` are streamed over the RunPod HTTPS
-proxy with a masked per-run token. The worker checks their pinned hashes before
-opening them, uses an offline HF cache, and receives no RunPod, GitHub or HF
-account credentials. Uploads cannot choose arbitrary filenames or overwrite a
-received file. Gated base weights are outside the result directory and are never
-published in GHCR or uploaded as GitHub artifacts.
+The Pod obtains `config.json` and `model.safetensors` through its immutable GHCR
+image, checks their pinned hashes before opening them, and uses the embedded
+offline HF cache. The masked per-run token authenticates status/result retrieval;
+runtime weight PUTs are disabled. Base weights are outside the result directory
+and are not uploaded as GitHub Actions artifacts.
 
 ## Results and cleanup
 
@@ -178,8 +211,9 @@ This also blocks a repeat after a pre-allocation failure; do not use the paid
 workflow for credential experiments—use the dedicated free CPU preflight.
 
 Evidence is uploaded as `dinov3-seed17-<run-id>` with a separate cleanup artifact.
-Provider rates/inventory, actual CUDA performance, final spending, official
-weights and real remote upload/cleanup remain unverified until a live run.
+Provider rates/inventory and cleanup are checked for each live run. CPU weight
+loading is verified separately; actual CUDA performance and DINO training
+quality remain unverified until a completed GPU run.
 
 The marker is read by the exact artifact ID returned by its upload step; this avoids the observed GitHub list-visibility race while still verifying run, source, name, expiry and digest.
 

@@ -15,6 +15,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 from runpod.dinov3_bundle import FILES, UPLOAD_CHUNK_BYTES, recipe, select, trials
+from runpod.dinov3_image_weights import HF_ROOT, verify_files
 
 ROOT = Path('/app')
 OUT = Path('/workspace/dino-results')
@@ -22,7 +23,7 @@ ARCHIVE = Path('/workspace/dino-results.tar.gz')
 DATASET = Path('/workspace/dino-data')
 TOKEN = ''
 WEIGHTS = {}
-STATE = {'status': 'running', 'phase': 'awaiting_weights'}
+STATE = {'status': 'running', 'phase': 'verifying_embedded_weights'}
 READY = threading.Event()
 LOCK = threading.Lock()
 
@@ -54,6 +55,9 @@ class Handler(BaseHTTPRequestHandler):
     def do_PUT(self):
         if not self.authorized():
             self.send_error(403)
+            return
+        if os.environ.get('DINO_WEIGHTS_MODE') == 'embedded':
+            self.send_error(405)
             return
         name = self.path.removeprefix('/weights/')
         try:
@@ -148,14 +152,20 @@ def hardware_smoke():
                 torch=torch.__version__, cuda=torch.version.cuda)
 
 
+def embedded_weights():
+    if os.environ.get('DINO_WEIGHTS_MODE') != 'embedded':
+        raise ValueError('A weighted image is required; runtime upload is disabled')
+    return verify_files(WEIGHTS)
+
+
 def work():
     child = None
     result = {'status': 'rejected', 'source_sha': os.environ['WAFERVLM_SOURCE_SHA'],
               'image': os.environ['DINO_IMAGE'], 'weights': WEIGHTS}
     try:
         OUT.mkdir(parents=True, exist_ok=False)
-        if not READY.wait(timeout=min(1200, max(0, float(os.environ['DINO_DEADLINE']) - time.time() - 180))):
-            raise TimeoutError('weights_delivery_timeout')
+        STATE['phase'] = 'verifying_embedded_weights'
+        write('weight-delivery.json', embedded_weights())
         write('hardware.json', hardware_smoke())
         environment = {k: v for k, v in os.environ.items() if k not in
                        {'RUNPOD_API_KEY', 'HF_TOKEN', 'HUGGING_FACE_HUB_TOKEN', 'GH_TOKEN', 'GITHUB_TOKEN', 'DINO_RESULT_TOKEN'}}
@@ -226,7 +236,7 @@ def main():
     global TOKEN, WEIGHTS
     TOKEN = os.environ.pop('DINO_RESULT_TOKEN')
     WEIGHTS = json.loads(os.environ.pop('DINO_WEIGHTS'))
-    os.environ['HF_HOME'] = '/workspace/dino-hf'
+    os.environ['HF_HOME'] = str(HF_ROOT)
     os.environ['HF_HUB_OFFLINE'] = '1'
     threading.Thread(target=work, daemon=True).start()
     ThreadingHTTPServer(('0.0.0.0', 8888), Handler).serve_forever()
