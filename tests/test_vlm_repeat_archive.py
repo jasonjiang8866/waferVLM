@@ -103,9 +103,12 @@ class RepeatArchive(unittest.TestCase):
                     api.listing.side_effect=[[pod],[],[],[]]
                     result=json.loads((self.root/'worker.json').read_text())
                     result['archive']=dict(size=archive.stat().st_size,sha256=sha256_file(archive))
+                    # This fake provider never executes the bootstrap. Worker images
+                    # intentionally omit the controller's production input receipts.
                     with patch.object(controller,'OUT',out),patch.object(controller,'SOURCE',self.spec['source_sha']), \
                          patch.object(controller,'IMAGE',self.spec['image']),patch.object(controller,'authorization_guard'), \
                          patch.object(controller,'preflight',return_value=evidence), \
+                         patch.object(controller,'worker_code',return_value='pass'), \
                          patch.object(inputs,'signed_input_urls',return_value={}), \
                          patch.object(controller,'request',return_value=result), \
                          patch.object(controller,'download',side_effect=lambda *a:shutil.copyfile(archive,out/'experiment.tar.gz')), \
