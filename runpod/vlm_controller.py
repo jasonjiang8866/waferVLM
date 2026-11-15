@@ -6,6 +6,7 @@ and the historical continuation workflow cannot silently change this workload.
 
 import argparse
 import base64
+import gzip
 import hashlib
 import io
 import json
@@ -114,7 +115,10 @@ def quote(rate, ledger=None):
             or prior_usd < PRIOR_SPEND_RESERVE or prior_seconds < PRIOR_RUNTIME_RESERVE_SECONDS):
         raise ValueError("Incomplete cumulative VLM ledger")
     hourly = rate + DISK_HOURLY
-    maximum = 3600 if evaluation() else MAX_WORK_SECONDS
+    spent = 0 if ledger is None else ledger.get('repeat_seconds', 0)
+    if evaluation() and (not finite(spent) or spent > 3540):
+        raise ValueError('Repeat evaluation allowance exhausted')
+    maximum = 3600 - math.ceil(spent) if evaluation() else MAX_WORK_SECONDS
     work = min(maximum, APPROVED_TOTAL_SECONDS - prior_seconds - CLEANUP_SECONDS, math.floor((APPROVED_USD - prior_usd - 2) / hourly * 3600) - CLEANUP_SECONDS)
     if work < maximum:
         raise ValueError("Insufficient budget or aggregate runtime")
@@ -464,9 +468,9 @@ def worker_code():
     names = ['runpod/vlm_worker.py', 'runpod/vlm_repeat_worker.py', 'runpod/vlm_repeat_inputs.py',
              'runpod/confirmation_verify.py', 'runpod/confirmation_contract.py', 'runpod/provider.py',
              'runpod/vlm-completed.json', 'docs/evidence/vlm-six-endpoints.json']
-    bundle = base64.b64encode(json.dumps({n: (ROOT / n).read_text() for n in names}).encode()).decode()
-    return ("import base64,json,pathlib,runpy,os;os.chdir('/app');"
-            "payload=json.loads(base64.b64decode(" + repr(bundle) + "));"
+    bundle = base64.b64encode(gzip.compress(json.dumps({n: (ROOT / n).read_text() for n in names}).encode(), mtime=0)).decode()
+    return ("import base64,gzip,json,pathlib,runpy,os;os.chdir('/app');"
+            "payload=json.loads(gzip.decompress(base64.b64decode(" + repr(bundle) + ")));"
             "[(pathlib.Path(n).parent.mkdir(parents=True,exist_ok=True),pathlib.Path(n).write_text(v)) for n,v in payload.items()];"
             "runpy.run_module('runpod.vlm_repeat_worker',run_name='__main__')")
 

@@ -7,6 +7,10 @@ was reconstructed from all four original ZIPs, including optimizer/scheduler/RNG
 states, before starting any new inference. Its SHA256 is
 `81c048fbb25396a9c2d937a94d9c055989b032d76d51446cc104f2641fd25a62`.
 
+Launch update: the first dispatch failed at the provider's create API (HTTP 500),
+with both cleanup paths verifying absence and no inference performed. See the
+[recovery receipt and reduced retry allowance](vlm-repeat-create-recovery.md).
+
 ## Workload and interpretation
 
 The existing fixed runner performs **3 seeds × 2 checkpoints × 3 fresh processes

@@ -32,6 +32,8 @@ class LedgerTests(unittest.TestCase):
         self.precreate.start(); self.addCleanup(self.precreate.stop)
         completed = patch.object(ledger, 'COMPLETED', [])
         completed.start(); self.addCleanup(completed.stop)
+        failed_repeats = patch.object(ledger, 'REPEAT_ATTEMPTS', [])
+        failed_repeats.start(); self.addCleanup(failed_repeats.stop)
         self.artifacts = [dict(name=ledger.MARKER, id=x['marker_artifact_id'],
             digest='sha256:'+x['marker_sha256'], expired=False,
             workflow_run={'id': x['run_id']}) for x in ledger.HISTORY]

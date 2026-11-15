@@ -1,0 +1,150 @@
+[
+  {
+    "run_id": 43679597770,
+    "seed": "repeat",
+    "controller_sha": "56af40fa13e17f20957c9d8855841d70bffc561a",
+    "marker_artifact_id": 14147941217,
+    "marker_sha256": "434f23685a930fbe25609cc94a08cc4f755701344bf92a86d04e3b4f3226d772",
+    "result_artifact_id": 14147323613,
+    "result_sha256": "f17ede76fddead16b8af4ef9cdc9dd8e9c2f2151494498a8bd6666fb6242036b",
+    "independent_cleanup_run_id": 43680016685,
+    "independent_cleanup_artifact_id": 14148310783,
+    "independent_cleanup_sha256": "3225e0de435d1d4c3ba839eebfe78351e07dd3ccf02570e8583af33cd84065e5",
+    "cleanup": {
+      "status": "verified_absent",
+      "name": "wafer-20261107-usd20-vlmrepeats-43679597770",
+      "checked_epoch": 1794719498.0392294,
+      "consecutive_absent_checks": 8,
+      "creation_confirmed": false,
+      "elapsed_billing_bound_s": 145.14932703971863,
+      "estimated_total_usd": 8.16852580926767,
+      "within_budget": true,
+      "estimated_total_seconds": 38587.4081276989,
+      "within_runtime": true,
+      "persistent_volumes_created": false,
+      "cost_basis": "conservative_intent_to_absence_estimate_not_invoice"
+    },
+    "create_error": {
+      "status": "create_not_confirmed",
+      "checked_epoch": 1794719353.8526638,
+      "http_status": 500,
+      "categories": [
+        "unclassified"
+      ]
+    },
+    "provision": {
+      "name": "wafer-20261107-usd20-vlmrepeats-43679597770",
+      "run_id": "43679597770",
+      "started_epoch": 1794719352.8899055,
+      "deadline_epoch": 1794722952.8899055,
+      "cost": {
+        "gpu_hourly_usd": 0.89,
+        "disk_hourly_usd": 0.008928571428571428,
+        "work_seconds": 3600,
+        "cleanup_seconds": 600,
+        "planned_total_usd": 9.181031676712218,
+        "approved_usd": 30.0,
+        "prior_spend_reserve_usd": 8.132281676712218,
+        "prior_runtime_reserve_seconds": 38442.25880065918,
+        "approved_total_seconds": 66000,
+        "planned_total_seconds": 42642.25880065918,
+        "unallocated_reserve_usd": 20.818968323287784,
+        "transfer_usd": 0,
+        "storage_gb": 60,
+        "pricing_source": "https://docs.runpod.io/pods/pricing",
+        "note": "Conservative estimate, not a provider hard cap. Cleanup failure can overrun."
+      },
+      "pod_id": null
+    },
+    "launch_spec": {
+      "source_sha": "11d2e5f088b350dd9391864dbe2869417fff5af7",
+      "controller_sha": "56af40fa13e17f20957c9d8855841d70bffc561a",
+      "image": "ghcr.io/jasonjiang8866/wafervlm@sha256:a6d31b4f12c2c3ee64c59d08b1e67c89e9bbf9b46cbdb4179417f1d1efa3fa79",
+      "gpu": "NVIDIA GeForce RTX 4090",
+      "gpu_hourly_usd": 0.89,
+      "ledger": {
+        "usd": 8.132281676712218,
+        "seconds": 38442.25880065918,
+        "attempts": [
+          {
+            "run_id": 42346201550,
+            "marker_artifact_id": 13564060530,
+            "evidence_sha256": "99c0371bfa0e297f431af49e0a1bb162eca1f1147f1743f840c2513bd51d1653",
+            "cleanup": "verified_absent"
+          },
+          {
+            "run_id": 42385615853,
+            "marker_artifact_id": 13579825671,
+            "evidence_sha256": "8412f5981d9d997016c6e39b9d81fd14c88cc267e5b4bebbafac0178d18c7caa",
+            "cleanup": "verified_absent"
+          },
+          {
+            "run_id": 42431025521,
+            "marker_artifact_id": 13597661487,
+            "evidence_sha256": "43a608ce2b659a6f3cd8a589b00b8551cd9e3d02c485827738cce8b882f092b2",
+            "cleanup": "verified_absent"
+          },
+          {
+            "run_id": 42502913001,
+            "marker_artifact_id": 13626700093,
+            "evidence_sha256": "2f13170ad3fff0f8546ee987db5cd63818ddf1cebc90b9061b1d996e5d3e7b2f",
+            "cleanup": "verified_absent"
+          },
+          {
+            "run_id": 42655151230,
+            "marker_artifact_id": 13690724238,
+            "evidence_sha256": "a5732ce500f12391e281bffae6a2b1480c81862b2287b3003c49364ca9b76188",
+            "cleanup": "verified_absent"
+          },
+          {
+            "run_id": 42661065788,
+            "marker_artifact_id": 13694661007,
+            "evidence_sha256": "6a9f7d955eb2d5f7547b1e8125281b4bef7a9b07b55a883199cd4257aee5352b",
+            "cleanup": "verified_absent"
+          },
+          {
+            "run_id": 42682266526,
+            "marker_artifact_id": 13703281873,
+            "evidence_sha256": "b6c494dc8ca303e275c49a6a3956ecc650fd530e9852dcc6a9665a91bb44d53d",
+            "cleanup": "verified_absent"
+          },
+          {
+            "run_id": 43553982790,
+            "marker_artifact_id": 14097845102,
+            "evidence_sha256": "bb48489f35b749dafd5b49e5cef1722b76bff204abfe3bd8a7fe5654c0c1e3a0",
+            "cleanup": "verified_absent"
+          },
+          {
+            "run_id": 43562568201,
+            "marker_artifact_id": 14100597084,
+            "evidence_sha256": "0fbdc49903f33518b7887226a77b6522541035948db6b28e9182f39c94a0a71e",
+            "cleanup": "verified_absent",
+            "seed": 42,
+            "accepted": true,
+            "result_sha256": "fabbcef0155c8c5f379da2d353654717f8a39fb4f699751a6b733b112a6d7c1e"
+          },
+          {
+            "run_id": 43609894428,
+            "marker_artifact_id": 14119796441,
+            "evidence_sha256": "d2e698dd9fc4b8dbb605c8355693c56d75ff679ffd827918e884be389a37ef9e",
+            "cleanup": "verified_absent",
+            "seed": 123,
+            "accepted": true,
+            "result_sha256": "e1b54d8e9d89dd989aceb06daee3eb234de46ea7705b0cf0cf7bd6299cddbdb2"
+          }
+        ]
+      },
+      "phase": "validation-repeats",
+      "config_sha256": "d44e509c2304d9efe8fad7e53ad53a9f5fee81e7f82e2f5cb5a9c688db62e49a",
+      "input_manifest_sha256": "81c048fbb25396a9c2d937a94d9c055989b032d76d51446cc104f2641fd25a62"
+    },
+    "independent_cleanup": {
+      "status": "verified_absent",
+      "name": "wafer-20261107-usd20-vlmrepeats-43679597770",
+      "checked_epoch": 1794719530.8962185,
+      "consecutive_absent_checks": 3,
+      "creation_confirmed": false,
+      "cost": "unverified_no_local_intent"
+    }
+  }
+]

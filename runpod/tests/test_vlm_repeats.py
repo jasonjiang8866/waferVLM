@@ -20,6 +20,8 @@ class RepeatLifecycle(unittest.TestCase):
                          GITHUB_REPOSITORY=c.REPOSITORY, GH_TOKEN='test-only')
         env.start(); self.addCleanup(env.stop)
         out = patch.object(c, 'OUT', self.out); out.start(); self.addCleanup(out.stop)
+        failed = patch.object(ledger, 'REPEAT_ATTEMPTS', [])
+        failed.start(); self.addCleanup(failed.stop)
         self.ledger = dict(usd=8.132281676712218, seconds=38442.25880065918,
                           attempts=[dict(seed=s, accepted=True) for s in (42, 123)])
         self.evidence = dict(controller_sha='a'*40, config_sha256='b'*64,
@@ -39,6 +41,18 @@ class RepeatLifecycle(unittest.TestCase):
         self.assertAlmostEqual(q['planned_total_usd'],9.181031676712218)
         with self.assertRaises(ValueError):c.quote(.89,dict(self.ledger,seconds=62000))
         with self.assertRaises(ValueError):c.quote(.89,dict(self.ledger,usd=29))
+
+    def test_retry_deducts_failed_create_time_and_bootstrap_roundtrips(self):
+        import ast, base64, gzip
+        retry=dict(self.ledger,usd=8.16852580926767,seconds=38587.4081276989,repeat_seconds=145.14932703971863)
+        q=c.quote(.89,retry)
+        self.assertEqual(q['work_seconds'],3454)
+        self.assertLessEqual(q['planned_total_seconds'],self.evidence['cost']['planned_total_seconds'])
+        code=c.worker_code();self.assertLess(len(code),24000)
+        assignment=next(n for n in ast.parse(code).body if isinstance(n,ast.Assign))
+        encoded=assignment.value.args[0].args[0].args[0].value
+        payload=json.loads(gzip.decompress(base64.b64decode(encoded)))
+        for name,content in payload.items():self.assertEqual(content,(c.ROOT/name).read_text())
 
     def test_repeat_cleanup_recovers_ledger_and_cannot_delete_training(self):
         api=Mock();api.listing.side_effect=[[self.pod()],[],[],[]]
