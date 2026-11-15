@@ -1,0 +1,53 @@
+{
+  "run_id": "43609129272",
+  "source_sha": "fc7975cef669acf12f1470f0e2288dd249f1db46",
+  "job_id": 132490089327,
+  "estimated_gpu_usd": 0,
+  "gpu_seconds": 0,
+  "required_steps": {
+    "Load and fingerprint official weights on CPU": "success",
+    "Offline DINO lifecycle and model tests": "success",
+    "Current image, catalog, inventory and cost checks": "failure",
+    "Persist one-off create intent marker": "skipped",
+    "Run actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02": "skipped",
+    "Run six trials, reload selected models, retrieve evidence and delete Pod": "skipped",
+    "Independent inventory check": "success"
+  },
+  "result": {
+    "artifact_id": 14119199431,
+    "name": "dinov3-seed17-43609129272",
+    "sha256": "0d8c2c03b9d511ede0deaf5015fe6f3c4ac8c89cb862db02c73ad7fed976401a",
+    "run_id": "43609129272",
+    "source_sha": "fc7975cef669acf12f1470f0e2288dd249f1db46",
+    "files": [
+      "cleanup.json",
+      "error.json",
+      "weights/checksums.json",
+      "weights/weights.json"
+    ],
+    "cleanup": {
+      "status": "verified_absent",
+      "run_id": "43609129272",
+      "checks": 12,
+      "persistent_volumes_created": false,
+      "checked_epoch": 1794669462.7809029
+    }
+  },
+  "independent": {
+    "artifact_id": 14119656754,
+    "name": "dinov3-cleanup-43609129272",
+    "sha256": "5cfe1e6a4b4211b1bf051df126a244d7826f0e016a66ed8ef783fcb4cc4ff279",
+    "run_id": "43609402837",
+    "source_sha": "fc7975cef669acf12f1470f0e2288dd249f1db46",
+    "files": [
+      "cleanup.json"
+    ],
+    "cleanup": {
+      "status": "verified_absent",
+      "run_id": "43609129272",
+      "checks": 12,
+      "persistent_volumes_created": false,
+      "checked_epoch": 1794669592.1469886
+    }
+  }
+}

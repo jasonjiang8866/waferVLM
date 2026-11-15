@@ -13,7 +13,7 @@ from runpod import dinov3_controller as c, dinov3_scheduling as s
 
 class SchedulingTests(unittest.TestCase):
     def setUp(self):
-        self.environ = patch.dict(os.environ, PARALLEL_VLM_RUN_ID='', REPLACE_QUEUED_RUN_ID='')
+        self.environ = patch.dict(os.environ, PARALLEL_VLM_RUN_ID='', REPLACE_QUEUED_RUN_ID='', DINO_GPU='')
         self.environ.start()
         self.addCleanup(self.environ.stop)
         self.vlm_run = dict(id=int(s.VLM_RUN), head_sha=s.VLM_SHA, head_branch='main',
@@ -103,13 +103,13 @@ class SchedulingTests(unittest.TestCase):
 
     def test_exact_cancelled_zero_job_run_can_be_replaced(self):
         os.environ['REPLACE_QUEUED_RUN_ID'] = s.QUEUED_DINO_RUN
-        history = dict(total_count=5,workflow_runs=[{'id':999},self.previous,{'id':int(s.CPU_FAILED_RUN)},
+        history = dict(total_count=6,workflow_runs=[{'id':999},self.previous,{'id':int(s.CPU_FAILED_RUN)},{'id':int(s.PREFLIGHT_FAILED['run_id'])},
                                                   *[{'id':int(p['run_id'])} for p in s.PAID_HISTORY]])
         with patch.object(s,'request',side_effect=[self.previous,{'total_count':0,'jobs':[]},
                                                   {'total_count':0,'artifacts':[]}]) as read, \
                 patch.object(s,'reconciled_cpu_failure') as cpu, patch.object(s,'reconciled_paid_failure') as paid:
             s.dispatch_history(history,'999','fake')
-        cpu.assert_called_once_with('fake')
+        self.assertEqual([call.args for call in cpu.call_args_list], [('fake',), ('fake',s.PREFLIGHT_FAILED)])
         self.assertEqual(paid.call_count,2)
         self.assertEqual([call.args for call in paid.call_args_list], [('fake',p) for p in s.PAID_HISTORY])
         self.assertEqual(read.call_count,3)
@@ -118,11 +118,25 @@ class SchedulingTests(unittest.TestCase):
 
     def test_fourth_paid_attempt_or_missing_receipt_still_blocks(self):
         os.environ['REPLACE_QUEUED_RUN_ID'] = s.QUEUED_DINO_RUN
-        prior=[self.previous,{'id':int(s.CPU_FAILED_RUN)},*[{'id':int(p['run_id'])} for p in s.PAID_HISTORY]]
+        prior=[self.previous,{'id':int(s.CPU_FAILED_RUN)},{'id':int(s.PREFLIGHT_FAILED['run_id'])},*[{'id':int(p['run_id'])} for p in s.PAID_HISTORY]]
         for rows in [[{'id':999},*prior,{'id':888}],[{'id':999},*prior[:-1]]]:
             with patch.object(s,'request') as read, self.assertRaises(ValueError):
                 s.dispatch_history(dict(total_count=len(rows),workflow_runs=rows),'999','fake')
             read.assert_not_called()
+
+    def test_read_only_history_requires_all_five_records_and_no_extra_dispatch(self):
+        rows = [{'id':int(n)} for n in s.KNOWN_PRIOR_RUNS]
+        with patch.object(s,'request',return_value=dict(total_count=5,workflow_runs=rows)), \
+                patch.object(s,'reconcile_prior_records') as reconcile:
+            result = s.observe_history('fake')
+            reconcile.assert_called_once_with('fake')
+            self.assertEqual(result['paid_attempts'],2)
+            self.assertEqual(result['accounted_usd'],.1)
+        for wrong in [rows[:-1], [*rows, {'id':999}]]:
+            with patch.object(s,'request',return_value=dict(total_count=len(wrong),workflow_runs=wrong)), \
+                    patch.object(s,'reconcile_prior_records') as reconcile, self.assertRaises(ValueError):
+                s.observe_history('fake')
+            reconcile.assert_not_called()
 
     def test_pending_running_rerun_or_wrong_source_is_never_a_free_replacement(self):
         for key,value in [('status','pending'),('conclusion','success'),('run_attempt',2),
@@ -151,9 +165,9 @@ class SchedulingTests(unittest.TestCase):
 
 class CpuFailureReceiptTests(unittest.TestCase):
     def setUp(self):
-        self.receipt = json.loads(Path(s.__file__).with_name('dinov3-precreate.json').read_text())
+        self.receipt = copy.deepcopy(getattr(self, 'pinned', json.loads(Path(s.__file__).with_name('dinov3-precreate.json').read_text())))
         p = self.receipt
-        self.run = dict(id=int(s.CPU_FAILED_RUN),head_sha=p['source_sha'],head_branch='main',
+        self.run = dict(id=int(p['run_id']),head_sha=p['source_sha'],head_branch='main',
                         event='workflow_dispatch',path='.github/workflows/dinov3-gpu.yml',
                         run_attempt=1,status='completed',conclusion='failure')
         self.job = dict(id=p['job_id'],status='completed',conclusion='failure',
@@ -182,7 +196,7 @@ class CpuFailureReceiptTests(unittest.TestCase):
 
     def check(self):
         with patch.object(s,'request',side_effect=self.read),patch.object(s,'artifact_bytes',side_effect=self.archive):
-            s.reconciled_cpu_failure('fake')
+            s.reconciled_cpu_failure('fake', self.receipt)
 
     def test_exact_cpu_failure_with_two_cleanup_receipts_is_reconciled(self):
         self.check()
@@ -262,3 +276,7 @@ class SecondPaidFailureReceiptTests(PaidFailureReceiptTests):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class PreflightFailureReceiptTests(CpuFailureReceiptTests):
+    pinned = s.PREFLIGHT_FAILED

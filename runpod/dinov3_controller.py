@@ -15,7 +15,7 @@ from contextlib import contextmanager
 from pathlib import Path
 
 from runpod.dinov3_bundle import FILES, UPLOAD_CHUNK_BYTES, cache_files, recipe, verify_archive, weight_report
-from runpod.dinov3_scheduling import PAID_HISTORY, companion, dispatch_history
+from runpod.dinov3_scheduling import PAID_HISTORY, companion, dispatch_history, observe_history
 from runpod.provider import NoRedirect, REPOSITORY, RemoteHTTPError, Runpod, budget, finite, request
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -23,11 +23,11 @@ OUT = ROOT / 'dinov3-results'
 AUTH = 'wafervlm-dinov3-seed17-v1'
 GPU = 'NVIDIA GeForce RTX 4090'
 RATE_CAP = .89
+GPU_LIMITS = {GPU: (RATE_CAP, 3.0), 'NVIDIA GeForce RTX 5090': (1.19, 3.5)}
 DISK_GB = 60
 DISK_RATE = DISK_GB * .10 / (28 * 24)
 WORK_SECONDS = 5400
 CLEANUP_SECONDS = 600
-TOTAL_USD_CAP = 3.0  # Conservative first-attempt ceiling within aggregate approval.
 APPROVED_TOTAL_USD = 10.0  # User approval 2026-11-14, DINO only.
 APPROVED_TOTAL_SECONDS = 500 * 60
 PRIOR_SPEND_USD = sum(p['accounted_usd'] for p in PAID_HISTORY)
@@ -45,9 +45,10 @@ SAFE_PREFLIGHT_REASONS = frozenset({
     'Image source differs from reviewed main SHA', 'Existing project Pod must be reconciled',
     'Unreviewed parallel VLM run', 'Parallel VLM Actions identity mismatch',
     'Multiple project Pods; refuse another allocation', 'Parallel VLM Pod identity/state/rate mismatch',
-    '4090 quote exceeds cap', 'Insufficient cleanup/uncertainty reserve',
-    'No 4090 capacity meeting CUDA minimum', 'Invalid budget reserve',
+    'GPU quote exceeds cap', 'Unapproved DINO GPU', 'Insufficient cleanup/uncertainty reserve',
+    'No selected GPU capacity meeting CUDA minimum', 'Invalid budget reserve',
     'Read-only dispatch/main/source required', 'Read-only provider mutation forbidden',
+    'Unexpected DINO history before launch',
 })
 
 
@@ -95,16 +96,27 @@ def identity():
     return run
 
 
-def cost(rate):
-    if not finite(rate, .001) or rate > RATE_CAP:
-        raise ValueError('4090 quote exceeds cap')
+def selected_gpu():
+    gpu = os.environ.get('DINO_GPU') or GPU
+    if gpu not in GPU_LIMITS:
+        raise ValueError('Unapproved DINO GPU')
+    return gpu
+
+
+def cost(rate, gpu=None):
+    gpu = selected_gpu() if gpu is None else gpu
+    if gpu not in GPU_LIMITS:
+        raise ValueError('Unapproved DINO GPU')
+    rate_cap, total_cap = GPU_LIMITS[gpu]
+    if not finite(rate, .001) or rate > rate_cap:
+        raise ValueError('GPU quote exceeds cap')
     maximum = (rate + DISK_RATE) * (WORK_SECONDS + CLEANUP_SECONDS) / 3600
-    if (maximum + 1 > min(TOTAL_USD_CAP, APPROVED_TOTAL_USD) - PRIOR_SPEND_USD
+    if (maximum + 1 > min(total_cap, APPROVED_TOTAL_USD) - PRIOR_SPEND_USD
             or PRIOR_RUNTIME_SECONDS + WORK_SECONDS + CLEANUP_SECONDS > APPROVED_TOTAL_SECONDS):
         raise ValueError('Insufficient cleanup/uncertainty reserve')
     return dict(gpu_hourly_usd=rate, disk_hourly_usd=DISK_RATE, work_seconds=WORK_SECONDS,
                 cleanup_seconds=CLEANUP_SECONDS, estimated_max_usd=maximum,
-                total_cap_usd=TOTAL_USD_CAP, reserve_usd=TOTAL_USD_CAP-PRIOR_SPEND_USD-maximum,
+                total_cap_usd=total_cap, reserve_usd=total_cap-PRIOR_SPEND_USD-maximum,
                 approved_total_usd=APPROVED_TOTAL_USD, approved_total_seconds=APPROVED_TOTAL_SECONDS,
                 prior_spend_usd=PRIOR_SPEND_USD, prior_runtime_seconds=PRIOR_RUNTIME_SECONDS)
 
@@ -204,6 +216,8 @@ def observe(api):
                 or not re.fullmatch('[a-f0-9]{40}', source) or not token
                 or not isinstance(api, ReadOnlyRunpod)):
             raise ValueError('Read-only dispatch/main/source required')
+    with preflight_stage('historical_receipts'):
+        save('historical-receipts.json', observe_history(token))
     evidence = preflight_checks(api, source, token)
     evidence.update(status='read_only_observation_passed', controller_sha=git('rev-parse', 'HEAD'),
                     paid_compute_started=False)
@@ -212,6 +226,8 @@ def observe(api):
 
 
 def preflight_checks(api, source, github_token):
+    with preflight_stage('gpu_selection'):
+        gpu = selected_gpu()
     image = os.environ.get('DINO_IMAGE', '')
     with preflight_stage('weight_report'):
         report = weight_report(OUT / 'weights' / 'weights.json')
@@ -224,26 +240,26 @@ def preflight_checks(api, source, github_token):
     query = urllib.parse.urlencode(dict(include='AVAILABILITY', product='POD', cloud='SECURE', count=1,
                                        minCudaVersion=recipe()['required_min_cuda']))
     with preflight_stage('catalog'):
-        catalog = api.call('/catalog/gpus/' + urllib.parse.quote(GPU, safe='') + '?' + query)
+        catalog = api.call('/catalog/gpus/' + urllib.parse.quote(gpu, safe='') + '?' + query)
     rate = catalog.get('price', {}).get('secure')
-    save('catalog.json', dict(gpu=GPU, required_min_cuda=recipe()['required_min_cuda'],
+    save('catalog.json', dict(gpu=gpu, required_min_cuda=recipe()['required_min_cuda'],
                              secure_hourly_usd=rate if finite(rate) else None,
                              available_region_count=sum(d.get('availability') in {'LOW', 'MEDIUM', 'HIGH'}
                                                         for d in catalog.get('dataCenters', []))))
     with preflight_stage('quote'):
-        quoted = cost(rate)
+        quoted = cost(rate, gpu)
     regions = sorted(d['id'] for d in catalog.get('dataCenters', [])
                      if d.get('availability') in {'LOW', 'MEDIUM', 'HIGH'}
                      and re.fullmatch(r'[A-Za-z0-9-]+', d.get('id', '')))
     with preflight_stage('capacity'):
         if not regions:
-            raise ValueError('No 4090 capacity meeting CUDA minimum')
+            raise ValueError('No selected GPU capacity meeting CUDA minimum')
     with preflight_stage('companion'):
         concurrent = companion(pods, github_token)
     with preflight_stage('account_budget'):
-        account_budget = budget(api, reserve=TOTAL_USD_CAP + concurrent['account_reserve_usd'])
+        account_budget = budget(api, reserve=quoted['total_cap_usd'] + concurrent['account_reserve_usd'])
     evidence = dict(status='preflight_passed', source_sha=source, image=image, weights=report,
-                    gpu=GPU, min_cuda_version=recipe()['required_min_cuda'], regions=regions, cost=quoted,
+                    gpu=gpu, min_cuda_version=recipe()['required_min_cuda'], regions=regions, cost=quoted,
                     companion=concurrent,
                     budget=account_budget,
                     checked_epoch=time.time())
@@ -280,7 +296,7 @@ def cleanup(api):
                                   cost_basis='intent_to_absence_estimate_not_invoice',
                                   cumulative_estimated_usd=PRIOR_SPEND_USD+estimate,
                                   cumulative_runtime_bound_s=PRIOR_RUNTIME_SECONDS+elapsed,
-                                  within_cap=PRIOR_SPEND_USD+estimate <= TOTAL_USD_CAP
+                                  within_cap=PRIOR_SPEND_USD+estimate <= GPU_LIMITS[state.get('gpu', GPU)][1]
                                   and elapsed <= WORK_SECONDS + CLEANUP_SECONDS
                                   and PRIOR_RUNTIME_SECONDS+elapsed <= APPROVED_TOTAL_SECONDS)
                 save('cleanup.json', record)
@@ -298,8 +314,9 @@ def cleanup(api):
                 started, rate = float(pod['env']['DINO_STARTED']), float(pod['env']['DINO_RATE'])
                 if not finite(started, 1) or started > time.time():
                     raise ValueError('Invalid recovered start time')
-                cost(rate)
-                state = dict(started_epoch=started, rate=rate)
+                gpu = pod['env'].get('DINO_GPU', GPU)
+                cost(rate, gpu)
+                state = dict(started_epoch=started, rate=rate, gpu=gpu)
             state['pod_id'] = pod['id']
             save('provision.json', state)
             try:
@@ -372,20 +389,21 @@ def interrupted(signum, frame):
 def launch(api):
     ledger_guard()
     evidence = preflight(api)  # fresh inventory/price after marker persistence
+    gpu = evidence['gpu']
     run, token = identity(), secrets.token_urlsafe(32)
     print('::add-mask::' + token, flush=True)
     files = cache_files(evidence['weights'])
     started = time.time()
     deadline = started + WORK_SECONDS
-    save('provision.json', dict(pod_id=None, started_epoch=started, rate=evidence['cost']['gpu_hourly_usd']))
+    save('provision.json', dict(pod_id=None, started_epoch=started, rate=evidence['cost']['gpu_hourly_usd'], gpu=gpu))
     payload = dict(name=AUTH + '-' + run, image=evidence['image'], cloud='SECURE', disk=DISK_GB,
-                   gpu=dict(id=GPU, count=1, minRamPerGpu=32, minVcpuCountPerGpu=4,
+                   gpu=dict(id=gpu, count=1, minRamPerGpu=32, minVcpuCountPerGpu=4,
                             minCudaVersion=evidence['min_cuda_version']),
                    dataCenterIds=evidence['regions'], startSsh=False, ports=['8888/http'],
                    entrypoint=['/bin/bash', '-lc'],
                    cmd=['exec /app/.venv/bin/python -u -m runpod.dinov3_worker'],
                    env=dict(WAFER_MANAGED_BY=REPOSITORY, DINO_RUN_ID=run, DINO_AUTH=AUTH,
-                            DINO_RESULT_TOKEN=token, DINO_DEADLINE=str(deadline-60),
+                            DINO_RESULT_TOKEN=token, DINO_DEADLINE=str(deadline-60), DINO_GPU=gpu,
                             DINO_WEIGHTS=json.dumps(evidence['weights']), DINO_IMAGE=evidence['image'],
                             DINO_STARTED=str(started), DINO_RATE=str(evidence['cost']['gpu_hourly_usd']),
                             WAFERVLM_IMAGE_DIGEST=evidence['image'].split('@')[1]))
@@ -396,14 +414,14 @@ def launch(api):
         pod_id = pod.get('id', '')
         if not re.fullmatch('[a-zA-Z0-9_-]{1,128}', pod_id):
             raise ValueError('Create outcome unknown; reconcile by name')
-        save('provision.json', dict(pod_id=pod_id, started_epoch=started, rate=evidence['cost']['gpu_hourly_usd']))
+        save('provision.json', dict(pod_id=pod_id, started_epoch=started, rate=evidence['cost']['gpu_hourly_usd'], gpu=gpu))
         current = api.call('/pods/' + pod_id)
-        if (not owned(current, run) or current.get('gpu', {}).get('id') != GPU
+        if (not owned(current, run) or current.get('gpu', {}).get('id') != gpu
                 or current.get('dataCenterId') not in evidence['regions']
                 or not finite(current.get('cost'), .001)
                 or current['cost'] > evidence['cost']['gpu_hourly_usd'] + DISK_RATE):
             raise ValueError('Allocated identity/GPU/region/rate mismatch')
-        save('allocation.json', dict(pod_id=pod_id, gpu=GPU, data_center=current['dataCenterId'], hourly_usd=current['cost']))
+        save('allocation.json', dict(pod_id=pod_id, gpu=gpu, data_center=current['dataCenterId'], hourly_usd=current['cost']))
         url = 'https://' + pod_id + '-8888.proxy.runpod.net'
         next_inventory, last_phase, seen = time.time() + 60, None, False
         while time.time() < deadline - 30:
@@ -432,7 +450,7 @@ def launch(api):
                 archive = download(url, token, result['archive']) if result.get('archive') else None
                 if result['status'] != 'accepted' or archive is None:
                     raise ValueError('Worker did not complete all six trials')
-                acceptance = verify_archive(archive, evidence['source_sha'], evidence['image'], evidence['weights'])
+                acceptance = verify_archive(archive, evidence['source_sha'], evidence['image'], evidence['weights'], expected_gpu=gpu)
                 save('acceptance.json', acceptance)
                 return
             time.sleep(10)

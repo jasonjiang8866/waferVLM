@@ -129,6 +129,25 @@ class Handler(BaseHTTPRequestHandler):
             self.send_error(404)
 
 
+def hardware_smoke():
+    import torch
+    if not torch.cuda.is_available() or not torch.cuda.is_bf16_supported():
+        raise ValueError('CUDA_BF16_required')
+    gpu = torch.cuda.get_device_name()
+    if gpu != os.environ.get('DINO_GPU'):
+        raise ValueError('allocated_GPU_does_not_match_selection')
+    # Execute a kernel before downloading/preparing data. Device discovery alone
+    # cannot establish that this pinned PyTorch build supports a Blackwell GPU.
+    x = torch.ones((64, 64), device='cuda', dtype=torch.bfloat16)
+    y = x @ x
+    torch.cuda.synchronize()
+    if not bool(torch.all(y == 64).item()):
+        raise ValueError('BF16_matmul_smoke_failed')
+    return dict(gpu=gpu, bf16=True, bf16_matmul_passed=True,
+                compute_capability=list(torch.cuda.get_device_capability()),
+                torch=torch.__version__, cuda=torch.version.cuda)
+
+
 def work():
     child = None
     result = {'status': 'rejected', 'source_sha': os.environ['WAFERVLM_SOURCE_SHA'],
@@ -137,11 +156,7 @@ def work():
         OUT.mkdir(parents=True, exist_ok=False)
         if not READY.wait(timeout=min(1200, max(0, float(os.environ['DINO_DEADLINE']) - time.time() - 180))):
             raise TimeoutError('weights_delivery_timeout')
-        import torch
-        if not torch.cuda.is_available() or not torch.cuda.is_bf16_supported():
-            raise ValueError('CUDA_BF16_required')
-        write('hardware.json', dict(gpu=torch.cuda.get_device_name(), bf16=True,
-              torch=torch.__version__, cuda=torch.version.cuda))
+        write('hardware.json', hardware_smoke())
         environment = {k: v for k, v in os.environ.items() if k not in
                        {'RUNPOD_API_KEY', 'HF_TOKEN', 'HUGGING_FACE_HUB_TOKEN', 'GH_TOKEN', 'GITHUB_TOKEN', 'DINO_RESULT_TOKEN'}}
         environment.update(HF_HUB_OFFLINE='1', TRANSFORMERS_OFFLINE='1', PYTHONUNBUFFERED='1')
