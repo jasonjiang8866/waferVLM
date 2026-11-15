@@ -29,6 +29,9 @@ class DinoArchiveTests(unittest.TestCase):
         cfg['dataset_sha256'] = sha256_file(root / 'dataset.json')
         cfg['validation_sha256'] = sha256_file(root / 'validation.jsonl')
         write_json(root / 'worker.json', dict(status='accepted', source_sha=SOURCE, image=IMAGE, weights=WEIGHTS))
+        write_json(root / 'weight-delivery.json', dict(mode='embedded', verified=True,
+            model_id=cfg['model_id'], model_revision=cfg['model_revision'],
+            files_sha256=WEIGHTS['files_sha256'], license_sha256='e'*64))
         write_json(root / 'hardware.json', dict(gpu='synthetic GPU', bf16=True))
         evidence = Path(__file__).resolve().parents[1] / 'docs/evidence/wm811k-lot17.json'
         (root / 'acquisition.json').write_bytes(evidence.read_bytes())
@@ -123,6 +126,17 @@ class DinoArchiveTests(unittest.TestCase):
             write_json(root/'linear-reload/run.json', info)
             seal_output(root/'linear-reload')
             with self.assertRaisesRegex(ValueError, 'reload'):
+                self.verify(root, cfg)
+
+    def test_embedded_delivery_receipt_must_match_cpu_fingerprint(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)/'results'
+            cfg = self.fixture(root)
+            path = root/'weight-delivery.json'
+            data = json.loads(path.read_text())
+            data['files_sha256'] = {'model.safetensors': 'd'*64}
+            write_json(path, data)
+            with self.assertRaisesRegex(ValueError, 'Embedded weight delivery mismatch'):
                 self.verify(root, cfg)
 
 

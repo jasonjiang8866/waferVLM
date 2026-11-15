@@ -169,6 +169,7 @@ class DinoLifecycleTests(unittest.TestCase):
                     patch.object(w, 'ARCHIVE', root/'result.tar.gz'), patch.object(w, 'DATASET', dataset), \
                     patch.object(w, 'recipe', return_value=cfg), patch.object(w, 'READY', ready), \
                     patch.object(w, 'STATE', {}), patch.dict('sys.modules', torch=torch), \
+                    patch.object(w, 'embedded_weights', return_value={'mode': 'embedded', 'verified': True}), \
                     patch.object(w, 'hardware_smoke', return_value={'gpu':'synthetic GPU','bf16':True}), \
                     patch.object(w.subprocess, 'Popen', side_effect=process), \
                     patch.dict(os.environ, WAFERVLM_SOURCE_SHA='a'*40, DINO_IMAGE='image',

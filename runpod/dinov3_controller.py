@@ -43,6 +43,7 @@ SAFE_PREFLIGHT_REASONS = frozenset({
     'Pinned waferVLM image digest required', 'Invalid image content digest',
     'Image content digest mismatch', 'Exactly one linux/amd64 manifest required',
     'Image source differs from reviewed main SHA', 'Existing project Pod must be reconciled',
+    'Offline embedded-weight image required',
     'Unreviewed parallel VLM run', 'Parallel VLM Actions identity mismatch',
     'Multiple project Pods; refuse another allocation', 'Parallel VLM Pod identity/state/rate mismatch',
     'GPU quote exceeds cap', 'Unapproved DINO GPU', 'Insufficient cleanup/uncertainty reserve',
@@ -150,6 +151,10 @@ def image_provenance(image, source):
     values = [x for x in config.get('config', {}).get('Env', []) if x.startswith('WAFERVLM_SOURCE_SHA=')]
     if values != ['WAFERVLM_SOURCE_SHA=' + source]:
         raise ValueError('Image source differs from reviewed main SHA')
+    required = {'DINO_WEIGHTS_MODE=embedded', 'HF_HOME=/opt/dinov3-hf',
+                'HF_HUB_OFFLINE=1', 'TRANSFORMERS_OFFLINE=1'}
+    if not required.issubset(config.get('config', {}).get('Env', [])):
+        raise ValueError('Offline embedded-weight image required')
 
 
 def manual_guard():
@@ -392,7 +397,6 @@ def launch(api):
     gpu = evidence['gpu']
     run, token = identity(), secrets.token_urlsafe(32)
     print('::add-mask::' + token, flush=True)
-    files = cache_files(evidence['weights'])
     started = time.time()
     deadline = started + WORK_SECONDS
     save('provision.json', dict(pod_id=None, started_epoch=started, rate=evidence['cost']['gpu_hourly_usd'], gpu=gpu))
@@ -444,7 +448,7 @@ def launch(api):
                 save('worker-status.json', {k: result[k] for k in ('status', 'phase', 'received', 'error_type') if k in result})
                 last_phase = phase
             if result.get('status') == 'running' and phase == 'awaiting_weights':
-                upload_weights(url, token, files, result)
+                raise ValueError('Runtime weight upload disabled; rebuild the weighted image')
             if result.get('status') in {'accepted', 'rejected'}:
                 save('result.json', result)
                 archive = download(url, token, result['archive']) if result.get('archive') else None

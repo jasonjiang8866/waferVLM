@@ -81,6 +81,14 @@ def verify_archive(archive, source, image, weights, expected_gpu=None):
         if (worker.get('status') != 'accepted' or worker.get('source_sha') != source
                 or worker.get('image') != image or worker.get('weights') != weights):
             raise ValueError('Worker provenance mismatch')
+        delivery = json.loads((root / 'weight-delivery.json').read_text())
+        import re
+        if (delivery.get('mode') != 'embedded' or delivery.get('verified') is not True
+                or delivery.get('model_id') != cfg['model_id']
+                or delivery.get('model_revision') != cfg['model_revision']
+                or delivery.get('files_sha256') != weights['files_sha256']
+                or not re.fullmatch('[a-f0-9]{64}', delivery.get('license_sha256', ''))):
+            raise ValueError('Embedded weight delivery mismatch')
         hardware = json.loads((root / 'hardware.json').read_text())
         if not hardware.get('gpu') or not hardware.get('bf16'):
             raise ValueError('GPU evidence missing')

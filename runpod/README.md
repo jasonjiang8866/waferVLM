@@ -2,6 +2,12 @@
 
 DINOv3 uses a separate [seed-17 sweep workflow and launch specification](../docs/dinov3-launch.md). The user approved US$10 / 500 minutes cumulatively for DINOv3 and explicitly requested RTX 5090 on 2026-11-15. RTX 4090 remains the default (US$3 ceiling); the explicit 5090 choice has a US$3.50 ceiling, both with 90 minutes work + 10 minutes cleanup and prior spend included. Official-weight access and fresh live checks precede allocation; the Qwen workflow below does not launch DINOv3.
 
+The DINO image now embeds the pinned 86 MB backbone and its original license.
+BuildKit uses `HF_TOKEN` only as a build secret, then loads the real model with
+networking disabled. RunPod reads this verified local cache after pulling the
+image; the controller no longer uploads weight chunks through the HTTPS proxy.
+Training outputs remain separate, portable artifacts.
+
 Seed-confirmation implementation and approval handoff: [fixed training/repeat runners](../docs/seed-confirmation-implementation.md). No new paid workflow has been activated.
 
 **Current authorization:** US$30 / 1,100 minutes cumulative. The [validation-only 200→300 continuation](../docs/continuation-300-results.md) completed; checkpoint 250 was selected. Conservative cumulative usage is **US$5.903039 / 491.911 minutes**. Its Pod was verified absent by primary and independent cleanup; no persistent volume was created. Full states and predictions are preserved in [continuation-300-v1](https://github.com/jasonjiang8866/waferVLM/releases/tag/continuation-300-v1). Earlier diagnostic parity failures remain rejected. The [next seed-confirmation workload](../docs/seed-confirmation-plan.md) is planned but not executed. The current authorization marker remains consumed until reconciled with reviewed next-stage code.
