@@ -47,7 +47,7 @@ The unchanged step-200 adapter changed five predictions relative to its historic
 
 **Diagnostics:** [recovered performance evidence](docs/checkpoint-200-diagnostics.md) and [preserved diagnostic Release](https://github.com/jasonjiang8866/waferVLM/releases/tag/checkpoint-200-diagnostics-v1). CUDA execution is confirmed. Two unprofiled four-step probes on RTX 4090 averaged 12.82/12.98 seconds per new optimizer step; both diagnostic runs remain rejected under the original numerical-parity gate. Repeated unprofiled runs also vary. No diagnostic weights are promoted.
 
-**Next steps:** [TODO](TODO.md) and the [seed confirmation plan](docs/seed-confirmation-plan.md) — compare fixed steps 200/250 across independent seeds and repeated fixed-weight evaluation, then assess the frozen 148-image unseen-lot holdout once the models are fixed. These next experiments have not run.
+**Confirmation progress:** fresh seeds [42](docs/vlm-seed42-results.md) and [123](docs/vlm-seed123-results.md) completed 250 steps, with both step-200/250 full states independently verified and temporary Pods removed. All six endpoints are frozen for [18 repeated validation passes](docs/vlm-repeat-execution.md). New quality scores and the final 148-image unseen-lot evaluation remain pending; see the [fixed protocol](docs/seed-confirmation-plan.md) and [TODO](TODO.md).
 
 **Historical test results (through checkpoint 200):**
 

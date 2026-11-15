@@ -69,8 +69,23 @@ def training_seed():
     return int(value)
 
 
+def evaluation():
+    phase = os.environ.get('WAFER_VLM_PHASE', 'training')
+    if phase not in {'training', 'repeat'}:
+        raise RuntimeError('Unsupported VLM phase')
+    return phase == 'repeat'
+
+
+def ledger_seed():
+    return 'repeat' if evaluation() else training_seed()
+
+
+def pod_label():
+    return 'vlmrepeats' if evaluation() else f'vlm{training_seed()}'
+
+
 def experiment():
-    return "vlm-seed" + str(training_seed())
+    return 'vlm-repeats' if evaluation() else "vlm-seed" + str(training_seed())
 
 
 def save(name, value):
@@ -81,7 +96,7 @@ def save(name, value):
 
 
 def identity():
-    training_seed()
+    ledger_seed()
     if os.environ.get("GITHUB_REPOSITORY") != REPOSITORY:
         raise RuntimeError("Unexpected repository")
     run = os.environ.get("GITHUB_RUN_ID", "")
@@ -99,8 +114,9 @@ def quote(rate, ledger=None):
             or prior_usd < PRIOR_SPEND_RESERVE or prior_seconds < PRIOR_RUNTIME_RESERVE_SECONDS):
         raise ValueError("Incomplete cumulative VLM ledger")
     hourly = rate + DISK_HOURLY
-    work = min(MAX_WORK_SECONDS, APPROVED_TOTAL_SECONDS - prior_seconds - CLEANUP_SECONDS, math.floor((APPROVED_USD - prior_usd - 2) / hourly * 3600) - CLEANUP_SECONDS)
-    if work < MAX_WORK_SECONDS:
+    maximum = 3600 if evaluation() else MAX_WORK_SECONDS
+    work = min(maximum, APPROVED_TOTAL_SECONDS - prior_seconds - CLEANUP_SECONDS, math.floor((APPROVED_USD - prior_usd - 2) / hourly * 3600) - CLEANUP_SECONDS)
+    if work < maximum:
         raise ValueError("Insufficient budget or aggregate runtime")
     estimate = prior_usd + hourly * (work + CLEANUP_SECONDS) / 3600
     return {"gpu_hourly_usd": rate, "disk_hourly_usd": DISK_HOURLY,
@@ -182,7 +198,7 @@ def provenance():
         "image_source_sha": SOURCE,
         "image": IMAGE,
         "anonymous_manifest_verified": verify_image_manifest(),
-        "suite": f"seed{training_seed()}-independent-confirmation",
+        "suite": 'validation-repeats' if evaluation() else f"seed{training_seed()}-independent-confirmation",
         "config_sha256": hashlib.sha256(
             (ROOT / "configs/seed-confirmation.json").read_bytes()
         ).hexdigest(),
@@ -194,9 +210,14 @@ def preflight(api):
     identity()
     evidence = provenance()
     from runpod.vlm_ledger import reconcile
-    evidence["ledger"] = reconcile(identity(), require_current=False, output=OUT, seed=training_seed())
+    evidence["ledger"] = reconcile(identity(), require_current=False, output=OUT, seed=ledger_seed())
     attempts = evidence["ledger"]["attempts"]
-    if training_seed() == 123 and not any(a.get("seed") == 42 and a.get("accepted") is True for a in attempts):
+    if evaluation():
+        if not all(any(a.get('seed') == s and a.get('accepted') is True for a in attempts) for s in (42, 123)):
+            raise RuntimeError('Both new seeds must be accepted before repeats')
+        from runpod.vlm_repeat_inputs import preflight_inputs
+        evidence['inputs'] = preflight_inputs(OUT)
+    elif training_seed() == 123 and not any(a.get("seed") == 42 and a.get("accepted") is True for a in attempts):
         raise RuntimeError("Seed 42 acceptance and cleanup must be pinned before seed 123")
     pods = api.listing("/pods", "pods")
     if any(p.get("env", {}).get(OWNER) == REPOSITORY for p in pods):
@@ -287,7 +308,7 @@ def authorization_guard():
     if remote.get("object", {}).get("sha") != os.environ["EXPECTED_SHA"]:
         raise RuntimeError("main moved; no paid launch")
     from runpod.vlm_ledger import reconcile
-    reconcile(run, require_current=True, output=OUT, seed=training_seed())
+    reconcile(run, require_current=True, output=OUT, seed=ledger_seed())
 
 
 def owned(pod, state):
@@ -308,7 +329,7 @@ def cleanup(api):
     state = (
         json.loads(path.read_text())
         if path.exists()
-        else {"name": AUTHORIZATION + f"-vlm{training_seed()}-" + run, "run_id": run, "pod_id": None}
+        else {"name": AUTHORIZATION + '-' + pod_label() + '-' + run, "run_id": run, "pod_id": None}
     )
     # Invalidate any earlier success before querying inventory again.
     save("cleanup.json", {"status": "unknown", "name": state["name"]})
@@ -372,8 +393,8 @@ def cleanup(api):
                     'usd': float(matches[0]['env'].get('WAFER_PRIOR_USD', PRIOR_SPEND_RESERVE)),
                     'seconds': float(matches[0]['env'].get('WAFER_PRIOR_SECONDS', PRIOR_RUNTIME_RESERVE_SECONDS)),
                 }
-                if training_seed() == 123 and not {'WAFER_PRIOR_USD', 'WAFER_PRIOR_SECONDS'} <= matches[0]['env'].keys():
-                    raise RuntimeError("Missing seed-123 cumulative cost recovery metadata")
+                if (evaluation() or training_seed() == 123) and not {'WAFER_PRIOR_USD', 'WAFER_PRIOR_SECONDS'} <= matches[0]['env'].keys():
+                    raise RuntimeError("Missing cumulative cost recovery metadata")
                 state.update(
                     started_epoch=started,
                     cost=quote(float(matches[0]["env"]["WAFER_RATE"]), prior),
@@ -434,14 +455,40 @@ def interrupt(signum, frame):
     raise Deadline("Work deadline or cancellation; begin cleanup")
 
 
+def worker_code():
+    if not evaluation():
+        worker = base64.b64encode((ROOT / 'runpod/vlm_worker.py').read_bytes()).decode()
+        return "import base64;exec(compile(base64.b64decode(" + repr(worker) + "),'paid_worker.py','exec'))"
+    # Inject reviewed orchestration only. src/scripts/configs and locked packages
+    # remain byte-identical to the existing image, checked by provenance().
+    names = ['runpod/vlm_worker.py', 'runpod/vlm_repeat_worker.py', 'runpod/vlm_repeat_inputs.py',
+             'runpod/confirmation_verify.py', 'runpod/confirmation_contract.py', 'runpod/provider.py',
+             'runpod/vlm-completed.json', 'docs/evidence/vlm-six-endpoints.json']
+    bundle = base64.b64encode(json.dumps({n: (ROOT / n).read_text() for n in names}).encode()).decode()
+    return ("import base64,json,pathlib,runpy,os;os.chdir('/app');"
+            "payload=json.loads(base64.b64decode(" + repr(bundle) + "));"
+            "[(pathlib.Path(n).parent.mkdir(parents=True,exist_ok=True),pathlib.Path(n).write_text(v)) for n,v in payload.items()];"
+            "runpy.run_module('runpod.vlm_repeat_worker',run_name='__main__')")
+
+
 def launch(api):
     authorization_guard()
     evidence = preflight(api)
     from runpod.confirmation_contract import launch_plan
-    spec = {"seed": training_seed(), "source_sha": SOURCE, "controller_sha": evidence["controller_sha"],
+    spec = {"source_sha": SOURCE, "controller_sha": evidence["controller_sha"],
             "image": IMAGE, "gpu": evidence["gpu"],
             "gpu_hourly_usd": evidence["cost"]["gpu_hourly_usd"], "ledger": evidence["ledger"]}
-    launch_plan(spec)
+    input_urls = None
+    if evaluation():
+        from runpod.vlm_repeat_inputs import signed_input_urls
+        spec.update(phase='validation-repeats', config_sha256=evidence['config_sha256'],
+                    input_manifest_sha256=evidence['inputs']['manifest_sha256'])
+        input_urls = signed_input_urls()
+        for value in input_urls.values():
+            print('::add-mask::' + value, flush=True)
+    else:
+        spec['seed'] = training_seed()
+        launch_plan(spec)
     save("launch-spec.json", spec)
     run = identity()
     token = secrets.token_urlsafe(32)
@@ -449,7 +496,7 @@ def launch(api):
     started = time.time()
     deadline = started + evidence["cost"]["work_seconds"]
     state = {
-        "name": AUTHORIZATION + f"-vlm{training_seed()}-" + run,
+        "name": AUTHORIZATION + '-' + pod_label() + '-' + run,
         "run_id": run,
         "started_epoch": started,
         "deadline_epoch": deadline,
@@ -457,12 +504,7 @@ def launch(api):
         "pod_id": None,
     }
     save("provision.json", state)  # durable intent BEFORE the only create request
-    worker = base64.b64encode((ROOT / "runpod/vlm_worker.py").read_bytes()).decode()
-    code = (
-        "import base64;exec(compile(base64.b64decode("
-        + repr(worker)
-        + "),'paid_worker.py','exec'))"
-    )
+    code = worker_code()
     payload = {
         "name": state["name"],
         "image": IMAGE,
@@ -499,6 +541,10 @@ def launch(api):
             "WAFER_DATASET_SHA": json.loads((ROOT / "docs/evidence/wm811k-lot17.json").read_text())["dataset_sha256"],
         },
     }
+    if evaluation():
+        payload['env'].pop('WAFER_SEED')
+        payload['env'].update(WAFER_INPUT_URLS=json.dumps(input_urls),
+                              WAFER_INPUT_MANIFEST_SHA=spec['input_manifest_sha256'])
     handlers = {
         s: signal.signal(s, interrupt) for s in (signal.SIGALRM, signal.SIGTERM, signal.SIGINT)
     }
@@ -559,10 +605,15 @@ def launch(api):
                 continue
             worker_seen = True
             phase = result.get("phase")
-            if phase != last_phase and phase in {"starting", "data", "training"}:
+            if phase != last_phase and phase in {"starting", "data", "training", "inputs", "validation"}:
                 print("Worker phase: " + phase, flush=True)
                 last_phase = phase
             progress = result.get("progress", {})
+            completed = progress.get('completed_passes')
+            if (evaluation() and type(completed) is int and 0 <= completed <= 18
+                    and progress.get('total_passes') == 18 and completed != last_progress):
+                print(f'Validation passes {completed}/18', flush=True)
+                last_progress = completed
             step, total = progress.get("optimizer_step"), progress.get("optimizer_steps")
             if (type(step) is int and type(total) is int and total in {100, 150, 200, 250}
                     and 0 <= step <= total and (step, total) != last_progress):
@@ -584,14 +635,18 @@ def launch(api):
                     result.get("source_sha") != SOURCE
                     or result.get("config_sha256") != evidence["config_sha256"]
                     or result.get("controller_sha") != evidence["controller_sha"]
-                    or result.get("profiles") != ["seed-confirmation"]
-                    or result.get("seed") != training_seed()
+                    or result.get("profiles") != (["validation-repeats"] if evaluation() else ["seed-confirmation"])
+                    or (not evaluation() and result.get("seed") != training_seed())
                     or not (OUT / "experiment.tar.gz").is_file()
                 ):
                     raise RuntimeError("Result provenance/completeness mismatch")
-                from runpod.confirmation_verify import verify_training_archive
-                from runpod.vlm_ledger import dataset_metadata
-                accepted = verify_training_archive(OUT / "experiment.tar.gz", dataset_metadata(OUT), spec)
+                if evaluation():
+                    from runpod.vlm_repeat_verify import verify_repeat_archive
+                    accepted = verify_repeat_archive(OUT / 'experiment.tar.gz', spec)
+                else:
+                    from runpod.confirmation_verify import verify_training_archive
+                    from runpod.vlm_ledger import dataset_metadata
+                    accepted = verify_training_archive(OUT / "experiment.tar.gz", dataset_metadata(OUT), spec)
                 save("acceptance.json", accepted)
                 return
             time.sleep(10)

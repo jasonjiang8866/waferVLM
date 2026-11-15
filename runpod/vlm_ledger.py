@@ -70,8 +70,11 @@ def verify_marker(data, run, current=False, controller_sha=None, seed=42):
             raise RuntimeError('Authorization marker run mismatch')
     if current:
         intent = zip_json(data, 'intent.json')
-        if intent != {'seed': seed, 'controller_sha': controller_sha or os.environ.get('GITHUB_SHA'),
-                      'run_id': str(run), 'workload': f'vlm-seed{seed}'}:
+        expected = {'controller_sha': controller_sha or os.environ.get('GITHUB_SHA'),
+                    'run_id': str(run)}
+        expected.update({'phase': 'validation-repeats', 'workload': 'vlm-repeats'} if seed == 'repeat'
+                        else {'seed': seed, 'workload': f'vlm-seed{seed}'})
+        if intent != expected:
             raise RuntimeError('Current launch intent mismatch')
 
 
@@ -249,7 +252,7 @@ def reconcile(run, require_current, output, seed=42):
     """Unknown/missing/expired attempts block launch, including another agent's attempt."""
     output = Path(output)
     output.mkdir(parents=True, exist_ok=True)
-    if seed not in {42, 123}:
+    if seed not in {42, 123, 'repeat'}:
         raise RuntimeError('Unsupported ledger seed')
     precreate = reconciled_precreate()
     completed, total_usd, total_seconds = completed_receipts(output)
@@ -304,6 +307,31 @@ def reconcile(run, require_current, output, seed=42):
             break
     else:
         raise RuntimeError('Incomplete seed-123 dispatch history')
+    for page in range(1, 101):
+        try:
+            data = request(f'{BASE}/actions/workflows/vlm-repeats.yml/runs?event=workflow_dispatch&per_page=100&page={page}',
+                           token=os.environ['GH_TOKEN'])
+        except RemoteHTTPError as exc:
+            if exc.status == 404 and seed != 'repeat' and page == 1:
+                break  # Legacy training may predate this workflow.
+            raise
+        runs = data.get('workflow_runs')
+        if not isinstance(runs, list):
+            raise RuntimeError('Cannot verify repeat dispatch history')
+        for previous in runs:
+            if str(previous.get('id')) == str(run):
+                continue
+            if previous.get('status') != 'completed' or previous.get('run_attempt') != 1:
+                raise RuntimeError('Unreconciled repeat dispatch')
+            jobs = request(f"{BASE}/actions/runs/{previous['id']}/jobs?per_page=100", token=os.environ['GH_TOKEN'])
+            paid = [s for j in jobs.get('jobs', []) for s in j.get('steps', [])
+                    if s.get('name') == 'Validate 18 passes, retrieve evidence, delete Pod']
+            if len(paid) != 1 or paid[0].get('conclusion') != 'skipped':
+                raise RuntimeError('A prior paid repeat attempt requires reconciliation')
+        if len(runs) < 100:
+            break
+    else:
+        raise RuntimeError('Incomplete repeat dispatch history')
     expected = {str(x['run_id']): x for x in HISTORY + ([precreate] if precreate else []) + completed}
     observed, current, attempts = set(), False, []
     for page in range(1, 101):
