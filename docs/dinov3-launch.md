@@ -1,5 +1,29 @@
 # Bounded DINOv3 RunPod experiment
 
+## Resume with embedded weights (2026-11-15)
+
+The user authorized starting fine-tuning after the embedded-weight fix in
+[PR #37](https://github.com/jasonjiang8866/waferVLM/pull/37). The three prior paid
+attempts are reconciled at **US$0.23 / 690 seconds** using exact result and
+independent cleanup receipts, including `runpod/dinov3-paid-5090.json`. The
+launch gate admits those six known historical dispatches plus exactly one new
+dispatch; any extra or changed execution still blocks allocation.
+
+Continue the explicitly requested **RTX 5090** attempt (4090 remains the default
+for unqualified runs), with the same six seed-17 linear/LoRA trials, pinned
+790-train/160-validation split and untouched holdout. Maximum work is 85 minutes
+plus 10 minutes cleanup, GPU-only rate at most US$1.39/hour, and cumulative
+attempt ceiling US$3.50 within the original **US$10 / 500-minute** authorization.
+Prior US$0.23 + maximum new compute/disk US$2.21497 leaves over US$1.05 before
+the US$3.50 ceiling. Shortening the previous 90-minute work window by five
+minutes preserves the controller's full US$1 uncertainty reserve without
+increasing any spending ceiling or changing the declared training trials.
+
+Publish the weighted image for the exact resulting main SHA, then run fresh
+read-only price/inventory/image/history checks and the paid workflow with
+`gpu=NVIDIA GeForce RTX 5090`, `replace_queued_run_id=43563592797`, and an empty
+`parallel_vlm_run_id`. This preparation itself does not establish a GPU launch.
+
 ## Weight delivery: embed the fixed backbone in the image
 
 The current worker requires a **weighted DINO image**. The old route was
@@ -74,9 +98,8 @@ Verified receipts:
 | Failed run, transfer/allocation/cost/cleanup | [14146537615](https://github.com/jasonjiang8866/waferVLM/actions/runs/43676359795/artifacts/14146537615) | `73a212183032ef2d5c4e16e949b87cb10035bfc3b82d9ace54341a109f22394f` |
 | Independent absence | [14146364868](https://github.com/jasonjiang8866/waferVLM/actions/runs/43676869427/artifacts/14146364868) | `dde1f33dee3b90c2f0d3b8b7858238c037391f8e1e1bf19a01c5fb278f93a3b1` |
 
-The executable history guard still intentionally rejects any new dispatch until
-this newly completed paid attempt and both receipts are reconciled. This report
-does not enable or launch another paid attempt.
+Both receipts are now pinned in `runpod/dinov3-paid-5090.json` and reverified by
+the executable history guard before the authorized embedded-weight retry.
 
 ## 5090 launch preparation (before run 43676359795)
 

@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       confirm_paid:
-        description: 'One seed-17 sweep: cumulative <= US$3 (4090) or US$3.50 (5090); 90m work + 10m cleanup'
+        description: 'One seed-17 sweep: cumulative <= US$3 (4090) or US$3.50 (5090); 85m work + 10m cleanup'
         type: boolean
         required: true
         default: false

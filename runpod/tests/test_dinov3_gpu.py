@@ -16,10 +16,13 @@ class GPUSelectionTests(unittest.TestCase):
             q = c.cost(1.39)
             self.assertEqual(c.selected_gpu(), GPU5090)
             self.assertEqual(q['total_cap_usd'], 3.5)
-            self.assertEqual(q['prior_spend_usd'], .1)
-            self.assertEqual(q['prior_runtime_seconds'], 360)
-            self.assertLess(q['estimated_max_usd'], 2.332)
+            self.assertEqual(q['prior_spend_usd'], .23)
+            self.assertEqual(q['prior_runtime_seconds'], 690)
+            self.assertEqual(q['work_seconds'], 85*60)
+            self.assertLess(q['estimated_max_usd'], 2.215)
             self.assertGreater(q['reserve_usd'], 1)
+            with patch.object(c, 'WORK_SECONDS', 90*60), self.assertRaisesRegex(ValueError, 'reserve'):
+                c.cost(1.39)
             with self.assertRaises(ValueError): c.cost(1.40)
         with patch.dict(os.environ, DINO_GPU=''):
             self.assertEqual(c.selected_gpu(), c.GPU)

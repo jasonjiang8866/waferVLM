@@ -25,7 +25,8 @@ VLM_ACCOUNT_RESERVE_USD = 30.0
 CPU_FAILED_RUN = '43566277450'
 PAID = json.loads(Path(__file__).with_name('dinov3-paid-history.json').read_text())
 SECOND_PAID = json.loads(Path(__file__).with_name('dinov3-paid-recovery.json').read_text())
-PAID_HISTORY = (PAID, SECOND_PAID)
+THIRD_PAID = json.loads(Path(__file__).with_name('dinov3-paid-5090.json').read_text())
+PAID_HISTORY = (PAID, SECOND_PAID, THIRD_PAID)
 PREFLIGHT_FAILED = json.loads(Path(__file__).with_name('dinov3-preflight-failure.json').read_text())
 KNOWN_PRIOR_RUNS = {QUEUED_DINO_RUN, CPU_FAILED_RUN, PREFLIGHT_FAILED['run_id'],
                     *(p['run_id'] for p in PAID_HISTORY)}
@@ -126,7 +127,7 @@ def cancelled_before_jobs(run, token):
 
 
 def dispatch_history(data, current, token):
-    """Allow the explicitly authorized third paid attempt; a fourth stays blocked."""
+    """Allow one new attempt after every pinned prior run has been reconciled."""
     rows = data.get('workflow_runs', [])
     replaced = os.environ.get('REPLACE_QUEUED_RUN_ID', '')
     if not replaced:
@@ -134,9 +135,9 @@ def dispatch_history(data, current, token):
             return
         raise ValueError('Prior DINO dispatch requires ledger/spend/cleanup reconciliation')
     prior = KNOWN_PRIOR_RUNS
-    if (replaced != QUEUED_DINO_RUN or current in prior or data.get('total_count') != 6
-            or len(rows) != 6 or {str(r['id']) for r in rows} != {current, *prior}):
-        raise ValueError('Third paid attempt requires exact reconciled six-run history')
+    if (replaced != QUEUED_DINO_RUN or current in prior or data.get('total_count') != len(prior) + 1
+            or len(rows) != len(prior) + 1 or {str(r['id']) for r in rows} != {current, *prior}):
+        raise ValueError('New paid attempt requires exact reconciled run history')
     reconcile_prior_records(token)
 
 

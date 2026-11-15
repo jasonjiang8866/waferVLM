@@ -1,6 +1,6 @@
 # Bounded RunPod GPU experiment
 
-DINOv3 uses a separate [seed-17 sweep workflow and launch specification](../docs/dinov3-launch.md). The user approved US$10 / 500 minutes cumulatively for DINOv3 and explicitly requested RTX 5090 on 2026-11-15. RTX 4090 remains the default (US$3 ceiling); the explicit 5090 choice has a US$3.50 ceiling, both with 90 minutes work + 10 minutes cleanup and prior spend included. Official-weight access and fresh live checks precede allocation; the Qwen workflow below does not launch DINOv3.
+DINOv3 uses a separate [seed-17 sweep workflow and launch specification](../docs/dinov3-launch.md). The user approved US$10 / 500 minutes cumulatively for DINOv3 and explicitly requested RTX 5090 on 2026-11-15. RTX 4090 remains the default (US$3 ceiling); the explicit 5090 choice has a US$3.50 ceiling, both with 85 minutes work + 10 minutes cleanup and prior spend included. Official-weight access and fresh live checks precede allocation; the Qwen workflow below does not launch DINOv3.
 
 The DINO image now embeds the pinned 86 MB backbone and its original license.
 BuildKit uses `HF_TOKEN` only as a build secret, then loads the real model with

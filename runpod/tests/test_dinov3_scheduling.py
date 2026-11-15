@@ -103,20 +103,20 @@ class SchedulingTests(unittest.TestCase):
 
     def test_exact_cancelled_zero_job_run_can_be_replaced(self):
         os.environ['REPLACE_QUEUED_RUN_ID'] = s.QUEUED_DINO_RUN
-        history = dict(total_count=6,workflow_runs=[{'id':999},self.previous,{'id':int(s.CPU_FAILED_RUN)},{'id':int(s.PREFLIGHT_FAILED['run_id'])},
+        history = dict(total_count=7,workflow_runs=[{'id':999},self.previous,{'id':int(s.CPU_FAILED_RUN)},{'id':int(s.PREFLIGHT_FAILED['run_id'])},
                                                   *[{'id':int(p['run_id'])} for p in s.PAID_HISTORY]])
         with patch.object(s,'request',side_effect=[self.previous,{'total_count':0,'jobs':[]},
                                                   {'total_count':0,'artifacts':[]}]) as read, \
                 patch.object(s,'reconciled_cpu_failure') as cpu, patch.object(s,'reconciled_paid_failure') as paid:
             s.dispatch_history(history,'999','fake')
         self.assertEqual([call.args for call in cpu.call_args_list], [('fake',), ('fake',s.PREFLIGHT_FAILED)])
-        self.assertEqual(paid.call_count,2)
+        self.assertEqual(paid.call_count,3)
         self.assertEqual([call.args for call in paid.call_args_list], [('fake',p) for p in s.PAID_HISTORY])
         self.assertEqual(read.call_count,3)
         self.assertIn('filter=all',read.call_args_list[1].args[0])
         self.assertTrue(all('method' not in x.kwargs for x in read.call_args_list))
 
-    def test_fourth_paid_attempt_or_missing_receipt_still_blocks(self):
+    def test_unreviewed_fifth_paid_attempt_or_missing_receipt_still_blocks(self):
         os.environ['REPLACE_QUEUED_RUN_ID'] = s.QUEUED_DINO_RUN
         prior=[self.previous,{'id':int(s.CPU_FAILED_RUN)},{'id':int(s.PREFLIGHT_FAILED['run_id'])},*[{'id':int(p['run_id'])} for p in s.PAID_HISTORY]]
         for rows in [[{'id':999},*prior,{'id':888}],[{'id':999},*prior[:-1]]]:
@@ -124,14 +124,15 @@ class SchedulingTests(unittest.TestCase):
                 s.dispatch_history(dict(total_count=len(rows),workflow_runs=rows),'999','fake')
             read.assert_not_called()
 
-    def test_read_only_history_requires_all_five_records_and_no_extra_dispatch(self):
+    def test_read_only_history_requires_all_six_records_and_no_extra_dispatch(self):
         rows = [{'id':int(n)} for n in s.KNOWN_PRIOR_RUNS]
-        with patch.object(s,'request',return_value=dict(total_count=5,workflow_runs=rows)), \
+        with patch.object(s,'request',return_value=dict(total_count=6,workflow_runs=rows)), \
                 patch.object(s,'reconcile_prior_records') as reconcile:
             result = s.observe_history('fake')
             reconcile.assert_called_once_with('fake')
-            self.assertEqual(result['paid_attempts'],2)
-            self.assertEqual(result['accounted_usd'],.1)
+            self.assertEqual(result['paid_attempts'],3)
+            self.assertEqual(result['accounted_usd'],.23)
+            self.assertEqual(result['accounted_seconds'],690)
         for wrong in [rows[:-1], [*rows, {'id':999}]]:
             with patch.object(s,'request',return_value=dict(total_count=len(wrong),workflow_runs=wrong)), \
                     patch.object(s,'reconcile_prior_records') as reconcile, self.assertRaises(ValueError):
@@ -253,8 +254,8 @@ class PaidFailureReceiptTests(unittest.TestCase):
 
     def test_paid_attempt_cost_and_two_receipts_are_required(self):
         self.check()
-        self.assertEqual(c.PRIOR_SPEND_USD, .10)
-        self.assertEqual(c.PRIOR_RUNTIME_SECONDS, 360)
+        self.assertEqual(c.PRIOR_SPEND_USD, .23)
+        self.assertEqual(c.PRIOR_RUNTIME_SECONDS, 690)
         self.receipt['accounted_usd']=0
         with self.assertRaises(ValueError): self.check()
 
@@ -272,6 +273,10 @@ class PaidFailureReceiptTests(unittest.TestCase):
 
 class SecondPaidFailureReceiptTests(PaidFailureReceiptTests):
     pinned = s.SECOND_PAID
+
+
+class ThirdPaidFailureReceiptTests(PaidFailureReceiptTests):
+    pinned = s.THIRD_PAID
 
 
 if __name__ == '__main__':
