@@ -175,13 +175,14 @@ class RepeatArchive(unittest.TestCase):
         for r in self.records[14:16]:
             folder=self.repeats/r['output'];run=json.loads((folder/'run.json').read_text())
             run['gpu']=MIG;run['host']='mig-host';write_json(folder/'run.json',run);seal_output(folder)
-        source=resume.finish_pin()
+        source=dict(run_id=999,gpu=MIG)
         finish=self.fixture.root/'finish.json';record=receipt(16,source['run_id']);write_json(finish,record)
         write_json(self.repeats/'resume.json',record)
         reference=[json.loads(x) for x in (self.repeats/'validation-reference.jsonl').read_text().splitlines()]
         write_json(self.repeats/'summary.json',c.summarize_repeats(self.records,reference,base=self.repeats))
         spec=dict(self.spec,resume_source_run_id=source['run_id'])
-        with patch.object(resume,'RECEIPT',original),patch.object(resume,'FINISH_RECEIPT',finish):
+        with patch.object(resume,'RECEIPT',original),patch.object(resume,'FINISH_RECEIPT',finish), \
+                patch.object(resume,'finish_pin',return_value=source):
             accepted=verifier.verify_repeat_archive(self.pack(),spec)
             self.assertFalse(accepted['summary']['same_environment'])
             self.assertEqual([e['gpu'] for e in accepted['summary']['environments']],
