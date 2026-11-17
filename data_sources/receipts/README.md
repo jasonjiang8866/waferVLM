@@ -31,9 +31,8 @@ normalizing the source annotations.
 ## Cloud status
 
 **Not imported.** There is no Global Volume ID, cloud receipt or fresh-mount
-readback evidence in this change. No billable resources were created. The RunPod
-storage browser session requires sign-in; actual inventory and storage/compute
-quotes remain unverified. The local source cache is reproducible staging, not
+readback evidence in this change. No billable resources were created. The repository Secret will be used by the manual GET-only storage preflight;
+actual inventory and storage/compute quotes remain unverified until that run. The local source cache is reproducible staging, not
 durable cloud storage. See [import runbook](../RUNPOD.md).
 
 The offline tests mock a mount to test the copy/receipt protocol. That is **not**

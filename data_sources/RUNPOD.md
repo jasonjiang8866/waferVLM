@@ -18,8 +18,11 @@ Global Volume requests cost $0.005/1,000 Class A operations and
 $0.0005/1,000 Class B operations, **plus storage**. These are published request
 rates, not a total import quote. Stored-GB pricing, account inventory and an
 actual CPU/GPU quote were not verified in this session. No Pod or volume was
-created. The browser reached a sign-in page, and no RunPod connector or
-authenticated shell route was available.
+created. The authorized API route is the repository `RUNPOD_API_KEY` Secret
+through GitHub Actions; browser sign-in is unnecessary. The existing
+`preflight.yml` workflow now has a manual, GET-only `storage-observe` job.
+It records sanitized volume/Pod inventory and 2-vCPU prices/availability, without
+provisioning or exposing Pod environments. Dispatch on the reviewed branch.
 
 ## Initial import plan
 

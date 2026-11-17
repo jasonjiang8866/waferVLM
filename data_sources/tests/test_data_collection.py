@@ -10,7 +10,7 @@ import unittest
 from unittest.mock import patch
 import zipfile
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 spec = importlib.util.spec_from_file_location("collector", ROOT / "scripts/collect_wafer_data.py")
 collector = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(collector)

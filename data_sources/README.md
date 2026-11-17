@@ -48,7 +48,7 @@ python scripts/collect_wafer_data.py plan \
 python scripts/collect_wafer_data.py fetch \
   --datasets carinthia-s silicon-wafer-pl silicon-wafer-ebsd \
   --receipt data/collection/download.json
-python -m unittest discover -s tests -p test_data_collection.py -v
+python -m unittest discover -s data_sources/tests -p 'test_*.py' -v
 ```
 
 The downloader pins provider byte sizes and MD5 checksums, adds SHA256 receipts,

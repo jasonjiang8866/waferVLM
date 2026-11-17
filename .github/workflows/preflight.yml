@@ -76,3 +76,30 @@ jobs:
           path: out/
           retention-days: 30
           if-no-files-found: error
+  storage-observe:
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      github.repository == 'jasonjiang8866/waferVLM' &&
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feat/wafer-dataset-collection')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: GET-only Global Volume and CPU inventory
+        env:
+          RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY }}
+        run: python -m runpod.storage_preflight --output storage-observation
+      - name: Publish sanitized storage observation
+        if: always()
+        run: |
+          if [ -f storage-observation/summary.md ]; then cat storage-observation/summary.md >> "$GITHUB_STEP_SUMMARY"; fi
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: wafervlm-storage-preflight-${{ github.run_id }}-${{ github.run_attempt }}
+          path: storage-observation/
+          retention-days: 30
+          if-no-files-found: error
