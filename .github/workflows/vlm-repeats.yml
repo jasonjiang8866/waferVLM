@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       confirm_paid:
-        description: 'Use the extended US$30 / 1100-minute total authorization to resume 14/18 verified passes (45 shared work + 10 cleanup minutes; includes rejected attempt)'
+        description: 'Complete the final two passes from the verified 16/18 archive; one allocation, 40 work + 10 cleanup minutes within US$30 / 1100 minutes'
         type: boolean
         required: true
         default: false
@@ -39,6 +39,7 @@ jobs:
           WAFER_VLM_PHASE: 'repeat'
           WAFER_VLM_RESUME: '1'
           WAFER_VLM_RESUME_RETRY: '1'
+          WAFER_VLM_FINISH: '1'
           RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY }}
           GH_TOKEN: ${{ github.token }}
         run: python -m runpod.vlm_controller preflight
@@ -68,6 +69,7 @@ jobs:
           WAFER_VLM_PHASE: 'repeat'
           WAFER_VLM_RESUME: '1'
           WAFER_VLM_RESUME_RETRY: '1'
+          WAFER_VLM_FINISH: '1'
           RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY }}
           GH_TOKEN: ${{ github.token }}
           CONFIRM_PAID: ${{ inputs.confirm_paid }}
@@ -80,6 +82,7 @@ jobs:
           WAFER_VLM_PHASE: 'repeat'
           WAFER_VLM_RESUME: '1'
           WAFER_VLM_RESUME_RETRY: '1'
+          WAFER_VLM_FINISH: '1'
           RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY }}
         run: python -m runpod.vlm_controller cleanup
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -89,6 +92,7 @@ jobs:
           path: |
             runpod-results/
             !runpod-results/repeat-partial.zip
+            !runpod-results/repeat-finish-partial.zip
             !runpod-results/historical-result.zip
             !runpod-results/completed-*.zip
             !runpod-results/repeat-input-cache/

@@ -1,0 +1,15 @@
+{
+  "run_id": 44047184828,
+  "seed": "repeat",
+  "controller_sha": "b2e79a21ef863aae5aad05679b99ab2425a394ab",
+  "result_artifact_id": 14314821702,
+  "result_sha256": "c426d7e33a61b366b3400aa55cfc36129953c35721006b2259cd227f970c3f2b",
+  "archive_sha256": "071fe4bb7daae6a80b698a033a8d35b62aa70f75625bea8b64cd25df02df937a",
+  "marker_artifact_id": 14312795594,
+  "marker_sha256": "304dafc843752bc1bd982045634bf190ac37ca6de028192fa1c4d4764b3763ac",
+  "independent_cleanup_run_id": 44053623260,
+  "independent_cleanup_artifact_id": 14314019423,
+  "independent_cleanup_sha256": "5ecb2dc3b58638f1b9dca89b4faf9cf8da2d4ecd3d8ea04bae083887b6344437",
+  "completed_passes": 16,
+  "gpu": "NVIDIA RTX PRO 6000 Blackwell Server Edition MIG 1g.24gb"
+}

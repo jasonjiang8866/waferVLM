@@ -319,7 +319,7 @@ def reconcile(run, require_current, output, seed=42):
     completed, total_usd, total_seconds = completed_receipts(output)
     training_seconds = total_seconds
     failed_repeats, total_usd, total_seconds = repeat_failures(output, total_usd, total_seconds)
-    from runpod.vlm_repeat_resume import enabled, reconcile_partial
+    from runpod.vlm_repeat_resume import enabled, reconcile_partial, finishing, finish_pin, FINISH_RECEIPT
     if seed == 'repeat' and enabled():
         partial, total_usd, total_seconds = reconcile_partial(output, total_usd, total_seconds)
         failed_repeats.append(partial)
@@ -327,6 +327,12 @@ def reconcile(run, require_current, output, seed=42):
         if retrying():
             capacity, total_usd, total_seconds, retry_seconds = capacity_reconcile(output, total_usd, total_seconds)
             failed_repeats.append(capacity)
+        if finishing():
+            if not retrying():
+                raise RuntimeError('Finish requires the complete capacity-recovery chain')
+            partial, total_usd, total_seconds = reconcile_partial(
+                output, total_usd, total_seconds, pin=finish_pin(), receipt_path=FINISH_RECEIPT)
+            failed_repeats.append(partial)
     # Run history survives deleted/expired artifacts. A previous paid step must
     # be reconciled explicitly; only visibly skipped paid steps are read-only.
     for page in range(1, 101):

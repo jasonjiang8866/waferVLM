@@ -82,6 +82,34 @@ class RepeatContinuation(unittest.TestCase):
         self.assertFalse((self.out / 'summary.json').exists())
         c.verify_tree(self.out)
 
+    def test_sixteen_verified_passes_execute_only_the_final_two_processes(self):
+        for name in self.receipt['new_outputs'][:2]:
+            shutil.copytree(self.outputs[name], self.previous / name)
+            self.receipt['reused'].append(dict(output=name))
+        self.receipt['new_outputs'] = self.receipt['new_outputs'][2:]
+        report, executed = self.run_resume()
+        self.assertEqual(executed, ['seed123-step250-repeat2', 'seed123-step250-repeat3'])
+        self.assertEqual(len(report['environments']), 18)
+        self.assertEqual(len(json.loads((self.out/'passes.json').read_text())), 18)
+
+    def test_finish_requires_reconciled_16_pass_receipt_and_preserves_aggregate_caps(self):
+        from runpod.vlm_repeat_capacity import PIN
+        pin = dict(run_id=999, result_artifact_id=1000, result_sha256='e'*64)
+        ledger = dict(usd=9.472521519981784, seconds=44333.58444801331,
+                      resume_source_run_id=pin['run_id'], resume_capacity_run_id=PIN['run_id'])
+        with patch.object(resume,'finish_pin',return_value=pin), \
+                patch.dict(os.environ, WAFER_VLM_PHASE='repeat', WAFER_VLM_RESUME='1',
+                        WAFER_VLM_RESUME_RETRY='1', WAFER_VLM_FINISH='1'):
+            q = controller.quote(1.19, ledger)
+            self.assertEqual(q['work_seconds'],2400)
+            self.assertEqual(q['cleanup_seconds'],600)
+            self.assertLess(q['planned_total_usd'],10.48)
+            self.assertLess(q['planned_total_seconds'],790*60)
+            self.assertEqual(resume.transfer_pin()['artifact_id'],pin['result_artifact_id'])
+            for change in (dict(ledger,resume_source_run_id=resume.PIN['run_id']),
+                           dict(ledger,resume_capacity_run_id=0),dict(ledger,seconds=64000)):
+                with self.assertRaises(ValueError):controller.quote(1.19,change)
+
     def test_untrusted_partial_rejected_before_any_inference(self):
         bad = self.fixture.root / 'bad.zip'; bad.write_bytes(b'not the reviewed artifact')
         with patch.object(c, 'run_process') as process, self.assertRaisesRegex(ValueError, 'checksum'):
