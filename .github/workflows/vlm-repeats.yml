@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       confirm_paid:
-        description: 'Complete the final two passes from the verified 16/18 archive; global approved GPU selection; one create, 37m35s work + 10m cleanup; within US$30 / 1100 minutes'
+        description: 'Complete the final two passes from the verified 16/18 archive; global approved GPU selection; one create, 60m work + 10m cleanup; within US$30 / 1100 minutes'
         type: boolean
         required: true
         default: false
@@ -40,6 +40,7 @@ jobs:
           WAFER_VLM_RESUME: '1'
           WAFER_VLM_RESUME_RETRY: '1'
           WAFER_VLM_FINISH: '1'
+          WAFER_VLM_STARTUP_RETRY: '1'
           RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY }}
           GH_TOKEN: ${{ github.token }}
         run: python -m runpod.vlm_controller preflight
@@ -70,6 +71,7 @@ jobs:
           WAFER_VLM_RESUME: '1'
           WAFER_VLM_RESUME_RETRY: '1'
           WAFER_VLM_FINISH: '1'
+          WAFER_VLM_STARTUP_RETRY: '1'
           RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY }}
           GH_TOKEN: ${{ github.token }}
           CONFIRM_PAID: ${{ inputs.confirm_paid }}
@@ -83,6 +85,7 @@ jobs:
           WAFER_VLM_RESUME: '1'
           WAFER_VLM_RESUME_RETRY: '1'
           WAFER_VLM_FINISH: '1'
+          WAFER_VLM_STARTUP_RETRY: '1'
           RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY }}
         run: python -m runpod.vlm_controller cleanup
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02

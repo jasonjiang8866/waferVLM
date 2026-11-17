@@ -26,6 +26,7 @@ from runpod.vlm_repeat_resume import enabled as resuming, PIN as RESUME_PIN, GPU
 from runpod.vlm_repeat_resume import finishing, active_pin, FINISH_RECEIPT, FINISH_PIN_FILE
 from runpod.vlm_repeat_capacity import enabled as resume_retry, PIN as CAPACITY_PIN
 from runpod.vlm_repeat_finish_capacity import PIN as FINISH_CAPACITY_PIN
+from runpod.vlm_repeat_startup_recovery import enabled as startup_retry, PIN as STARTUP_PIN, WORK_SECONDS as STARTUP_RETRY_WORK_SECONDS
 
 from runpod.provider import (
     MIG,
@@ -145,6 +146,8 @@ def gpu_price_caps():
 
 
 def quote(rate, ledger=None):
+    if startup_retry() and not (evaluation() and resuming() and resume_retry() and finishing()):
+        raise ValueError('Startup recovery is only valid for the final-two continuation')
     if not finite(rate, 0.001) or rate > max(gpu_price_caps().values()):
         raise ValueError("GPU quote exceeds authorized maximum")
     prior_usd = PRIOR_SPEND_RESERVE if ledger is None else ledger['usd']
@@ -166,6 +169,11 @@ def quote(rate, ledger=None):
                     or not finite(finish_elapsed, .001)):
                 raise ValueError('Final capacity rejection must be reconciled before retry')
             maximum = 40 * 60 - math.ceil(finish_elapsed)
+            if startup_retry():
+                if (ledger.get('startup_failure_run_id') != STARTUP_PIN['run_id']
+                        or not finite(ledger.get('startup_failure_seconds'), .001)):
+                    raise ValueError('Allocated startup failure must be reconciled before retry')
+                maximum = STARTUP_RETRY_WORK_SECONDS
             if maximum < 1200:
                 raise ValueError('Insufficient final continuation time')
         elif resume_retry():
@@ -249,6 +257,11 @@ def provenance():
         # This independent DINO proxy diagnostic is never imported/executed by
         # the VLM worker; merging it does not change the pinned VLM workload.
         ":(exclude)scripts/check_dinov3_proxy.py",
+        # Separate data-collection entrypoints are not imported by the frozen
+        # WM-811K evaluator. Keep all existing evaluation scripts checked.
+        ":(exclude)scripts/collect_wafer_data.py",
+        ":(exclude)scripts/audit_collection_images.py",
+        ":(exclude)scripts/prepare_collection_samples.py",
     )
     if changed:
         raise RuntimeError("Current workload differs from pinned image; review image/source pin")
@@ -715,6 +728,9 @@ def launch(api):
         last_cpu_report = 0
         next_inventory = time.time() + 60
         worker_seen = False
+        current = detail
+        startup_snapshot_taken = False
+        last_proxy_error = None
         deliveries = {}
         while time.time() < deadline - 35:
             if time.time() >= next_inventory:
@@ -722,12 +738,23 @@ def launch(api):
                 if not owned(current, state) or current.get("status") in {"ERROR", "EXITED", "TERMINATED"}:
                     raise RuntimeError("Pod stopped or identity changed before result retrieval")
                 print("Pod status: " + str(current.get("status")), flush=True)
+                if not worker_seen and not startup_snapshot_taken and time.time() - started >= 300:
+                    from runpod.startup_diagnostics import capture
+                    save("startup-diagnostics.json", capture(pod_id, current, last_proxy_error))
+                    print('Startup diagnostics: ' + (OUT/'startup-diagnostics.json').read_text(), flush=True)
+                    startup_snapshot_taken = True
                 next_inventory = time.time() + 60
             if not worker_seen and time.time() - started > 1200:
+                from runpod.startup_diagnostics import capture
+                save("startup-timeout-diagnostics.json", capture(pod_id, current, last_proxy_error))
+                print('Startup timeout diagnostics: ' + (OUT/'startup-timeout-diagnostics.json').read_text(), flush=True)
                 raise RuntimeError("Worker startup exceeded 20 minutes")
             try:
                 result = request(url + "/result", token=token)
-            except RuntimeError:
+            except RuntimeError as exc:
+                last_proxy_error = ({"kind": "http", "status": exc.status}
+                                    if isinstance(exc, RemoteHTTPError)
+                                    else {"kind": "transport_or_response"})
                 time.sleep(10)
                 continue
             worker_seen = True
