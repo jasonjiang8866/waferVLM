@@ -127,27 +127,37 @@ def validate_result(result, selected, mode, volume_id):
                 raise ValueError('Publisher checksum receipt mismatch')
 
 
-def stage(api, mode, prefix, source, volume_id, cpu, selected, deadline):
-    if time.monotonic() + 60 >= deadline:
-        raise TimeoutError('Insufficient time remaining for next Pod')
-    pod = api.call('/pods', method='POST', body=payload(prefix, source, mode, volume_id, cpu))
-    pod_id = pod['id']
-    # No automatic create retry: on ambiguous create, outer cleanup reconciles inventory.
-    while time.monotonic() < deadline:
+def wait_ready(api, pod_id, mode, prefix, source, volume_id, deadline, diagnostics):
+    # A newly returned Pod was visible to GET but exec returned 404 in run 44118683682.
+    # Probe only the harmless ready command; never retry a worker launch on 404.
+    ready_deadline = min(deadline, time.monotonic() + 120)
+    while time.monotonic() < ready_deadline:
         pod = api.call('/pods/' + pod_id)
         verify_pod(pod, prefix, source, mode, volume_id)
+        diagnostics.update(pod_id=pod_id, status=pod.get('status'),
+                           data_center_id=pod.get('dataCenterId'), compute_usd_per_hour=pod['cost'])
         if pod.get('status') == 'RUNNING':
             try:
                 exec_python(api, pod_id, "print('ready')")
-                break
+                return pod
             except RemoteHTTPError as exc:
-                if exc.status not in (409, 503):
+                diagnostics.setdefault('readiness_http_statuses', []).append(exc.status)
+                if exc.status not in (404, 409, 503):
                     raise
         elif pod.get('status') in ('EXITED', 'TERMINATED'):
             raise RuntimeError('CPU Pod exited before readiness')
         time.sleep(5)
-    else:
-        raise TimeoutError('CPU Pod readiness deadline')
+    raise TimeoutError('CPU Pod exec readiness exceeded 120 seconds')
+
+
+def stage(api, mode, prefix, source, volume_id, cpu, selected, deadline, diagnostics):
+    if time.monotonic() + 60 >= deadline:
+        raise TimeoutError('Insufficient time remaining for next Pod')
+    pod = api.call('/pods', method='POST', body=payload(prefix, source, mode, volume_id, cpu))
+    pod_id = pod['id']
+    diagnostics.update(mode=mode, pod_id=pod_id)
+    # No automatic create retry: on ambiguous create, outer cleanup reconciles inventory.
+    pod = wait_ready(api, pod_id, mode, prefix, source, volume_id, deadline, diagnostics)
     bootstrap = """import base64,io,json,os,pathlib,subprocess,sys,zipfile
 root=pathlib.Path('/tmp/wafer-storage');root.mkdir(exist_ok=True)
 marker=root/'started'
@@ -192,7 +202,7 @@ def execute(api, args):
     report = {'status': 'started', 'run_id': args.run_id, 'attempt': args.attempt,
               'source_sha': source, 'image': IMAGE, 'volume_id': volume_id,
               'approved_budget_usd': args.approved_budget_usd, 'sizes': sizes,
-              'aggregate_work_seconds_cap': RUNTIME_SECONDS, 'stages': []}
+              'aggregate_work_seconds_cap': RUNTIME_SECONDS, 'stages': [], 'attempted_stages': []}
     args.output.mkdir(parents=True, exist_ok=True)
     def save():
         (args.output / 'import.json').write_text(json.dumps(report, indent=2) + '\n')
@@ -201,7 +211,9 @@ def execute(api, args):
     deadline = started + RUNTIME_SECONDS
     try:
         for mode in ['import', 'verify']:
-            report['stages'].append(stage(api, mode, prefix, source, volume_id, cpus[0], selected, deadline))
+            diagnostics = {'mode': mode}
+            report['attempted_stages'].append(diagnostics)
+            report['stages'].append(stage(api, mode, prefix, source, volume_id, cpus[0], selected, deadline, diagnostics))
             report['cleanup'] = cleanup(api, prefix, source)
             save()
         report['status'] = 'accepted'

@@ -26,7 +26,7 @@ named for waferVLM. No resources were changed. Six 2-vCPU flavors were listed;
 This is catalog evidence, not a capacity reservation. See the
 [sanitized receipt](receipts/runpod-storage-preflight-44113725134.json).
 
-## Prepared Actions import (not yet executed)
+## Actions import and authorized budget
 
 Use the existing **RunPod observation and offline contract** workflow
 (`.github/workflows/preflight.yml`) on `feat/wafer-dataset-collection` at its
@@ -35,19 +35,22 @@ reviewed commit. No merge is necessary to dispatch this reviewed branch.
 | Input | Value for the initial batch |
 |---|---|
 | `storage_action` | `import` |
-| `confirm_paid_storage_import` | `true`, only after CPU import budget approval |
-| `approved_storage_budget_usd` | Proposed **0.50**, including temporary compute/disk/request/cleanup reserve |
+| `confirm_paid_storage_import` | `true` (approved for this task) |
+| `approved_storage_budget_usd` | **0.50** per attempt, including temporary compute/disk/request/cleanup reserve |
 | `global_volume_id` | Empty selects the unique existing Global Volume; an explicit owned ID is also accepted |
 
 The controller rechecks inventory and quotes, then runs **two sequential CPU
 Pods**: one importer and one fresh-mount verifier. Current compute estimate is
 $0.06 × 25/60 = **$0.025** for the full 25-minute aggregate work window.
 The controller refuses actual compute rates above $0.10/hour; cleanup has a
-separate 5-minute Actions job. The $0.50 proposal includes headroom for temporary
+separate 5-minute Actions job. The $0.50 per-attempt allocation includes headroom for temporary
 disk/request/cleanup costs; it is not a provider-enforced billing hard cap.
 Long-term storage for ~491 MB is covered by the user's data-collection scope,
 but its stored-GB rate remains unverified and is not included in this one-off
-compute estimate. No prior model-training budget is reused.
+compute estimate. The user authorized a total **US$10 / 500 minutes** for this collection task on
+2026-11-17; this is the aggregate ceiling, not a spending target. Each attempt
+remains limited to US$0.50 and 25 minutes plus independent cleanup. Stop before
+exceeding the total authorization. Data above 10 GB still requires separate approval.
 
 Implementation: `runpod/storage_import.py` + `runpod/storage_worker.py`.
 The image is official Docker Hub Python 3.12 slim, pinned to the Linux amd64
@@ -134,3 +137,17 @@ uploader Pod ownership/run ID, measured or estimated costs, first readback,
 independent fresh-mount readback, and independent removal of the owned temporary
 Pod. Retain the Global Volume. Store sanitized receipts here after execution;
 do not claim persistence based only on a local copy or an exit code.
+
+### Attempt 1: exec readiness failure, cleaned up
+
+[Run 44118683682](https://github.com/jasonjiang8866/waferVLM/actions/runs/44118683682)
+used source `40b50e340d03bd0bcc2569e305abf96cd09250c1`. A CPU Pod was created
+and its ownership, mount and price passed validation, but its first harmless
+REST exec readiness probe returned HTTP 404. No data worker was launched.
+The controller deleted Pod `92rbh6cu5uw4tg`; independent cleanup job
+`134164041251` confirmed no owned Pods remained. The
+[receipt](receipts/runpod-import-44118683682.json) records 3.939 seconds of
+controller work and a conservative compute estimate of US$0.000109 (not a bill).
+The next revision allows up to 120 seconds for harmless readiness probes on
+404/409/503, records their status codes, and still never retries create or worker
+launch blindly. Whether this 404 was startup lag remains unproven.

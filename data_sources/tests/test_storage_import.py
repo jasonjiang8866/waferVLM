@@ -88,6 +88,32 @@ class StorageImportTests(unittest.TestCase):
         self.assertFalse(pod()['ports'])
         self.assertNotIn('gpu', pod())
 
+    def test_new_pod_exec_404_can_recover_without_recreating_or_writing(self):
+        class API:
+            def call(self, path):
+                self.last_path = path
+                return pod()
+        api, diagnostics = API(), {}
+        with patch.object(m, 'exec_python', side_effect=[m.RemoteHTTPError(404, []), 'ready']) as probe, patch.object(m.time, 'sleep'):
+            result = m.wait_ready(api, 'owned', 'import', PREFIX, SOURCE, 'gsb_one', float('inf'), diagnostics)
+        self.assertEqual(result['id'], 'owned')
+        self.assertEqual(diagnostics['readiness_http_statuses'], [404])
+        self.assertEqual([c.args[2] for c in probe.call_args_list], ["print('ready')"] * 2)
+        self.assertEqual(api.last_path, '/pods/owned')
+
+    def test_exec_readiness_is_bounded_and_never_retries_auth_errors(self):
+        class API:
+            def call(self, path): return pod()
+        for code in (401, 403):
+            with patch.object(m, 'exec_python', side_effect=m.RemoteHTTPError(code, [])) as probe:
+                with self.assertRaises(m.RemoteHTTPError):
+                    m.wait_ready(API(), 'owned', 'import', PREFIX, SOURCE, 'gsb_one', float('inf'), {})
+                self.assertEqual(probe.call_count, 1)
+        with patch.object(m.time, 'monotonic', side_effect=[0, 0, 121]), patch.object(m.time, 'sleep'), patch.object(m, 'exec_python', side_effect=m.RemoteHTTPError(404, [])) as probe:
+            with self.assertRaises(TimeoutError):
+                m.wait_ready(API(), 'owned', 'import', PREFIX, SOURCE, 'gsb_one', float('inf'), {})
+            self.assertEqual(probe.call_count, 1)
+
     def test_two_sequential_stages_and_cleanup_failure_cannot_be_accepted(self):
         class API:
             def listing(self, path, key):
