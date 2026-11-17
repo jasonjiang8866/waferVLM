@@ -1,0 +1,50 @@
+{
+  "dataset": "carinthia-s",
+  "verified_utc": "2026-11-17T14:58:10.884701+00:00",
+  "image_mask_pairs_decoded": 4591,
+  "image_mask_dimensions_equal": true,
+  "image_dimensions_counts": {
+    "(480, 480)": 4591
+  },
+  "mask_modes": {
+    "L": 4587,
+    "RGBA": 2,
+    "RGB": 2
+  },
+  "grayscale_mask_value_range": [
+    0,
+    255
+  ],
+  "grayscale_mask_distinct_values": 256,
+  "grayscale_masks_with_intermediate_values": 395,
+  "color_mask_ids": [
+    {
+      "source_id": "c3e76bd3c56347c7a9123e506fffc2d5",
+      "mode": "RGBA"
+    },
+    {
+      "source_id": "8040e35e1e3b4207bd9ec827e13295ff",
+      "mode": "RGBA"
+    },
+    {
+      "source_id": "fcfa9ba42433420b9f21e88b59cee0db",
+      "mode": "RGB"
+    },
+    {
+      "source_id": "b67ba0002de44870992e49a4b6f1ea03",
+      "mode": "RGB"
+    }
+  ],
+  "class_counts": {
+    "1": 55,
+    "2": 8,
+    "3": 4008,
+    "4": 289,
+    "5": 4,
+    "6": 227
+  },
+  "archive_bytes": 139225942,
+  "expanded_bytes": 153064018,
+  "archive_sha256": "e7cc8507657611f89db33345d50fc7951e8784045684888dc997ac5298b7a3a2",
+  "global_volume_status": "not_imported"
+}

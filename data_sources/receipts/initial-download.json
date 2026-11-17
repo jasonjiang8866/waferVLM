@@ -1,0 +1,204 @@
+{
+  "status": "download_verified",
+  "datasets": [
+    {
+      "id": "carinthia-s",
+      "version": "zenodo-16895427",
+      "source": "https://zenodo.org/records/16895427",
+      "license": "CC-BY-4.0",
+      "files": [
+        {
+          "name": "carinthia-s_dataset.html",
+          "bytes": 2104107,
+          "sha256": "848ae9d300b97a26cab6bbdaad93802499982ec8768557e915490f8acd1b9ba7",
+          "publisher_md5": "4d9ca3ed51dfc97444939f742496d2d9",
+          "expanded_bytes": 2104107
+        },
+        {
+          "name": "data.zip",
+          "bytes": 139225942,
+          "sha256": "e7cc8507657611f89db33345d50fc7951e8784045684888dc997ac5298b7a3a2",
+          "publisher_md5": "3a41242574635cf1302fab15accb7730",
+          "expanded_bytes": 153064018
+        }
+      ]
+    },
+    {
+      "id": "silicon-wafer-pl",
+      "version": "zenodo-19603335",
+      "source": "https://zenodo.org/records/19603335",
+      "license": "CC-BY-4.0",
+      "files": [
+        {
+          "name": "Figure_1c_raw_image.png",
+          "bytes": 516254,
+          "sha256": "87a901ee6862b8bbcc04fb7a36184b77bf35f455a58092d3726716d1c0c9a126",
+          "publisher_md5": "4fb680491c678b0603567b07e82ea655",
+          "expanded_bytes": 516254
+        },
+        {
+          "name": "Figure_2a_data.csv",
+          "bytes": 1623,
+          "sha256": "a59249c0c3cf5df4b26c3b0fc1d6c23e9a8b6f1f89cf08310d32dc8a4a24b47f",
+          "publisher_md5": "120b7ffa387ddfdda676f65a8855427b",
+          "expanded_bytes": 1623
+        },
+        {
+          "name": "Figure_2b_data.csv",
+          "bytes": 47987,
+          "sha256": "c49f1533fef3a08ad9793ee7a05870302d11894c5d0e0b0da94de098e6160411",
+          "publisher_md5": "fae47f0b7b6e55c53831115477acb868",
+          "expanded_bytes": 47987
+        },
+        {
+          "name": "Figure_3a_data.csv",
+          "bytes": 704,
+          "sha256": "f61bd011fa20074b443d264dd85ac8ea37aadd886b0144f2cd7dc33cc057afd4",
+          "publisher_md5": "446b78018e4733ae601c85796dafb372",
+          "expanded_bytes": 704
+        },
+        {
+          "name": "Figure_3b_data.csv",
+          "bytes": 142959,
+          "sha256": "386bf196425f76efa0fc3536cbe63e6c99baf09934d0f4404afccfcffe536b83",
+          "publisher_md5": "ac15c5099fd2d5c3b6cbcf1f0081a8c2",
+          "expanded_bytes": 142959
+        },
+        {
+          "name": "Figure_4a_PLI_raw_image.raw",
+          "bytes": 4194304,
+          "sha256": "e0324c7a5389e2485578f81c6de8e806f4037cd25d1718b7b306fd0daa772be0",
+          "publisher_md5": "83dac75856676fcb76cd6d9fb373af51",
+          "expanded_bytes": 4194304
+        },
+        {
+          "name": "Figure_4a_inset_data.csv",
+          "bytes": 3835,
+          "sha256": "bea712172a811864551e2fdff74c1d274257a97827b69fea6f26b3be147676e4",
+          "publisher_md5": "dfcde39a5a2f471dd716c35b97930f4b",
+          "expanded_bytes": 3835
+        },
+        {
+          "name": "Figure_4b_data.csv",
+          "bytes": 51242,
+          "sha256": "bdd4b8deadd26f4b4c8a4043268f6b21c0034cb26e5ef5b0813d4c989fb8cf61",
+          "publisher_md5": "0b37879e47d8867a59c8538d58860c84",
+          "expanded_bytes": 51242
+        },
+        {
+          "name": "Figure_5_data.csv",
+          "bytes": 215,
+          "sha256": "1d96a28d8277fe8e3887c872a498897769e0151c4e87af87a2a13513b096a544",
+          "publisher_md5": "47c83b639634e380f8cf47b98c44d0bd",
+          "expanded_bytes": 215
+        },
+        {
+          "name": "Figure_6a_0min_raw_image.raw",
+          "bytes": 4194304,
+          "sha256": "e70459af237ff6eecd7691e7887c2508cd1e9c834aee8121287c8ede1f80763f",
+          "publisher_md5": "1ef8c72e8ac09a72ef09698c731ed179",
+          "expanded_bytes": 4194304
+        },
+        {
+          "name": "Figure_6a_1week_raw_image.raw",
+          "bytes": 4194304,
+          "sha256": "d57a140ddb6b25f9d9bdcdb399d25f72adfc442d868833159a1fdd9c42d68560",
+          "publisher_md5": "7a78d31cb953be2d1e5e33649fe7f078",
+          "expanded_bytes": 4194304
+        },
+        {
+          "name": "Figure_6a_data.csv",
+          "bytes": 11042,
+          "sha256": "7099d0be15f1b9045c4d219f58167eeec5e168ab1a3d539ca88b7ec3c8e09977",
+          "publisher_md5": "2d49c512fbf5c147d45009028c001446",
+          "expanded_bytes": 11042
+        },
+        {
+          "name": "Figure_6b_1week_raw_image.raw",
+          "bytes": 4194304,
+          "sha256": "35a1d863399e5e8b3834e805ba1e074a50b27bbf93a1e6eb0bd7778f30f9c088",
+          "publisher_md5": "d4e290e313cab9b980e79497d2692859",
+          "expanded_bytes": 4194304
+        },
+        {
+          "name": "Figure_6b_90min_raw_image.raw",
+          "bytes": 4194304,
+          "sha256": "0a340aa1f0f08f824e7f049baad037828cc960d0f6591f27b66771bdd9f44c14",
+          "publisher_md5": "b615583000dc8343f66194ae2142de3e",
+          "expanded_bytes": 4194304
+        },
+        {
+          "name": "Figure_6b_data.csv",
+          "bytes": 11201,
+          "sha256": "e17d1f53f45d3338d9560cd231908d176f0824174f325d907214f79bee81b198",
+          "publisher_md5": "d222cdd697f8dbf07b99326df00b333a",
+          "expanded_bytes": 11201
+        },
+        {
+          "name": "Figure_7a_raw_image.raw",
+          "bytes": 4194304,
+          "sha256": "80ef20d3cb05ffc4d055ad212246adc34152797b6ec0601ff7a2d45187b32a7b",
+          "publisher_md5": "2f5532d030f9d4c797180dfa674f7b4c",
+          "expanded_bytes": 4194304
+        },
+        {
+          "name": "Figure_7b_raw_image.raw",
+          "bytes": 4194304,
+          "sha256": "17d3e7edab0c93849cec3ee9fb47f87d4622c4337f782c4cb90dd7e61ca98e93",
+          "publisher_md5": "33011b874953a2a3e4cafd8579dd65ca",
+          "expanded_bytes": 4194304
+        },
+        {
+          "name": "Figure_S1a_data.csv",
+          "bytes": 47644,
+          "sha256": "c339324552da209d5ebcbcd23004cce3a341a2e90c209ef9da55a6ebdb34c9f9",
+          "publisher_md5": "1aff89cb2d5d4f0ee92a0aea192bdc90",
+          "expanded_bytes": 47644
+        },
+        {
+          "name": "Figure_S1b_data.csv",
+          "bytes": 141,
+          "sha256": "ad3b681aa381a8584110d4e246985c5abb91bd8147e36ea3db78d1b8405e190f",
+          "publisher_md5": "fffab8b873e3bfaaa880f7230714b205",
+          "expanded_bytes": 141
+        },
+        {
+          "name": "Figure_S1c_1.5min_without_dumping_raw_image.raw",
+          "bytes": 4194304,
+          "sha256": "05b3eb4305f7f461aed9c3661291812b0270cad7cdba7d1891597e67d8a01f8d",
+          "publisher_md5": "04e1de4ed2b2395e6b4ee13f95e93f88",
+          "expanded_bytes": 4194304
+        },
+        {
+          "name": "Figure_S1c_3_dumping_cycles_raw_image.raw",
+          "bytes": 4194304,
+          "sha256": "9beaa73c4d90ddd6e119633bc3ec70c6568d30af85ddefec9b95a684a95a0b51",
+          "publisher_md5": "71ff95c73f3826b2b683f278737b0c74",
+          "expanded_bytes": 4194304
+        }
+      ]
+    },
+    {
+      "id": "silicon-wafer-ebsd",
+      "version": "zenodo-7491388",
+      "source": "https://zenodo.org/records/7491388",
+      "license": "CC-BY-4.0",
+      "files": [
+        {
+          "name": "ebsd_si_wafer.zip",
+          "bytes": 311310347,
+          "sha256": "f75c959889e5998840be7993891005272aaaa5f4a4484441f16b2684612f4c29",
+          "publisher_md5": "444ec4188ba8c8bda5948c2bf4f9a672",
+          "expanded_bytes": 581340387
+        }
+      ]
+    }
+  ],
+  "download_bytes": 491223979,
+  "expanded_bytes_ceiling": 843751708,
+  "peak_bytes_ceiling": 1334975687,
+  "limit_bytes": 10000000000,
+  "schema_version": 1,
+  "verified_utc": "2026-11-17T14:56:40.453280+00:00",
+  "catalog_sha256": "2fe2669ad0ef3f61739e8273bb7a26da29f9fb0db3013db236abf7bda1d745fe"
+}

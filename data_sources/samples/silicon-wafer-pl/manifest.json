@@ -1,0 +1,9 @@
+{
+  "source": "https://zenodo.org/records/19603335",
+  "license": "CC-BY-4.0",
+  "source_filename": "Figure_1c_raw_image.png",
+  "bytes": 516254,
+  "sha256": "87a901ee6862b8bbcc04fb7a36184b77bf35f455a58092d3726716d1c0c9a126",
+  "changes": "none",
+  "purpose": "published SEM illustration; not an independent training dataset"
+}

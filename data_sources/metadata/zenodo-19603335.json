@@ -1,0 +1,228 @@
+{
+  "id": 19603335,
+  "doi": "10.5281/zenodo.19603335",
+  "created": "2026-04-17T12:59:51.346767+00:00",
+  "modified": "2026-09-17T13:05:15.075985+00:00",
+  "retrieved_date": "2026-11-17",
+  "source": "https://zenodo.org/api/records/19603335",
+  "metadata": {
+    "title": "Dataset for \"Non-disruptive HF pretreatment to enhance defect visibility in silicon wafer manufacturing via photoluminescence imaging\"",
+    "doi": "10.5281/zenodo.19603335",
+    "publication_date": "2026-04-17",
+    "license": {
+      "id": "cc-by-4.0"
+    },
+    "creators": [
+      {
+        "name": "Sutinen, Kaisla",
+        "affiliation": "Aalto University",
+        "orcid": "0009-0002-5555-9912"
+      },
+      {
+        "name": "Golovleva, Maria",
+        "affiliation": "Okmetic (Finland)",
+        "orcid": "0009-0000-5693-2892"
+      },
+      {
+        "name": "Liu, Xiaolong",
+        "affiliation": "Aalto University",
+        "orcid": "0000-0002-1976-492X"
+      },
+      {
+        "name": "Patana, Mikko",
+        "affiliation": "Okmetic (Finland)"
+      },
+      {
+        "name": "Timperi, Iida",
+        "affiliation": "Aalto University"
+      },
+      {
+        "name": "Mustonen, Katja",
+        "affiliation": "Tampere University",
+        "orcid": "0009-0001-8050-975X"
+      },
+      {
+        "name": "Vähänissi, Ville",
+        "affiliation": "Aalto University",
+        "orcid": "0000-0002-2681-5609"
+      },
+      {
+        "name": "Savin, Hele",
+        "affiliation": "Aalto University",
+        "orcid": "0000-0003-3946-7727"
+      }
+    ],
+    "description": "<h3>Summary</h3>\n<p>This is a collection of datasets and raw images for an article manuscript titled &ldquo;Non-disruptive HF pretreatment to enhance defect visibility in silicon wafer manufacturing via photoluminescence imaging&rdquo; and the corresponding supplementary material. The publication is open access and can be found from https://doi.org/10.1088/1361-6641/aea702.</p>\n<h3>Methods</h3>\n<p>The experimental and computational methods used to generate the datasets and raw images are described in detail in the original manuscript.</p>\n<p>In this collection, &ldquo;HF treatment&rdquo; denotes the full workflow described in the manuscript: HF immersion, DIW rinse, drying, and storage under N2 until photoluminescence imaging (PLI). Unless noted otherwise, all laser‑induced grooves were fabricated on the rear side of the wafer; measurements may be acquired from either the rear or front side as specified in each file description.</p>\n<h3>File Description</h3>\n<p>Each file is named to correspond to a figure or part of a figure (e.g., an inset) in the original manuscript or supplementary material. The datasets used to generate the manuscript plots are provided in CSV format. Both unnormalized and normalized data are provided in the datasets that correspond to figures presenting normalized data. Normalization factors can be found in the descriptions below. Photoluminescence (PL) images are provided in RAW format (1024 &times; 1024 pixels, 32-bit, 4 MB). The scanning electron microscopy (SEM) image is provided in PNG format.&nbsp;</p>\n<p>&nbsp;A short description for each file is given below.</p>\n<p><strong>Figure_1c_raw_image.png</strong></p>\n<p>This file contains a cross-sectional SEM image of the deepest laser-induced grooves.&nbsp;</p>\n<p><strong>Figure_2a_data.csv</strong></p>\n<p>This file contains lower and upper modal quartiles and the mode of the PL counts corresponding to PL images of wafers from different process steps (A&ndash;V). Both unnormalized and normalized data are provided. The normalization factor corresponds to the mode of process step A (14137.459).</p>\n<p><strong>Figure_2b_data.csv</strong></p>\n<p>This file contains line scan data (representing PL counts) across PL images taken after process steps C and J. Both unnormalized and normalized data are provided. The normalization factor corresponds to the first measured pixel of the wafer from process step C (11239).</p>\n<p><strong>Figure_3a_data.csv</strong></p>\n<p>This file contains lower and upper modal quartiles and the mode of the PL counts corresponding to PL images of wafers treated with varying hydrofluoric acid (HF) concentrations for different immersion times. Both unnormalized and normalized data are provided. The normalization factor corresponds to the mode of the wafer treated with 1% HF for 2.5 min (28467.55).</p>\n<p><strong>Figure_3b_data.csv</strong></p>\n<p>This file contains line scan data (representing PL counts) across PL images of wafers treated with varying HF concentrations for different immersion times. Both unnormalized and normalized data are provided. The normalization factor corresponds to the first measured pixel of the wafer treated with 1% HF for 2.5 min (4409.8).</p>\n<p><strong>Figure_4a_PLI_raw_image.raw</strong></p>\n<p>This file contains a PL image taken from the rear side of a wafer with laser-induced grooves before HF treatment.</p>\n<p><strong>Figure_4a_inset_data.csv</strong></p>\n<p>This file contains data for the inset of Figure 4a. The data provides occurrences (pixel counts) for the PL count range 30000&ndash;39960.938 from the PL image provided in &ldquo;Figure_4a_PLI_raw_image.raw.&rdquo; The PL count range is divided into 256 bins, which corresponds to a step size of 39.062.</p>\n<p><strong>Figure_4b_data.csv</strong></p>\n<p>This file contains line scan data (representing PL counts) across rows (A&ndash;D) of laser-induced grooves. Line scans are provided before HF treatment (as-received) from both the rear and front sides of the wafer, as well as after HF treatment from the front side of the wafer. Gaps in the data indicate transitions between scans (e.g. from A to B). Both unnormalized and normalized data are provided. All scans are normalized to their first measured pixel: 23052.7 (After HF treatment, front), 37286 (As-received, rear) and 39309 (As-received, front). In the manuscript figure (with arbitrary PL counts), the line scans were vertically offset (y-axis) to avoid overlap.</p>\n<p><strong>Figure_5_data.csv</strong></p>\n<p>This file contains the PL count differences between laser-induced grooves of different depths (5 to 220 &micro;m) and the background signal, expressed as percentages. The values are provided before HF treatment (as-received) from both the rear and front sides of the wafer, as well as after HF treatment from the front side of the wafer.&nbsp;</p>\n<p><strong>Figure_6a_data.csv</strong></p>\n<p>This file contains line scan data (PL counts) over a selected 220 &micro;m deep and 10 mm wide laser-induced groove from the rear side of the wafer, measured at different air exposure times after HF treatment. Both unnormalized and normalized data are provided. All scans are normalized to their first measured pixel: 25133.652 (t = 0 min), 3100.167 (t = 55 min) and 9109.906 (t = 1 week).</p>\n<p><strong>Figure_6a_0min_raw_image.raw</strong></p>\n<p>This file contains a PL image of laser-induced grooves from the rear side of the wafer, acquired with a high‑magnification lens immediately upon air exposure (t = 0 min) after HF treatment. The groove shown in the inset of Figure 6a corresponds to the middle groove.</p>\n<p><strong>Figure_6a_1week_raw_image.raw</strong></p>\n<p>This file contains a PL image of laser-induced grooves from the rear side of the wafer, acquired with a high‑magnification lens after 1 week of air exposure following HF treatment. The groove shown in the inset of Figure 6a corresponds to the middle groove.</p>\n<p><strong>Figure_6b_data.csv</strong></p>\n<p>This file contains line scan data (PL counts) over a selected ~10 &micro;m deep and 10 mm wide laser-induced groove from the front side of the wafer, measured at different air exposure times after HF treatment. Both unnormalized and normalized data are provided. All scans are normalized to their first measured pixel: 1102.558 (t = 90 min), 16798.551 (t = 23 h) and 7235.617 (t = 1 week).</p>\n<p><strong>Figure_6b_90min_raw_image.raw</strong></p>\n<p>This file contains a PL image of laser-induced grooves from the front side of the wafer, acquired with a high‑magnification lens after 90 min of air exposure following HF treatment. The groove shown in the inset of Figure 6b corresponds to the groove on the left.</p>\n<p><strong>Figure_6b_1week_raw_image.raw</strong></p>\n<p>This file contains a PL image of laser-induced grooves from the front side of the wafer, acquired with a high‑magnification lens after 1 week of air exposure following HF treatment. The groove shown in the inset of Figure 6b corresponds to the bottom groove.</p>\n<p><strong>Figure_7a_raw_image.raw</strong></p>\n<p>This file contains a PL image of a wafer known to have stacking faults, acquired after HF treatment.</p>\n<p><strong>Figure_7b_raw_image.raw</strong></p>\n<p>This file contains a PL image of a wafer known to have stacking faults, acquired after HF treatment.</p>\n<p><strong>Figure_S1a_data.csv</strong></p>\n<p>This file contains line scan data (representing PL counts) across PL images of wafers stored in different ambient conditions after HF treatment. Both unnormalized and normalized data are provided. The normalization factor corresponds to the first measured pixel of the wafer stored in vacuum (10066.2).</p>\n<p><strong>Figure_S1b_data.csv</strong></p>\n<p>This file contains average PL count modes from PL images of wafers dried by different methods as a part of HF treatment. Both unnormalized and normalized data are provided. The normalization factor corresponds to the average PL count mode of the wafers dried with N2 flow (9502.171).</p>\n<p><strong>Figure_S1c_1.5min_without_dumping_raw_image.raw</strong></p>\n<p>This file contains a PL image of a wafer rinsed in DIW for 1.5 min without dumping as a part of HF treatment.</p>\n<p><strong>Figure_S1c_3_dumping_cycles_raw_image.raw</strong></p>\n<p>This file contains a PL image of a wafer rinsed in DIW with 3 dumping cycles as a part of HF treatment.</p>\n<h3>Credit</h3>\n<p>When using the datasets or raw images, please cite the original paper.</p>\n<h3>Acknowledgements</h3>\n<p>This work was supported by The Finnish Research Impact Foundation, grant number 389. The authors acknowledge the provision of facilities and technical support by Micronova Nanofabrication Centre in Espoo, Finland within the OtaNano research infrastructure at Aalto University.</p>",
+    "related_identifiers": null
+  },
+  "files": [
+    {
+      "key": "Figure_4a_PLI_raw_image.raw",
+      "size": 4194304,
+      "checksum": "md5:83dac75856676fcb76cd6d9fb373af51",
+      "links": {
+        "self": "https://zenodo.org/api/records/19603335/files/Figure_4a_PLI_raw_image.raw/content"
+      }
+    },
+    {
+      "key": "Figure_2a_data.csv",
+      "size": 1623,
+      "checksum": "md5:120b7ffa387ddfdda676f65a8855427b",
+      "links": {
+        "self": "https://zenodo.org/api/records/19603335/files/Figure_2a_data.csv/content"
+      }
+    },
+    {
+      "key": "Figure_1c_raw_image.png",
+      "size": 516254,
+      "checksum": "md5:4fb680491c678b0603567b07e82ea655",
+      "links": {
+        "self": "https://zenodo.org/api/records/19603335/files/Figure_1c_raw_image.png/content"
+      }
+    },
+    {
+      "key": "Figure_6a_0min_raw_image.raw",
+      "size": 4194304,
+      "checksum": "md5:1ef8c72e8ac09a72ef09698c731ed179",
+      "links": {
+        "self": "https://zenodo.org/api/records/19603335/files/Figure_6a_0min_raw_image.raw/content"
+      }
+    },
+    {
+      "key": "Figure_4a_inset_data.csv",
+      "size": 3835,
+      "checksum": "md5:dfcde39a5a2f471dd716c35b97930f4b",
+      "links": {
+        "self": "https://zenodo.org/api/records/19603335/files/Figure_4a_inset_data.csv/content"
+      }
+    },
+    {
+      "key": "Figure_2b_data.csv",
+      "size": 47987,
+      "checksum": "md5:fae47f0b7b6e55c53831115477acb868",
+      "links": {
+        "self": "https://zenodo.org/api/records/19603335/files/Figure_2b_data.csv/content"
+      }
+    },
+    {
+      "key": "Figure_3b_data.csv",
+      "size": 142959,
+      "checksum": "md5:ac15c5099fd2d5c3b6cbcf1f0081a8c2",
+      "links": {
+        "self": "https://zenodo.org/api/records/19603335/files/Figure_3b_data.csv/content"
+      }
+    },
+    {
+      "key": "Figure_3a_data.csv",
+      "size": 704,
+      "checksum": "md5:446b78018e4733ae601c85796dafb372",
+      "links": {
+        "self": "https://zenodo.org/api/records/19603335/files/Figure_3a_data.csv/content"
+      }
+    },
+    {
+      "key": "Figure_5_data.csv",
+      "size": 215,
+      "checksum": "md5:47c83b639634e380f8cf47b98c44d0bd",
+      "links": {
+        "self": "https://zenodo.org/api/records/19603335/files/Figure_5_data.csv/content"
+      }
+    },
+    {
+      "key": "Figure_6a_data.csv",
+      "size": 11042,
+      "checksum": "md5:2d49c512fbf5c147d45009028c001446",
+      "links": {
+        "self": "https://zenodo.org/api/records/19603335/files/Figure_6a_data.csv/content"
+      }
+    },
+    {
+      "key": "Figure_4b_data.csv",
+      "size": 51242,
+      "checksum": "md5:0b37879e47d8867a59c8538d58860c84",
+      "links": {
+        "self": "https://zenodo.org/api/records/19603335/files/Figure_4b_data.csv/content"
+      }
+    },
+    {
+      "key": "Figure_6b_data.csv",
+      "size": 11201,
+      "checksum": "md5:d222cdd697f8dbf07b99326df00b333a",
+      "links": {
+        "self": "https://zenodo.org/api/records/19603335/files/Figure_6b_data.csv/content"
+      }
+    },
+    {
+      "key": "Figure_6a_1week_raw_image.raw",
+      "size": 4194304,
+      "checksum": "md5:7a78d31cb953be2d1e5e33649fe7f078",
+      "links": {
+        "self": "https://zenodo.org/api/records/19603335/files/Figure_6a_1week_raw_image.raw/content"
+      }
+    },
+    {
+      "key": "Figure_6b_1week_raw_image.raw",
+      "size": 4194304,
+      "checksum": "md5:d4e290e313cab9b980e79497d2692859",
+      "links": {
+        "self": "https://zenodo.org/api/records/19603335/files/Figure_6b_1week_raw_image.raw/content"
+      }
+    },
+    {
+      "key": "Figure_7b_raw_image.raw",
+      "size": 4194304,
+      "checksum": "md5:33011b874953a2a3e4cafd8579dd65ca",
+      "links": {
+        "self": "https://zenodo.org/api/records/19603335/files/Figure_7b_raw_image.raw/content"
+      }
+    },
+    {
+      "key": "Figure_7a_raw_image.raw",
+      "size": 4194304,
+      "checksum": "md5:2f5532d030f9d4c797180dfa674f7b4c",
+      "links": {
+        "self": "https://zenodo.org/api/records/19603335/files/Figure_7a_raw_image.raw/content"
+      }
+    },
+    {
+      "key": "Figure_6b_90min_raw_image.raw",
+      "size": 4194304,
+      "checksum": "md5:b615583000dc8343f66194ae2142de3e",
+      "links": {
+        "self": "https://zenodo.org/api/records/19603335/files/Figure_6b_90min_raw_image.raw/content"
+      }
+    },
+    {
+      "key": "Figure_S1c_3_dumping_cycles_raw_image.raw",
+      "size": 4194304,
+      "checksum": "md5:71ff95c73f3826b2b683f278737b0c74",
+      "links": {
+        "self": "https://zenodo.org/api/records/19603335/files/Figure_S1c_3_dumping_cycles_raw_image.raw/content"
+      }
+    },
+    {
+      "key": "Figure_S1b_data.csv",
+      "size": 141,
+      "checksum": "md5:fffab8b873e3bfaaa880f7230714b205",
+      "links": {
+        "self": "https://zenodo.org/api/records/19603335/files/Figure_S1b_data.csv/content"
+      }
+    },
+    {
+      "key": "Figure_S1a_data.csv",
+      "size": 47644,
+      "checksum": "md5:1aff89cb2d5d4f0ee92a0aea192bdc90",
+      "links": {
+        "self": "https://zenodo.org/api/records/19603335/files/Figure_S1a_data.csv/content"
+      }
+    },
+    {
+      "key": "Figure_S1c_1.5min_without_dumping_raw_image.raw",
+      "size": 4194304,
+      "checksum": "md5:04e1de4ed2b2395e6b4ee13f95e93f88",
+      "links": {
+        "self": "https://zenodo.org/api/records/19603335/files/Figure_S1c_1.5min_without_dumping_raw_image.raw/content"
+      }
+    }
+  ]
+}
