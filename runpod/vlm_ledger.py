@@ -28,6 +28,22 @@ DINO_MARKER = 'runpod-authorization-wafervlm-dinov3-seed17-v1'
 
 
 def artifact_bytes(artifact_id, expected_sha, limit):
+    """Retry transient GET failures only; corrupt or unauthorized data fails closed."""
+    for attempt in range(3):
+        try:
+            return _artifact_bytes_once(artifact_id, expected_sha, limit)
+        except urllib.error.HTTPError as exc:
+            exc.close()
+            if exc.code not in {502, 503, 504}:
+                raise RuntimeError(f'Artifact GET failed with HTTP {exc.code}') from None
+        except (urllib.error.URLError, TimeoutError):
+            pass
+        if attempt < 2:
+            time.sleep((2, 5)[attempt])
+    raise RuntimeError('Artifact GET unavailable after three bounded attempts') from None
+
+
+def _artifact_bytes_once(artifact_id, expected_sha, limit):
     """Exchange the GitHub token for a signed URL; never forward that token."""
     req = urllib.request.Request(f'{BASE}/actions/artifacts/{artifact_id}/zip',
         headers={'Authorization': 'Bearer ' + os.environ['GH_TOKEN'],
@@ -36,7 +52,7 @@ def artifact_bytes(artifact_id, expected_sha, limit):
         response = urllib.request.build_opener(NoRedirect).open(req, timeout=30)
     except urllib.error.HTTPError as exc:
         if exc.code != 302:
-            raise RuntimeError('Artifact download failed') from None
+            raise
         url = exc.headers.get('Location', '')
         parsed = urllib.parse.urlsplit(url)
         host = parsed.hostname or ''

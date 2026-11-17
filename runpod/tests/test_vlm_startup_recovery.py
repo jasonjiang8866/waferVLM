@@ -3,6 +3,7 @@ import json
 import os
 import tempfile
 import unittest
+import urllib.error
 import zipfile
 from pathlib import Path
 from unittest.mock import patch
@@ -122,6 +123,35 @@ class StartupRecovery(unittest.TestCase):
             for change in ({'usd': 29}, {'seconds': 64000}, {'startup_failure_run_id': 0}, {'startup_failure_seconds': 0}):
                 with self.subTest(change=change), self.assertRaises(ValueError): c.quote(2.69, dict(data, **change))
             with patch.dict(os.environ, WAFER_VLM_PHASE='training'), self.assertRaises(ValueError): c.quote(.89, data)
+
+
+class ArtifactRetries(unittest.TestCase):
+    def test_transient_read_is_retried_with_same_integrity_arguments(self):
+        error = urllib.error.HTTPError('https://example.invalid', 503, 'private-error', {}, None)
+        with patch.object(ledger, '_artifact_bytes_once', side_effect=[error, b'verified']) as read, \
+             patch.object(ledger.time, 'sleep') as sleep:
+            self.assertEqual(ledger.artifact_bytes(1, 'a'*64, 100), b'verified')
+        self.assertEqual(read.call_count, 2)
+        self.assertTrue(all(call.args == (1, 'a'*64, 100) for call in read.call_args_list))
+        sleep.assert_called_once_with(2)
+
+    def test_attempts_are_bounded_and_never_expose_error_body(self):
+        error = urllib.error.HTTPError('https://secret-url.invalid', 503, 'private-error', {}, None)
+        with patch.object(ledger, '_artifact_bytes_once', side_effect=error) as read, \
+             patch.object(ledger.time, 'sleep') as sleep, \
+             self.assertRaisesRegex(RuntimeError, '^Artifact GET unavailable after three bounded attempts$'):
+            ledger.artifact_bytes(1, 'a'*64, 100)
+        self.assertEqual(read.call_count, 3)
+        self.assertEqual(sleep.call_count, 2)
+
+    def test_auth_error_and_corrupt_artifact_are_not_retried(self):
+        for error in (urllib.error.HTTPError('https://example.invalid', 403, 'private', {}, None),
+                      RuntimeError('Artifact size or SHA256 mismatch')):
+            with patch.object(ledger, '_artifact_bytes_once', side_effect=error) as read, \
+                 patch.object(ledger.time, 'sleep') as sleep, self.assertRaises(RuntimeError):
+                ledger.artifact_bytes(1, 'a'*64, 100)
+            self.assertEqual(read.call_count, 1)
+            sleep.assert_not_called()
 
 
 if __name__ == '__main__': unittest.main()

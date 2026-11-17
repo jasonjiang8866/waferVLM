@@ -40,3 +40,14 @@ The worker log category summary is also printed to the live Actions log after
 five minutes, permitting diagnosis before final artifact upload. No raw log text
 or credentials are printed. The pinned image, 16 existing passes, two missing
 outputs and frozen evaluator are unchanged.
+
+Historical artifact GETs retry 502/503/504 and transport failures at most three
+times, with two- and five-second waits. A fresh signed URL is obtained for each
+attempt, without forwarding the GitHub token to storage. Authorization failures,
+unexpected destinations and SHA/size mismatches remain fatal. This addresses the
+observed transient artifact-storage 503 before any Pod is purchased.
+
+The independent data collection scripts added by PR #47 are excluded by exact
+path from the VLM image-workload diff, as is the existing DINO proxy diagnostic.
+All existing evaluator scripts, model source, configs and dependency pins remain
+checked; the collection is not used as new model input by this continuation.

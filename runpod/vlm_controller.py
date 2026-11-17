@@ -257,6 +257,11 @@ def provenance():
         # This independent DINO proxy diagnostic is never imported/executed by
         # the VLM worker; merging it does not change the pinned VLM workload.
         ":(exclude)scripts/check_dinov3_proxy.py",
+        # Separate data-collection entrypoints are not imported by the frozen
+        # WM-811K evaluator. Keep all existing evaluation scripts checked.
+        ":(exclude)scripts/collect_wafer_data.py",
+        ":(exclude)scripts/audit_collection_images.py",
+        ":(exclude)scripts/prepare_collection_samples.py",
     )
     if changed:
         raise RuntimeError("Current workload differs from pinned image; review image/source pin")
