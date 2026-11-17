@@ -14,6 +14,7 @@ from http.server import ThreadingHTTPServer
 
 from runpod import vlm_worker as w
 from runpod.vlm_repeat_inputs import FROZEN, archives, prepare, validated_url
+from runpod.vlm_repeat_resume import enabled as resuming, transfer_pin
 
 INPUT_LOCK = threading.Lock()
 INPUT_READY = threading.Event()
@@ -122,6 +123,10 @@ def work():
         started = time.time()
         paths = archives('/workspace/repeat-archives', request_input_url, deadline - 180)
         rows = prepare(paths, '/workspace/repeat-inputs', dataset, json.loads(FROZEN.read_text()))
+        partial = None
+        if resuming():
+            partial = archives('/workspace/repeat-archives', request_input_url, deadline - 180,
+                               pins={'repeat-partial': transfer_pin()})['repeat-partial']
         endpoints = Path('/workspace/frozen-endpoints.json')
         endpoints.write_text(json.dumps(rows, indent=2))
         phases.append(dict(phase='inputs', wall_seconds=time.time()-started, returncode=0))
@@ -129,7 +134,9 @@ def work():
         cap = int(deadline - time.time() - 180)
         if not 60 <= cap <= 3600:
             raise TimeoutError('Insufficient validation time')
-        run('validation', ['scripts/run_seed_confirmation.py', 'repeat', '--dataset', str(dataset),
+        entry = (['-m', 'runpod.vlm_repeat_resume', 'resume', '--source', str(partial)] if resuming()
+                 else ['scripts/run_seed_confirmation.py', 'repeat'])
+        run('validation', [*entry, '--dataset', str(dataset),
                           '--endpoints', str(endpoints), '--output', str(w.OUT / 'repeats'),
                           '--timeout-seconds', str(cap)], cap + 15)
         if json.loads((w.OUT / 'repeats/status.json').read_text()) != dict(

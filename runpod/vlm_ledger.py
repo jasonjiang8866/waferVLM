@@ -319,6 +319,10 @@ def reconcile(run, require_current, output, seed=42):
     completed, total_usd, total_seconds = completed_receipts(output)
     training_seconds = total_seconds
     failed_repeats, total_usd, total_seconds = repeat_failures(output, total_usd, total_seconds)
+    from runpod.vlm_repeat_resume import enabled, reconcile_partial
+    if seed == 'repeat' and enabled():
+        partial, total_usd, total_seconds = reconcile_partial(output, total_usd, total_seconds)
+        failed_repeats.append(partial)
     # Run history survives deleted/expired artifacts. A previous paid step must
     # be reconciled explicitly; only visibly skipped paid steps are read-only.
     for page in range(1, 101):
@@ -453,6 +457,8 @@ def reconcile(run, require_current, output, seed=42):
         raise RuntimeError('Historical cumulative consumption/cleanup mismatch')
     ledger = dict(usd=total_usd, seconds=total_seconds, attempts=sorted(attempts, key=lambda a:a['run_id']))
     ledger['repeat_seconds'] = total_seconds - training_seconds
+    if seed == 'repeat' and enabled():
+        ledger['resume_source_run_id'] = partial['run_id']
     (output / 'ledger.json').write_text(json.dumps(ledger, indent=2) + '\n')
     return ledger
 
