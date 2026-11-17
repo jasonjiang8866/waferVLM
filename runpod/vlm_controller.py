@@ -93,6 +93,21 @@ def experiment():
     return 'vlm-repeats' if evaluation() else "vlm-seed" + str(training_seed())
 
 
+def validation_detail(progress):
+    """Render bounded counters only; worker text and model responses stay private."""
+    active = progress.get('active_pass')
+    if not isinstance(active, dict):
+        return None
+    seed, step, repeat, count = [active.get(k) for k in ('seed', 'step', 'repeat', 'completed_samples')]
+    stage = active.get('stage')
+    if (any(type(v) is not int for v in (seed, step, repeat, count))
+            or seed not in (17, 42, 123) or step not in (200, 250) or repeat not in (1, 2, 3)
+            or not 0 <= count <= 160 or active.get('total_samples') != 160
+            or stage not in ('preparing_or_loading', 'inference')):
+        return None
+    return f'Validation active seed={seed} step={step} repeat={repeat}: {count}/160 samples ({stage})'
+
+
 def save(name, value):
     OUT.mkdir(exist_ok=True)
     temporary = OUT / (name + ".tmp")
@@ -641,6 +656,8 @@ def launch(api):
         url = "https://" + pod_id + "-8888.proxy.runpod.net"
         last_phase = None
         last_progress = None
+        last_detail = None
+        last_cpu_report = 0
         next_inventory = time.time() + 60
         worker_seen = False
         deliveries = {}
@@ -681,6 +698,21 @@ def launch(api):
                     and progress.get('total_passes') == 18 and completed != last_progress):
                 print(f'Validation passes {completed}/18', flush=True)
                 last_progress = completed
+            if evaluation():
+                detail = validation_detail(progress)
+                if detail is not None and detail != last_detail:
+                    print(detail, flush=True)
+                    last_detail = detail
+                cpu = result.get('cpu')
+                if isinstance(cpu, dict) and time.time() - last_cpu_report >= 60:
+                    fields = {k: cpu[k] for k in ('logical_cpus', 'affinity_cpus', 'quota_cpus')
+                              if type(cpu.get(k)) in (int, float) and finite(cpu[k], 0)}
+                    counters = cpu.get('counters', {})
+                    if isinstance(counters, dict):
+                        fields.update({k: counters[k] for k in ('usage_usec', 'nr_periods', 'nr_throttled')
+                                       if type(counters.get(k)) is int and counters[k] >= 0})
+                    print('Visible CPU limits/counters: ' + json.dumps(fields, sort_keys=True), flush=True)
+                    last_cpu_report = time.time()
             step, total = progress.get("optimizer_step"), progress.get("optimizer_steps")
             if (type(step) is int and type(total) is int and total in {100, 150, 200, 250}
                     and 0 <= step <= total and (step, total) != last_progress):
