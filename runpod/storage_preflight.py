@@ -40,11 +40,13 @@ def observe(api):
     relevant_pods = []
     for pod in pods:
         if project_resource(pod):
-            mount = pod.get('mounts', {}).get('global') or {}
+            mounts = pod.get('mounts', {}).get('global') or []
+            if not isinstance(mounts, list):
+                raise ValueError('Invalid Global Volume mount schema')
             relevant_pods.append({
                 **{k: pod.get(k) for k in ('id', 'name', 'status', 'cost', 'dataCenterId')},
                 'kind': 'gpu' if pod.get('gpu') else 'cpu',
-                'global_mount': {k: mount.get(k) for k in ('id', 'path')},
+                'global_mounts': [{k: mount.get(k) for k in ('volumeId', 'path')} for mount in mounts],
             })
     return {
         'schema_version': 1, 'observed_at': datetime.now(timezone.utc).isoformat(),

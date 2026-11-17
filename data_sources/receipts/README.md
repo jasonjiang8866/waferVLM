@@ -30,10 +30,19 @@ normalizing the source annotations.
 
 ## Cloud status
 
-**Not imported.** There is no Global Volume ID, cloud receipt or fresh-mount
-readback evidence in this change. No billable resources were created. The repository Secret will be used by the manual GET-only storage preflight;
-actual inventory and storage/compute quotes remain unverified until that run. The local source cache is reproducible staging, not
-durable cloud storage. See [import runbook](../RUNPOD.md).
+**Not imported.** There is no cloud import receipt or fresh-mount readback
+evidence yet. No billable resources were created. The repository Secret
+successfully accessed RunPod in
+[preflight run 44113725134](https://github.com/jasonjiang8866/waferVLM/actions/runs/44113725134).
+The sanitized [inventory receipt](runpod-storage-preflight-44113725134.json)
+records one existing Global Volume, no wafer-named Pod, and a lowest CPU quote
+of **$0.06/hour**. The read-only preflight did not touch unrelated workloads.
+
+The complete CPU import/readback/cleanup workflow is prepared. It requires a
+one-off CPU import budget (proposed **$0.50**, 25-minute aggregate work window)
+before paid dispatch. The older training budgets are not used. The local source
+cache remains reproducible staging, not durable cloud storage. See the
+[exact import inputs and cost assumptions](../RUNPOD.md).
 
 The offline tests mock a mount to test the copy/receipt protocol. That is **not**
 a live Global Volume integration result. A successful future import must add its

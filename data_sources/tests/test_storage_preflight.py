@@ -15,7 +15,7 @@ class FakeAPI:
                     {'id': 'gsb_2', 'name': 'PRIVATE'}]
         return [{'id': 'pod1', 'name': 'wafervlm-training', 'status': 'RUNNING',
                  'gpu': {'count': 1}, 'env': {'TOKEN': 'SECRET'},
-                 'mounts': {'global': {'id': 'gsb_1', 'path': '/data', 'extra': 'SECRET'}}},
+                 'mounts': {'global': [{'volumeId': 'gsb_1', 'path': '/data', 'extra': 'SECRET'}]}},
                 {'id': 'pod2', 'name': 'PRIVATE', 'env': {'TOKEN': 'SECRET'}}]
 
     def call(self, path):

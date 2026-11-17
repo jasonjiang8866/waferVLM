@@ -23,3 +23,8 @@ parent-release.zip
 # Local DINO launch outputs; publish only sanitized Actions artifacts.
 dinov3-results/
 dino-authorization/
+
+# Local data collection controller evidence (sanitized copies under data_sources/receipts).
+storage-observation/
+storage-import/
+storage-cleanup/
