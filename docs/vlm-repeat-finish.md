@@ -69,3 +69,39 @@ The existing continuation window ends 2026-11-20 08:00 SGT.
 This change excludes the separate monitoring patch in PR #43. It changes only
 continuation orchestration and receipt verification; it does not modify the
 in-flight/finished experiment or DINOv3's code and budget.
+
+## Live-price follow-up: approval pending
+
+PRs #43 and #44 merged at main
+`694246f647246cd5f7645a7df92ceb2d004a193d`. Two subsequent dispatches,
+[44093168562](https://github.com/jasonjiang8866/waferVLM/actions/runs/44093168562)
+and [44094122951](https://github.com/jasonjiang8866/waferVLM/actions/runs/44094122951),
+passed the historical result/cleanup reconciliation but stopped at the read-only
+catalog check. Both observed RTX 4090 at US$0.89/hour and RTX 3090 at US$0.50/hour
+with no eligible secure-cloud capacity at CUDA >=12.8. RTX 5090 was quoted at
+US$1.39/hour, above its US$1.19/hour ceiling. Its capacity is **unverified**:
+the old preflight rejected its price before retaining regional availability.
+
+Neither dispatch reached the authorization-marker or allocation step. There
+was no create intent and no new inference. Both primary cleanup records and
+the independent cleanups
+[44093501498](https://github.com/jasonjiang8866/waferVLM/actions/runs/44093501498)
+and [44094432218](https://github.com/jasonjiang8866/waferVLM/actions/runs/44094432218)
+confirmed three consecutive absence checks. The study remains **16/18**.
+Provider billing is not read; this is evidence of no allocation by these runs,
+not a reconciled invoice.
+
+The proposed follow-up raises only the final-two slice's RTX 5090 ceiling to
+**US$1.39/hour**. Training and earlier continuation modes keep US$1.19/hour;
+4090/3090 caps, GPU eligibility, image/evaluator, one-create limit, cleanup,
+expiry, campaign budget and 40+10-minute envelope stay unchanged. A fresh
+preflight must still find eligible capacity; raising the ceiling does not
+guarantee allocation. Catalog receipts now retain the applied ceiling and
+observed regions even when a quote is rejected.
+Selection follows the final slice's documented 4090 → 5090 → 3090 preference,
+instead of the older training list that placed 3090 before 5090.
+
+At US$1.39/hour plus the same temporary disk, the one-allocation estimate is
+**US$1.165774**, or **US$0.166667** more than the previous maximum. The cumulative
+estimate is **US$10.638295 / 788.893 minutes**, within US$30 / 1100 minutes.
+This proposed price change requires approval before merge and paid dispatch.

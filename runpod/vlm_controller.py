@@ -125,8 +125,16 @@ def identity():
     return run
 
 
+def gpu_price_caps():
+    """The final-two slice has a separate reviewed 5090 price ceiling."""
+    caps = dict(GPU_CAPS)
+    if evaluation() and resuming() and resume_retry() and finishing():
+        caps["NVIDIA GeForce RTX 5090"] = 1.39
+    return caps
+
+
 def quote(rate, ledger=None):
-    if not finite(rate, 0.001) or rate > MAX_RATE:
+    if not finite(rate, 0.001) or rate > max(gpu_price_caps().values()):
         raise ValueError("GPU quote exceeds authorized maximum")
     prior_usd = PRIOR_SPEND_RESERVE if ledger is None else ledger['usd']
     prior_seconds = PRIOR_RUNTIME_RESERVE_SECONDS if ledger is None else ledger['seconds']
@@ -265,12 +273,14 @@ def preflight(api):
     if any(p.get("env", {}).get(OWNER) == REPOSITORY for p in pods):
         raise RuntimeError("An owned Pod already exists; cleanup and inspect before launch")
     choices, catalog = [], []
+    caps = gpu_price_caps()
     repeat_gpus = (MIG, 'NVIDIA GeForce RTX 3090') if resume_retry() else (RESUME_GPU,)
     if finishing():
         repeat_gpus = (RESUME_GPU, 'NVIDIA GeForce RTX 5090', 'NVIDIA GeForce RTX 3090')
     for name in (repeat_gpus if evaluation() and resuming() else GPUS):
         minimum_cuda = MIN_CUDA_BY_GPU[name]
-        entry = {"gpu": name, "min_cuda_version": minimum_cuda, "rate": None, "regions": []}
+        entry = {"gpu": name, "min_cuda_version": minimum_cuda, "rate": None,
+                 "approved_rate_cap": caps[name], "regions": []}
         try:
             data = api.call(
                 "/catalog/gpus/"
@@ -288,16 +298,17 @@ def preflight(api):
             )
             rate = data.get("price", {}).get("secure")
             entry["rate"] = rate if finite(rate) else None
-            if not finite(rate, 0.001) or rate > GPU_CAPS[name]:
-                raise ValueError("Per-model approved price exceeded")
-            cost = quote(rate, evidence["ledger"])
             regions = sorted(
                 d["id"]
                 for d in data.get("dataCenters", [])
                 if d.get("availability") in {"LOW", "MEDIUM", "HIGH"}
                 and re.fullmatch(r"[A-Za-z0-9-]+", d.get("id", ""))
             )
-            entry.update(regions=regions, status="available" if regions else "no_capacity")
+            entry["regions"] = regions
+            if not finite(rate, 0.001) or rate > caps[name]:
+                raise ValueError("Per-model approved price exceeded")
+            cost = quote(rate, evidence["ledger"])
+            entry["status"] = "available" if regions else "no_capacity"
             if regions:
                 choices.append((rate, name, regions, cost))
         except ValueError:
@@ -319,7 +330,8 @@ def preflight(api):
     save("preflight.json", evidence)
     if not choices:
         raise RuntimeError("No approved GPU with verified price/capacity")
-    rate, name, regions, cost = min(choices, key=lambda c: (GPUS.index(c[1]), c[0]))
+    priority = repeat_gpus if evaluation() and resuming() else GPUS
+    rate, name, regions, cost = min(choices, key=lambda c: (priority.index(c[1]), c[0]))
     evidence.update(
         status="preflight_passed",
         read_only=True,
