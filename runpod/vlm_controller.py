@@ -715,6 +715,9 @@ def launch(api):
         last_cpu_report = 0
         next_inventory = time.time() + 60
         worker_seen = False
+        current = detail
+        startup_snapshot_taken = False
+        last_proxy_error = None
         deliveries = {}
         while time.time() < deadline - 35:
             if time.time() >= next_inventory:
@@ -722,12 +725,21 @@ def launch(api):
                 if not owned(current, state) or current.get("status") in {"ERROR", "EXITED", "TERMINATED"}:
                     raise RuntimeError("Pod stopped or identity changed before result retrieval")
                 print("Pod status: " + str(current.get("status")), flush=True)
+                if not worker_seen and not startup_snapshot_taken and time.time() - started >= 300:
+                    from runpod.startup_diagnostics import capture
+                    save("startup-diagnostics.json", capture(pod_id, current, last_proxy_error))
+                    startup_snapshot_taken = True
                 next_inventory = time.time() + 60
             if not worker_seen and time.time() - started > 1200:
+                from runpod.startup_diagnostics import capture
+                save("startup-timeout-diagnostics.json", capture(pod_id, current, last_proxy_error))
                 raise RuntimeError("Worker startup exceeded 20 minutes")
             try:
                 result = request(url + "/result", token=token)
-            except RuntimeError:
+            except RuntimeError as exc:
+                last_proxy_error = ({"kind": "http", "status": exc.status}
+                                    if isinstance(exc, RemoteHTTPError)
+                                    else {"kind": "transport_or_response"})
                 time.sleep(10)
                 continue
             worker_seen = True
