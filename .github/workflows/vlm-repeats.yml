@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       confirm_paid:
-        description: 'Use the extended US$30 / 1100-minute total authorization for 18 frozen VLM validation passes (60 work + 10 cleanup minutes)'
+        description: 'Use the extended US$30 / 1100-minute total authorization to resume 14/18 verified passes (30 work + 10 cleanup minutes)'
         type: boolean
         required: true
         default: false
@@ -37,6 +37,7 @@ jobs:
       - name: Fresh GET-only capacity, rate and account guardrails
         env:
           WAFER_VLM_PHASE: 'repeat'
+          WAFER_VLM_RESUME: '1'
           RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY }}
           GH_TOKEN: ${{ github.token }}
         run: python -m runpod.vlm_controller preflight
@@ -64,6 +65,7 @@ jobs:
         if: inputs.confirm_paid
         env:
           WAFER_VLM_PHASE: 'repeat'
+          WAFER_VLM_RESUME: '1'
           RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY }}
           GH_TOKEN: ${{ github.token }}
           CONFIRM_PAID: ${{ inputs.confirm_paid }}
@@ -74,6 +76,7 @@ jobs:
         if: always() && inputs.confirm_paid
         env:
           WAFER_VLM_PHASE: 'repeat'
+          WAFER_VLM_RESUME: '1'
           RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY }}
         run: python -m runpod.vlm_controller cleanup
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -82,6 +85,7 @@ jobs:
           name: wafervlm-repeats-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             runpod-results/
+            !runpod-results/repeat-partial.zip
             !runpod-results/historical-result.zip
             !runpod-results/completed-*.zip
             !runpod-results/repeat-input-cache/

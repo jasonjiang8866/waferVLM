@@ -48,7 +48,7 @@ class RepeatLifecycle(unittest.TestCase):
         q=c.quote(.89,retry)
         self.assertEqual(q['work_seconds'],3454)
         self.assertLessEqual(q['planned_total_seconds'],self.evidence['cost']['planned_total_seconds'])
-        code=c.worker_code();self.assertLess(len(code),24000)
+        code=c.worker_code();self.assertLess(len(code),32000)
         assignment=next(n for n in ast.parse(code).body if isinstance(n,ast.Assign))
         encoded=assignment.value.args[0].args[0].args[0].value
         payload=json.loads(gzip.decompress(base64.b64decode(encoded)))

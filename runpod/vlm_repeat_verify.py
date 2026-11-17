@@ -46,6 +46,19 @@ def verify_repeat_archive(archive, spec):
         for r in records:
             if r.get('adapter_sha256') != weights.get((r.get('seed'), r.get('step'))):
                 raise ValueError('Pass does not use frozen weights')
+        if 'resume_source_run_id' in spec:
+            from runpod.vlm_repeat_resume import PIN, RECEIPT
+            receipt = json.loads(RECEIPT.read_text())
+            if (spec['resume_source_run_id'] != PIN['run_id']
+                    or json.loads((repeats / 'resume.json').read_text()) != receipt):
+                raise ValueError('Continuation source receipt mismatch')
+            for old in receipt['reused']:
+                folder = repeats / old['output']
+                if (sha256_file(folder / 'checksums.json') != old['checksums_sha256']
+                        or sha256_file(folder / 'predictions.jsonl') != old['predictions_sha256']):
+                    raise ValueError('Previously completed pass was altered')
+        elif (repeats / 'resume.json').exists():
+            raise ValueError('Unexpected continuation output')
         report = summarize_repeats(records, read_jsonl(repeats / 'validation-reference.jsonl'), base=repeats)
         for env in report['environments']:
             if (env['source_sha'] != spec['source_sha'] or env['image_digest'] != spec['image'].split('@')[1]

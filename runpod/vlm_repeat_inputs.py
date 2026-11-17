@@ -36,6 +36,11 @@ def inputs():
     return result
 
 
+def transfer_inputs():
+    from runpod.vlm_repeat_resume import enabled, transfer_pin
+    return dict(inputs(), **({'repeat-partial': transfer_pin()} if enabled() else {}))
+
+
 def validated_url(url):
     p = urllib.parse.urlsplit(url)
     if (p.scheme != 'https' or p.username or p.password or p.port not in (None, 443)
@@ -48,7 +53,7 @@ def validated_url(url):
 def signed_input_url(key):
     """Mint one link only when the worker is ready; GitHub guarantees one minute."""
     from runpod.provider import NoRedirect, REPOSITORY
-    pin = inputs()[key]
+    pin = transfer_inputs()[key]
     req = urllib.request.Request(
         f"https://api.github.com/repos/{REPOSITORY}/actions/artifacts/{pin['artifact_id']}/zip",
         headers={'Authorization': 'Bearer ' + os.environ['GH_TOKEN'],
@@ -62,13 +67,13 @@ def signed_input_url(key):
         return validated_url(exc.headers.get('Location', ''))
 
 
-def archives(output, urls=None, deadline=None):
+def archives(output, urls=None, deadline=None, *, pins=None):
     """Download bounded bytes and check the committed hash before any extraction."""
     from runpod.provider import NoRedirect
     output = Path(output); output.mkdir(parents=True, exist_ok=True)
-    pins = inputs()
+    pins = inputs() if pins is None else pins
     if urls is not None and not callable(urls) and set(urls) != set(pins):
-        raise ValueError('Exactly four pinned input archives are required')
+        raise ValueError('Exactly the pinned input archives are required')
     paths = {}
     for key, pin in pins.items():
         path = output / (key + '.zip')

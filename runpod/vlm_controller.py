@@ -22,6 +22,8 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
+from runpod.vlm_repeat_resume import enabled as resuming, PIN as RESUME_PIN, GPU as RESUME_GPU, RESUME_WORK_SECONDS, RESUME_EXPIRES
+
 from runpod.provider import (
     MIG,
     REPOSITORY,
@@ -116,9 +118,14 @@ def quote(rate, ledger=None):
         raise ValueError("Incomplete cumulative VLM ledger")
     hourly = rate + DISK_HOURLY
     spent = 0 if ledger is None else ledger.get('repeat_seconds', 0)
-    if evaluation() and (not finite(spent) or spent > 3540):
+    if evaluation() and resuming():
+        if ledger is None or ledger.get('resume_source_run_id') != RESUME_PIN['run_id']:
+            raise ValueError('Verified partial receipt is required before continuation')
+        maximum = RESUME_WORK_SECONDS
+    elif evaluation() and (not finite(spent) or spent > 3540):
         raise ValueError('Repeat evaluation allowance exhausted')
-    maximum = 3600 - math.ceil(spent) if evaluation() else MAX_WORK_SECONDS
+    else:
+        maximum = 3600 - math.ceil(spent) if evaluation() else MAX_WORK_SECONDS
     work = min(maximum, APPROVED_TOTAL_SECONDS - prior_seconds - CLEANUP_SECONDS, math.floor((APPROVED_USD - prior_usd - 2) / hourly * 3600) - CLEANUP_SECONDS)
     if work < maximum:
         raise ValueError("Insufficient budget or aggregate runtime")
@@ -227,7 +234,7 @@ def preflight(api):
     if any(p.get("env", {}).get(OWNER) == REPOSITORY for p in pods):
         raise RuntimeError("An owned Pod already exists; cleanup and inspect before launch")
     choices, catalog = [], []
-    for name in GPUS:
+    for name in ((RESUME_GPU,) if evaluation() and resuming() else GPUS):
         minimum_cuda = MIN_CUDA_BY_GPU[name]
         entry = {"gpu": name, "min_cuda_version": minimum_cuda, "rate": None, "regions": []}
         try:
@@ -302,7 +309,7 @@ def authorization_guard():
         or os.environ.get("GITHUB_RUN_ATTEMPT") != "1"
         or os.environ.get("CONFIRM_PAID") != "true"
         or os.environ.get("EXPECTED_SHA") != git("rev-parse", "HEAD")
-        or time.time() >= AUTHORIZATION_EXPIRES
+        or time.time() >= (RESUME_EXPIRES if evaluation() and resuming() else AUTHORIZATION_EXPIRES)
     ):
         raise RuntimeError("Manual authorization/ref/SHA/attempt/expiry guard failed")
     token = os.environ.get("GH_TOKEN", "")
@@ -399,6 +406,8 @@ def cleanup(api):
                 }
                 if (evaluation() or training_seed() == 123) and not {'WAFER_PRIOR_USD', 'WAFER_PRIOR_SECONDS'} <= matches[0]['env'].keys():
                     raise RuntimeError("Missing cumulative cost recovery metadata")
+                if evaluation() and resuming():
+                    prior['resume_source_run_id'] = RESUME_PIN['run_id']
                 state.update(
                     started_epoch=started,
                     cost=quote(float(matches[0]["env"]["WAFER_RATE"]), prior),
@@ -466,6 +475,7 @@ def worker_code():
     # Inject reviewed orchestration only. src/scripts/configs and locked packages
     # remain byte-identical to the existing image, checked by provenance().
     names = ['runpod/vlm_worker.py', 'runpod/vlm_repeat_worker.py', 'runpod/vlm_repeat_inputs.py',
+             'runpod/vlm_repeat_resume.py', 'docs/evidence/vlm-repeat-resume.json',
              'runpod/confirmation_verify.py', 'runpod/confirmation_contract.py', 'runpod/provider.py',
              'runpod/vlm-completed.json', 'docs/evidence/vlm-six-endpoints.json']
     bundle = base64.b64encode(gzip.compress(json.dumps({n: (ROOT / n).read_text() for n in names}).encode(), mtime=0)).decode()
@@ -476,9 +486,9 @@ def worker_code():
 
 
 def deliver_input_url(url, token, desired):
-    from runpod.vlm_repeat_inputs import inputs, signed_input_url
+    from runpod.vlm_repeat_inputs import transfer_inputs, signed_input_url
     if (not isinstance(desired, dict) or set(desired) != {'key', 'nonce'}
-            or desired['key'] not in inputs()
+            or desired['key'] not in transfer_inputs()
             or not re.fullmatch('[0-9a-f]{32}', desired['nonce'])):
         raise ValueError('Invalid input URL request')
     scoped = signed_input_url(desired['key'])
@@ -499,6 +509,8 @@ def launch(api):
     if evaluation():
         spec.update(phase='validation-repeats', config_sha256=evidence['config_sha256'],
                     input_manifest_sha256=evidence['inputs']['manifest_sha256'])
+        if resuming():
+            spec['resume_source_run_id'] = RESUME_PIN['run_id']
     else:
         spec['seed'] = training_seed()
         launch_plan(spec)
@@ -556,6 +568,8 @@ def launch(api):
     }
     if evaluation():
         payload['env'].pop('WAFER_SEED')
+        if resuming():
+            payload['env']['WAFER_VLM_RESUME'] = '1'
         payload['env']['WAFER_INPUT_MANIFEST_SHA'] = spec['input_manifest_sha256']
     handlers = {
         s: signal.signal(s, interrupt) for s in (signal.SIGALRM, signal.SIGTERM, signal.SIGINT)

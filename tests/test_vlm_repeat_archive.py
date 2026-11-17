@@ -83,6 +83,26 @@ class RepeatArchive(unittest.TestCase):
         (self.root/'holdout').mkdir()
         with self.assertRaises(ValueError):verifier.verify_repeat_archive(self.pack(),self.spec)
 
+    def test_continuation_binds_reused_bytes_and_requires_explicit_source(self):
+        from runpod import vlm_repeat_resume as resume
+        receipt = dict(source_run_id=resume.PIN['run_id'], reused=[dict(
+            output=r['output'],
+            checksums_sha256=sha256_file(self.repeats/r['output']/'checksums.json'),
+            predictions_sha256=sha256_file(self.repeats/r['output']/'predictions.jsonl'))
+            for r in self.records[:14]])
+        pin = self.fixture.root/'resume-pin.json';write_json(pin,receipt)
+        write_json(self.repeats/'resume.json',receipt)
+        spec = dict(self.spec,resume_source_run_id=resume.PIN['run_id'])
+        with patch.object(resume,'RECEIPT',pin):
+            self.assertEqual(verifier.verify_repeat_archive(self.pack(),spec)['passes'],18)
+            with self.assertRaisesRegex(ValueError,'Unexpected continuation'):
+                verifier.verify_repeat_archive(self.pack(),self.spec)
+            first=self.repeats/self.records[0]['output']
+            run=json.loads((first/'run.json').read_text());run['host']='different-host'
+            write_json(first/'run.json',run);seal_output(first)
+            with self.assertRaisesRegex(ValueError,'Previously completed pass was altered'):
+                verifier.verify_repeat_archive(self.pack(),spec)
+
     def test_retrieval_acceptance_and_corruption_both_reach_owned_cleanup(self):
         for corrupt in (False, True):
             with self.subTest(corrupt=corrupt),tempfile.TemporaryDirectory() as tmp:

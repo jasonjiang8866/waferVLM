@@ -7,6 +7,11 @@ was reconstructed from all four original ZIPs, including optimizer/scheduler/RNG
 states, before starting any new inference. Its SHA256 is
 `81c048fbb25396a9c2d937a94d9c055989b032d76d51446cc104f2641fd25a62`.
 
+**2026-11-17 update:** the GPU run completed 14/18 passes before timeout; the
+results were retrieved and cleanup verified, but the study was not accepted.
+See [verified continuation and current budget](vlm-repeat-resume.md). The launch
+allowance below describes the original attempt, not the four-pass continuation.
+
 Launch update: the first dispatch failed at the provider's create API (HTTP 500),
 with both cleanup paths verifying absence and no inference performed. See the
 [recovery receipt and reduced retry allowance](vlm-repeat-create-recovery.md).
