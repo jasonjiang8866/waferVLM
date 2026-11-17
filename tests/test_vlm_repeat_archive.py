@@ -103,6 +103,29 @@ class RepeatArchive(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,'Previously completed pass was altered'):
                 verifier.verify_repeat_archive(self.pack(),spec)
 
+    def test_fallback_binds_old_and_new_gpu_provenance_separately(self):
+        from runpod import vlm_repeat_resume as resume
+        from runpod.provider import MIG
+        receipt = dict(source_run_id=resume.PIN['run_id'], reused=[dict(
+            output=r['output'], checksums_sha256=sha256_file(self.repeats/r['output']/'checksums.json'),
+            predictions_sha256=sha256_file(self.repeats/r['output']/'predictions.jsonl')) for r in self.records[:14]])
+        pin=self.fixture.root/'resume-pin.json';write_json(pin,receipt)
+        write_json(self.repeats/'resume.json',receipt)
+        spec=dict(self.spec,resume_source_run_id=resume.PIN['run_id'],gpu=MIG)
+        write_json(self.root/'hardware.json',dict(gpu=MIG,image_digest=spec['image'].split('@')[1]))
+        for r in self.records[14:]:
+            folder=self.repeats/r['output'];run=json.loads((folder/'run.json').read_text())
+            run['gpu']=MIG;run['host']='new-host';write_json(folder/'run.json',run);seal_output(folder)
+        write_json(self.repeats/'summary.json',c.summarize_repeats(self.records,
+            [json.loads(x) for x in (self.repeats/'validation-reference.jsonl').read_text().splitlines()],base=self.repeats))
+        with patch.object(resume,'RECEIPT',pin):
+            accepted=verifier.verify_repeat_archive(self.pack(),spec)
+            self.assertFalse(accepted['summary']['same_environment'])
+            self.assertEqual([e['gpu'] for e in accepted['summary']['environments']],
+                             [self.spec['gpu']]*14+[MIG]*4)
+            with self.assertRaisesRegex(ValueError,'hardware/image mismatch'):
+                verifier.verify_repeat_archive(self.pack(),dict(spec,gpu=self.spec['gpu']))
+
     def test_retrieval_acceptance_and_corruption_both_reach_owned_cleanup(self):
         for corrupt in (False, True):
             with self.subTest(corrupt=corrupt),tempfile.TemporaryDirectory() as tmp:
