@@ -114,6 +114,45 @@ class RepeatLifecycle(unittest.TestCase):
             (self.out/'repeats/passes.json').write_text('[')
             self.assertNotIn('progress',worker.progress_snapshot())
 
+    def test_active_progress_distinguishes_loading_and_inference_without_counting_a_pass(self):
+        root = self.out/'repeats'; root.mkdir()
+        (root/'passes.json').write_text('[]')
+        active = root/'seed17-step200-repeat1'; active.mkdir()
+        with patch.object(worker,'OUT',self.out),patch.object(worker,'RESULT',dict(status='running',phase='validation')):
+            loading = worker.progress_snapshot()['progress']
+            self.assertEqual(loading['active_pass']['stage'], 'preparing_or_loading')
+            self.assertEqual(loading['active_pass']['completed_samples'], 0)
+            (active/'run.json').write_text('{"private": "do not publish"}')
+            (active/'predictions.jsonl').write_text('{"response":"private response"}\n' * 160)
+            state = worker.progress_snapshot()
+            self.assertEqual(state['progress']['completed_passes'], 0)
+            self.assertEqual(state['progress']['active_pass']['completed_samples'], 160)
+            self.assertEqual(state['progress']['active_pass']['stage'], 'inference')
+            self.assertNotIn('private', json.dumps(state))
+            self.assertIn('160/160 samples', c.validation_detail(state['progress']))
+            # A partially written file is not mistaken for completed inference.
+            (active/'predictions.jsonl').write_text('{')
+            self.assertEqual(worker.progress_snapshot()['progress']['completed_passes'], 0)
+
+    def test_active_progress_ignores_oversized_predictions_and_untrusted_paths(self):
+        root = self.out/'repeats'; root.mkdir()
+        (root/'passes.json').write_text('[]')
+        active = root/'seed17-step200-repeat1'; active.mkdir()
+        (active/'predictions.jsonl').write_bytes(b' ' * (512 * 1024 + 1))
+        with patch.object(worker,'OUT',self.out),patch.object(worker,'RESULT',dict(status='running',phase='validation')):
+            self.assertNotIn('completed_samples',worker.progress_snapshot()['progress']['active_pass'])
+            (root/'passes.json').write_text('[{"output":"../../private"}]')
+            self.assertNotIn('active_pass',worker.progress_snapshot()['progress'])
+
+    def test_controller_rejects_unbounded_or_textual_active_progress(self):
+        detail = dict(seed=17, step=200, repeat=1, completed_samples=12,
+                      total_samples=160, stage='inference')
+        self.assertIn('12/160',c.validation_detail({'active_pass':detail}))
+        for key, value in [('seed','private'),('repeat',True),('completed_samples',161),
+                           ('stage','private'),('total_samples',1000)]:
+            with self.subTest(key=key):
+                self.assertIsNone(c.validation_detail({'active_pass':{**detail,key:value}}))
+
     def test_deleted_marker_cannot_hide_a_prior_paid_repeat(self):
         def read(url,**kw):
             if 'vlm-repeats.yml/runs?' in url:

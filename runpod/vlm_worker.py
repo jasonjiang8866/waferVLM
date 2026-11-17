@@ -86,6 +86,29 @@ def progress_snapshot():
                 records = json.loads(path.read_text())
                 if isinstance(records, list) and len(records) <= 18:
                     snapshot['progress'] = {'completed_passes': len(records), 'total_passes': 18}
+                    matrix = [(s, t, r) for s in (17, 42, 123)
+                              for t in (200, 250) for r in (1, 2, 3)]
+                    names = [f'seed{s}-step{t}-repeat{r}' for s, t, r in matrix]
+                    # Derive the path from the frozen matrix, never from result text.
+                    if (len(records) < 18 and all(isinstance(r, dict) for r in records)
+                            and [r.get('output') for r in records] == names[:len(records)]):
+                        active = OUT / 'repeats' / names[len(records)]
+                        detail = dict(zip(('seed', 'step', 'repeat'), matrix[len(records)]))
+                        detail.update(total_samples=160, stage='preparing_or_loading')
+                        if (active / 'run.json').is_file():
+                            detail['stage'] = 'inference'
+                        predictions = active / 'predictions.jsonl'
+                        if predictions.is_file():
+                            with predictions.open('rb') as stream:
+                                raw = stream.read(512 * 1024 + 1)
+                            if len(raw) <= 512 * 1024:
+                                rows = [json.loads(line) for line in raw.splitlines()]
+                                if len(rows) <= 160 and all(isinstance(row, dict) for row in rows):
+                                    detail['completed_samples'] = len(rows)
+                        else:
+                            detail['completed_samples'] = 0
+                        snapshot['progress']['active_pass'] = detail
+                    snapshot['cpu'] = cpu_snapshot()
         except (OSError, ValueError):
             pass
         return snapshot
