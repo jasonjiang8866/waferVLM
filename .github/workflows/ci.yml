@@ -45,6 +45,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: python -m runpod.vlm_repeat_finish_capacity --output vlm-receipt-check
+      - name: Verify allocated startup failure and independent cleanup (no RunPod credentials)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python -m runpod.vlm_repeat_startup_recovery --output vlm-receipt-check
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: vlm-receipt-verification-${{ github.run_id }}
@@ -55,6 +59,7 @@ jobs:
             vlm-receipt-check/capacity-recovery.json
             vlm-receipt-check/finish-verification.json
             vlm-receipt-check/finish-capacity-recovery.json
+            vlm-receipt-check/startup-recovery.json
           if-no-files-found: error
   protocol:
     runs-on: ubuntu-24.04

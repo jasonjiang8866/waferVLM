@@ -26,6 +26,7 @@ from runpod.vlm_repeat_resume import enabled as resuming, PIN as RESUME_PIN, GPU
 from runpod.vlm_repeat_resume import finishing, active_pin, FINISH_RECEIPT, FINISH_PIN_FILE
 from runpod.vlm_repeat_capacity import enabled as resume_retry, PIN as CAPACITY_PIN
 from runpod.vlm_repeat_finish_capacity import PIN as FINISH_CAPACITY_PIN
+from runpod.vlm_repeat_startup_recovery import enabled as startup_retry, PIN as STARTUP_PIN, WORK_SECONDS as STARTUP_RETRY_WORK_SECONDS
 
 from runpod.provider import (
     MIG,
@@ -145,6 +146,8 @@ def gpu_price_caps():
 
 
 def quote(rate, ledger=None):
+    if startup_retry() and not (evaluation() and resuming() and resume_retry() and finishing()):
+        raise ValueError('Startup recovery is only valid for the final-two continuation')
     if not finite(rate, 0.001) or rate > max(gpu_price_caps().values()):
         raise ValueError("GPU quote exceeds authorized maximum")
     prior_usd = PRIOR_SPEND_RESERVE if ledger is None else ledger['usd']
@@ -166,6 +169,11 @@ def quote(rate, ledger=None):
                     or not finite(finish_elapsed, .001)):
                 raise ValueError('Final capacity rejection must be reconciled before retry')
             maximum = 40 * 60 - math.ceil(finish_elapsed)
+            if startup_retry():
+                if (ledger.get('startup_failure_run_id') != STARTUP_PIN['run_id']
+                        or not finite(ledger.get('startup_failure_seconds'), .001)):
+                    raise ValueError('Allocated startup failure must be reconciled before retry')
+                maximum = STARTUP_RETRY_WORK_SECONDS
             if maximum < 1200:
                 raise ValueError('Insufficient final continuation time')
         elif resume_retry():
@@ -728,11 +736,13 @@ def launch(api):
                 if not worker_seen and not startup_snapshot_taken and time.time() - started >= 300:
                     from runpod.startup_diagnostics import capture
                     save("startup-diagnostics.json", capture(pod_id, current, last_proxy_error))
+                    print('Startup diagnostics: ' + (OUT/'startup-diagnostics.json').read_text(), flush=True)
                     startup_snapshot_taken = True
                 next_inventory = time.time() + 60
             if not worker_seen and time.time() - started > 1200:
                 from runpod.startup_diagnostics import capture
                 save("startup-timeout-diagnostics.json", capture(pod_id, current, last_proxy_error))
+                print('Startup timeout diagnostics: ' + (OUT/'startup-timeout-diagnostics.json').read_text(), flush=True)
                 raise RuntimeError("Worker startup exceeded 20 minutes")
             try:
                 result = request(url + "/result", token=token)

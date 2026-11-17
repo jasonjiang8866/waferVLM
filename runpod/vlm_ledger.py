@@ -337,6 +337,12 @@ def reconcile(run, require_current, output, seed=42):
             finish_failure, total_usd, total_seconds, finish_elapsed, rejected = finish_capacity_reconcile(
                 output, total_usd, total_seconds)
             failed_repeats.append(finish_failure)
+            from runpod.vlm_repeat_startup_recovery import enabled as startup_retry, reconcile as startup_reconcile
+            if startup_retry():
+                startup_failure, total_usd, total_seconds, startup_elapsed, placement = startup_reconcile(
+                    output, total_usd, total_seconds)
+                failed_repeats.append(startup_failure)
+                rejected.append(placement)
     # Run history survives deleted/expired artifacts. A previous paid step must
     # be reconciled explicitly; only visibly skipped paid steps are read-only.
     for page in range(1, 101):
@@ -478,6 +484,9 @@ def reconcile(run, require_current, output, seed=42):
         if finishing():
             ledger.update(finish_capacity_run_id=finish_failure['run_id'],
                           finish_capacity_seconds=finish_elapsed, finish_rejected_placements=rejected)
+            if startup_retry():
+                ledger.update(startup_failure_run_id=startup_failure['run_id'],
+                              startup_failure_seconds=startup_elapsed)
     (output / 'ledger.json').write_text(json.dumps(ledger, indent=2) + '\n')
     return ledger
 

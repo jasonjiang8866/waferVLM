@@ -23,6 +23,20 @@ unreported, not proof that the container is stopped. Diagnostics do not alter
 creation retries, GPU/region selection, the twenty-minute startup limit, workload
 budget, cleanup ownership checks or the frozen evaluation inputs.
 
-This change does not reconcile or authorize replacement of the current paid run.
-Another paid attempt still requires its completed receipts, costs and independent
-cleanup to be incorporated into the existing ledger.
+The allocated startup failure is now separately reconciled using its pinned result
+and authorization artifacts, terminal run identities and independent cleanup. The
+full $0.943195406 intent-to-absence estimate is retained, bringing cumulative cost
+to $10.471823366 and runtime to 45736.061768 seconds. This is not a capacity
+rejection and contributes no new inference passes.
+
+The approved final-two continuation uses one create and a 60-minute work window
+plus ten minutes for cleanup. At the highest allowed $2.69/h rate, the cumulative
+compute/disk estimate is below $13.63 and cumulative time below 833 minutes, within
+the existing $30 / 1100-minute campaign. The failed PRO 6000 / US-PA-1 pair joins
+the placement history so fresh eligible regions are preferred. Unknown later
+attempts still block another allocation; the flag does not erase consumed markers.
+
+The worker log category summary is also printed to the live Actions log after
+five minutes, permitting diagnosis before final artifact upload. No raw log text
+or credentials are printed. The pinned image, 16 existing passes, two missing
+outputs and frozen evaluator are unchanged.
