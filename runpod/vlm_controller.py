@@ -314,11 +314,13 @@ def preflight(api):
             if evaluation() and resuming() and finishing():
                 rejected = evidence['ledger'].get('finish_rejected_placements')
                 if (not isinstance(rejected, list) or not rejected
-                        or any(not isinstance(p, dict) or set(p) != {'gpu', 'region'}
-                               or p['gpu'] not in GPU_CAPS or not isinstance(p['region'], str)
+                        or any(not isinstance(p, dict) or set(p) != {'gpu', 'region', 'retry_after_epoch'}
+                               or not isinstance(p['gpu'], str) or p['gpu'] not in GPU_CAPS
+                               or not finite(p['retry_after_epoch'], .001) or not isinstance(p['region'], str)
                                or not re.fullmatch(r'[A-Za-z0-9-]+', p['region']) for p in rejected)):
                     raise ValueError('Verified rejected placements required')
-                excluded = {p['region'] for p in rejected if p['gpu'] == name}
+                excluded = {p['region'] for p in rejected
+                            if p['gpu'] == name and time.time() < p['retry_after_epoch']}
                 entry.update(observed_regions=regions, excluded_regions=sorted(set(regions) & excluded))
                 regions = [r for r in regions if r not in excluded]
             entry["regions"] = regions

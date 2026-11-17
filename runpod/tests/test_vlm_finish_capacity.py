@@ -68,7 +68,7 @@ class FinalCapacityRecovery(unittest.TestCase):
         p, usd, seconds, elapsed, rejected = self.verify()
         self.assertEqual(p, recovery.PIN)
         self.assertEqual((usd, seconds, elapsed), (self.clean['estimated_total_usd'], self.prior_seconds+144, 144))
-        self.assertEqual(rejected, [dict(gpu='NVIDIA GeForce RTX 5090', region='TEST-1')])
+        self.assertEqual(rejected, [dict(gpu='NVIDIA GeForce RTX 5090', region='TEST-1', retry_after_epoch=2944)])
 
     def test_unknown_create_error_allocation_and_incomplete_cleanup_block(self):
         self.rows['create-error.json']['categories'] = ['transport_or_response_error']

@@ -3,6 +3,8 @@ import json
 import re
 from pathlib import Path
 
+COOLDOWN_SECONDS = 30 * 60
+
 PIN = dict(
     run_id=44096703333, seed='repeat',
     controller_sha='06606a81b749a5093c1428582eae62f5aa94ac84',
@@ -17,6 +19,7 @@ PIN = dict(
 
 def reconcile(output, prior_usd, prior_seconds):
     from runpod import vlm_ledger as ledger, vlm_repeat_capacity as capacity
+    from runpod.provider import finite
     from runpod.vlm_repeat_resume import finish_pin, RECEIPT, FINISH_RECEIPT
     output = Path(output)
     receipts = {
@@ -30,16 +33,19 @@ def reconcile(output, prior_usd, prior_seconds):
     raw = ledger.artifact_bytes(p['result_artifact_id'], p['result_sha256'], 100000)
     preflight = ledger.zip_json(raw, 'preflight.json')
     spec = ledger.zip_json(raw, 'launch-spec.json')
+    clean = ledger.zip_json(raw, 'cleanup.json')
     regions = preflight.get('regions')
     if (preflight.get('status') != 'preflight_passed'
             or preflight.get('gpu') != 'NVIDIA GeForce RTX 5090'
             or preflight.get('gpu') != spec.get('gpu')
             or preflight.get('cost', {}).get('gpu_hourly_usd') != 1.39
+            or not finite(clean.get('checked_epoch'), .001)
             or not isinstance(regions, list) or not 1 <= len(regions) <= 64
             or any(not isinstance(r, str) or not re.fullmatch(r'[A-Za-z0-9-]+', r) for r in regions)
             or len(set(regions)) != len(regions)):
         raise RuntimeError('Invalid rejected-placement evidence')
-    rejected = [dict(gpu=preflight['gpu'], region=r) for r in regions]
+    rejected = [dict(gpu=preflight['gpu'], region=r,
+                     retry_after_epoch=clean['checked_epoch'] + COOLDOWN_SECONDS) for r in regions]
     return p, usd, seconds, elapsed, rejected
 
 

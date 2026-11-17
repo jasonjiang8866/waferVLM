@@ -129,12 +129,14 @@ The recovery proposal verifies this exact failed run, three immutable artifacts,
 original 14-pass and current 16-pass receipts, prior capacity receipt and cost
 chain. Unknown allocations, different errors, changed receipts, replayed runs
 or incomplete cleanup still block a new create. The rejected GPU/region pairs
-are derived from the verified artifact and excluded from the next continuation.
-An alternative permitted GPU in the same region remains eligible. This scoped
-exclusion is not a claim that the region will stay unavailable permanently.
+are derived from the verified artifact and excluded until 30 minutes after the
+verified primary absence check.
+An alternative permitted GPU in the same region remains eligible. After that cooldown, fresh catalog checks may make the pair eligible again;
+this is not a permanent regional ban.
 
 The next manual dispatch remains capped at **one create request**. It must find
-a different eligible GPU/region combination at a fresh quote before allocation.
+an eligible alternative GPU/region combination during cooldown, or fresh
+capacity after cooldown, at an approved quote before allocation.
 If there is no alternative, it stops during GET-only preflight. This proposal
 does not establish current alternative capacity or schedule a background retry.
 

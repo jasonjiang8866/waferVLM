@@ -1,6 +1,7 @@
 import json
 import os
 import tempfile
+import time
 import unittest
 from pathlib import Path
 from unittest.mock import Mock, patch
@@ -15,7 +16,8 @@ class FinishPricing(unittest.TestCase):
         self.ledger = dict(usd=9.528627960290688, seconds=44477.96864977837,
                            finish_capacity_run_id=c.FINISH_CAPACITY_PIN['run_id'],
                            finish_capacity_seconds=144.38420176506042,
-                           finish_rejected_placements=[dict(gpu='NVIDIA GeForce RTX 5090', region='FAILED-1')],
+                           finish_rejected_placements=[dict(gpu='NVIDIA GeForce RTX 5090', region='FAILED-1',
+                                                            retry_after_epoch=time.time()+3600)],
                            resume_source_run_id=999, resume_capacity_run_id=c.CAPACITY_PIN['run_id'],
                            attempts=[dict(seed=s, accepted=True) for s in (42, 123)])
         self.env = dict(WAFER_VLM_PHASE='repeat', WAFER_VLM_RESUME='1',
@@ -93,6 +95,12 @@ class FinishPricing(unittest.TestCase):
             self.ledger['finish_rejected_placements'] = value
             with self.subTest(value=value), self.assertRaisesRegex(RuntimeError, 'No approved GPU'):
                 self.preflight()
+
+    def test_expired_cooldown_requires_fresh_capacity_but_does_not_ban_region(self):
+        self.ledger['finish_rejected_placements'][0].update(region='TEST-1', retry_after_epoch=1)
+        result = self.preflight()
+        self.assertEqual(result['gpu'], 'NVIDIA GeForce RTX 5090')
+        self.assertEqual(result['regions'], ['TEST-1'])
 
     def test_training_and_other_continuations_keep_the_original_ceiling(self):
         for change in [dict(WAFER_VLM_PHASE='training'), dict(WAFER_VLM_RESUME='0'),
