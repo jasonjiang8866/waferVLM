@@ -1,0 +1,73 @@
+{
+  "id": 10715190,
+  "doi": "10.5281/zenodo.10715190",
+  "created": "2024-02-27T08:57:14.159739+00:00",
+  "modified": "2024-02-27T08:57:14.417166+00:00",
+  "retrieved_date": "2026-11-17",
+  "source": "https://zenodo.org/api/records/10715190",
+  "metadata": {
+    "title": "Carinthia dataset",
+    "doi": "10.5281/zenodo.10715190",
+    "publication_date": "2024-02-27",
+    "license": {
+      "id": "cc-by-4.0"
+    },
+    "creators": [
+      {
+        "name": "Kofler, Corinna",
+        "affiliation": "KAI - Kompetenzzentrum Automobil- und Industrieelektronik GmbH",
+        "orcid": "0000-0003-4056-2617"
+      },
+      {
+        "name": "Strauß, Sabrina",
+        "affiliation": "KAI - Kompetenzzentrum Automobil- und Industrieelektronik GmbH",
+        "orcid": "0000-0001-5527-7654"
+      },
+      {
+        "name": "Zernig, Anja",
+        "affiliation": "KAI - Kompetenzzentrum Automobil- und Industrieelektronik GmbH",
+        "orcid": "0000-0002-4888-7494"
+      },
+      {
+        "name": "Lazaro Garcia, Ernesto",
+        "affiliation": "Infineon Technologies Dresden GmbH & Co. KG"
+      },
+      {
+        "name": "Boxleitner, Michael",
+        "affiliation": "Infineon Technologies Austria AG"
+      },
+      {
+        "name": "Mayr, Beatrix",
+        "affiliation": "Infineon Technologies Austria AG"
+      },
+      {
+        "name": "Dicillia-Kovatsch, Isabell",
+        "affiliation": "Infineon Technologies Austria AG"
+      },
+      {
+        "name": "Dohr, Claudia Anna",
+        "affiliation": "Infineon Technologies Austria AG"
+      }
+    ],
+    "description": "<div>\n<div>The Carinthia dataset contains Scanning Electron Microscope (SEM) images of defects found on one production layer of unstructured semiconductor wafers. The dataset consists of 4,591 images unevenly distributed in six defect classes. The dataset's description is available in the 'carinthia_dataset.html' file, and the images themselves can be found in the 'data.zip' file.</div>\n</div>",
+    "related_identifiers": null
+  },
+  "files": [
+    {
+      "key": "data.zip",
+      "size": 133840870,
+      "checksum": "md5:457011cf9063e5a49751f33ea468309d",
+      "links": {
+        "self": "https://zenodo.org/api/records/10715190/files/data.zip/content"
+      }
+    },
+    {
+      "key": "carinthia_dataset.html",
+      "size": 2603942,
+      "checksum": "md5:7ac95f3ef725c5fb03823f6e53f020b6",
+      "links": {
+        "self": "https://zenodo.org/api/records/10715190/files/carinthia_dataset.html/content"
+      }
+    }
+  ]
+}

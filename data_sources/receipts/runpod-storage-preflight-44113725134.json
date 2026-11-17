@@ -1,0 +1,279 @@
+{
+  "schema_version": 1,
+  "observed_at": "2026-11-17T15:23:20.550279+00:00",
+  "source_sha": "5aeef7a55dea9864a4cf8f519a5dc117c923586a",
+  "run_id": "44113725134",
+  "mode": "read-only",
+  "resources_created": false,
+  "data_imported": false,
+  "global_volume_count": 1,
+  "project_global_volumes": [],
+  "pod_count": 1,
+  "project_pods": [],
+  "cpu_candidates": [
+    {
+      "id": "cpu3c",
+      "vcpu_count": 2,
+      "memory_gb": 4,
+      "compute_usd_per_hour": 0.06,
+      "availability": "HIGH",
+      "data_centers": [
+        {
+          "id": "AP-JP-1",
+          "availability": "HIGH"
+        },
+        {
+          "id": "EU-CZ-1",
+          "availability": "HIGH"
+        },
+        {
+          "id": "EU-NL-1",
+          "availability": "HIGH"
+        },
+        {
+          "id": "EU-RO-1",
+          "availability": "HIGH"
+        },
+        {
+          "id": "EUR-IS-1",
+          "availability": "HIGH"
+        },
+        {
+          "id": "US-CA-2",
+          "availability": "HIGH"
+        },
+        {
+          "id": "US-GA-2",
+          "availability": "HIGH"
+        },
+        {
+          "id": "US-IL-1",
+          "availability": "HIGH"
+        },
+        {
+          "id": "US-KS-2",
+          "availability": "HIGH"
+        },
+        {
+          "id": "US-MD-1",
+          "availability": "HIGH"
+        },
+        {
+          "id": "US-MO-1",
+          "availability": "HIGH"
+        },
+        {
+          "id": "US-MO-2",
+          "availability": "HIGH"
+        },
+        {
+          "id": "US-NC-2",
+          "availability": "HIGH"
+        },
+        {
+          "id": "US-NE-1",
+          "availability": "HIGH"
+        },
+        {
+          "id": "US-WA-1",
+          "availability": "HIGH"
+        }
+      ]
+    },
+    {
+      "id": "cpu5c",
+      "vcpu_count": 2,
+      "memory_gb": 4,
+      "compute_usd_per_hour": 0.07,
+      "availability": "HIGH",
+      "data_centers": [
+        {
+          "id": "EU-RO-1",
+          "availability": "HIGH"
+        },
+        {
+          "id": "EUR-IS-1",
+          "availability": "HIGH"
+        }
+      ]
+    },
+    {
+      "id": "cpu3g",
+      "vcpu_count": 2,
+      "memory_gb": 8,
+      "compute_usd_per_hour": 0.08,
+      "availability": "HIGH",
+      "data_centers": [
+        {
+          "id": "AP-JP-1",
+          "availability": "HIGH"
+        },
+        {
+          "id": "EU-CZ-1",
+          "availability": "HIGH"
+        },
+        {
+          "id": "EU-NL-1",
+          "availability": "HIGH"
+        },
+        {
+          "id": "EU-RO-1",
+          "availability": "HIGH"
+        },
+        {
+          "id": "EUR-IS-1",
+          "availability": "HIGH"
+        },
+        {
+          "id": "US-CA-2",
+          "availability": "HIGH"
+        },
+        {
+          "id": "US-GA-2",
+          "availability": "HIGH"
+        },
+        {
+          "id": "US-IL-1",
+          "availability": "HIGH"
+        },
+        {
+          "id": "US-KS-2",
+          "availability": "HIGH"
+        },
+        {
+          "id": "US-MD-1",
+          "availability": "HIGH"
+        },
+        {
+          "id": "US-MO-1",
+          "availability": "HIGH"
+        },
+        {
+          "id": "US-MO-2",
+          "availability": "HIGH"
+        },
+        {
+          "id": "US-NC-2",
+          "availability": "HIGH"
+        },
+        {
+          "id": "US-NE-1",
+          "availability": "HIGH"
+        },
+        {
+          "id": "US-WA-1",
+          "availability": "HIGH"
+        }
+      ]
+    },
+    {
+      "id": "cpu5g",
+      "vcpu_count": 2,
+      "memory_gb": 8,
+      "compute_usd_per_hour": 0.092,
+      "availability": "HIGH",
+      "data_centers": [
+        {
+          "id": "EU-RO-1",
+          "availability": "HIGH"
+        },
+        {
+          "id": "EUR-IS-1",
+          "availability": "HIGH"
+        }
+      ]
+    },
+    {
+      "id": "cpu3m",
+      "vcpu_count": 2,
+      "memory_gb": 16,
+      "compute_usd_per_hour": 0.11,
+      "availability": "HIGH",
+      "data_centers": [
+        {
+          "id": "AP-JP-1",
+          "availability": "HIGH"
+        },
+        {
+          "id": "EU-CZ-1",
+          "availability": "MEDIUM"
+        },
+        {
+          "id": "EU-NL-1",
+          "availability": "HIGH"
+        },
+        {
+          "id": "EU-RO-1",
+          "availability": "HIGH"
+        },
+        {
+          "id": "EUR-IS-1",
+          "availability": "HIGH"
+        },
+        {
+          "id": "US-CA-2",
+          "availability": "HIGH"
+        },
+        {
+          "id": "US-GA-2",
+          "availability": "HIGH"
+        },
+        {
+          "id": "US-IL-1",
+          "availability": "HIGH"
+        },
+        {
+          "id": "US-KS-2",
+          "availability": "HIGH"
+        },
+        {
+          "id": "US-MD-1",
+          "availability": "HIGH"
+        },
+        {
+          "id": "US-MO-1",
+          "availability": "HIGH"
+        },
+        {
+          "id": "US-MO-2",
+          "availability": "HIGH"
+        },
+        {
+          "id": "US-NC-2",
+          "availability": "HIGH"
+        },
+        {
+          "id": "US-NE-1",
+          "availability": "HIGH"
+        },
+        {
+          "id": "US-WA-1",
+          "availability": "HIGH"
+        }
+      ]
+    },
+    {
+      "id": "cpu5m",
+      "vcpu_count": 2,
+      "memory_gb": 16,
+      "compute_usd_per_hour": 0.13,
+      "availability": "HIGH",
+      "data_centers": [
+        {
+          "id": "EU-RO-1",
+          "availability": "HIGH"
+        },
+        {
+          "id": "EUR-IS-1",
+          "availability": "HIGH"
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "Catalog availability is not a reservation or successful allocation.",
+    "Compute quote excludes storage and request fees.",
+    "Other projects are counted but their resource details are omitted.",
+    "No existing Pod may be reused without checking its workload and mount."
+  ]
+}

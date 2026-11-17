@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "authorization": {
+    "date_sgt": "2026-11-17",
+    "budget_usd": 10,
+    "time_minutes": 500,
+    "approval_required_above_bytes": 10000000000
+  },
+  "status": "accepted",
+  "successful_run_id": "44119575118",
+  "volume_id": "cmvwmviz9000007jteci4ajn8",
+  "payload_bytes": 491223979,
+  "files": 24,
+  "datasets": 3,
+  "runs": [
+    {
+      "run_id": "44118683682",
+      "source_sha": "40b50e340d03bd0bcc2569e305abf96cd09250c1",
+      "status": "partial_or_failed",
+      "controller_seconds": 3.939,
+      "compute_cost_upper_estimate_usd": 0.000109,
+      "receipt": "runpod-import-44118683682.json",
+      "independent_cleanup_receipt": "runpod-cleanup-44118683682.json"
+    },
+    {
+      "run_id": "44119575118",
+      "source_sha": "0ac3a8ac6aff1faf8eff0d0901b0c76d1b267363",
+      "status": "accepted",
+      "controller_seconds": 197.201,
+      "compute_cost_upper_estimate_usd": 0.005478,
+      "receipt": "runpod-import-44119575118.json",
+      "independent_cleanup_receipt": "runpod-cleanup-44119575118.json"
+    }
+  ],
+  "total_controller_seconds": 201.14,
+  "total_compute_cost_upper_estimate_usd": 0.005587,
+  "cost_scope": "Controller compute estimate only; excludes temporary disk, API/storage requests and ongoing Global Volume storage. Not an actual provider invoice.",
+  "remaining_owned_temporary_pods": [],
+  "global_volume_retained": true
+}

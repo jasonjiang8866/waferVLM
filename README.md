@@ -2,6 +2,11 @@
 
 **Turn wafer test maps into defect-pattern labels with compact vision and vision-language models.**
 
+**Data collection / 数据收集:** [Wafer and semiconductor image sources](data_sources/README.md)
+collects licensed SEM images/masks, photoluminescence and EBSD data alongside
+wafer-map sources, with small attributed samples, reproducible downloads and a
+10 GB approval gate for Global Volume imports.
+
 A semiconductor wafer contains many individual chips, called **dies**. A **wafer map** records their test results at each location: **yellow = defective, blue = good, black = outside the wafer**. Failed dies can form recognizable spatial patterns, such as a ring, a local patch, or a scratch-like trace.
 
 waferVLM gives [`Qwen/Qwen3.5-0.8B`](https://huggingface.co/Qwen/Qwen3.5-0.8B) a map and a fixed classification question, then returns one of eight pattern labels. A small LoRA adapter teaches the model this task. The current experiment classifies appearance; it does not establish the manufacturing root cause.

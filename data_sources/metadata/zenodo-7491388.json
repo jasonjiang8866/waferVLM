@@ -1,0 +1,49 @@
+{
+  "id": 7491388,
+  "doi": "10.5281/zenodo.7491388",
+  "created": "2022-12-29T08:47:02.696115+00:00",
+  "modified": "2023-01-01T11:16:26.644602+00:00",
+  "retrieved_date": "2026-11-17",
+  "source": "https://zenodo.org/api/records/7491388",
+  "metadata": {
+    "title": "Electron backscatter diffraction patterns from a single crystal silicon wafer",
+    "doi": "10.5281/zenodo.7491388",
+    "publication_date": "2022-12-29",
+    "license": {
+      "id": "cc-by-4.0"
+    },
+    "creators": [
+      {
+        "name": "Håkon Wiik Ånes",
+        "affiliation": "Norwegian University of Science and Technology",
+        "orcid": "0000-0002-1213-2911"
+      },
+      {
+        "name": "Jarle Hjelen",
+        "affiliation": "Norwegian University of Science and Technology"
+      },
+      {
+        "name": "Antonius T. J. van Helvoort",
+        "affiliation": "Norwegian University of Science and Technology",
+        "orcid": "0000-0001-6437-1474"
+      },
+      {
+        "name": "Knut Marthinsen",
+        "affiliation": "Norwegian University of Science and Technology",
+        "orcid": "0000-0003-1732-6421"
+      }
+    ],
+    "description": "<p>An electron backscatter diffraction (EBSD) dataset of (50, 50) patterns of (480, 480) pixel resolution from a single crystal silicon wafer. The patterns were acquired on a NORDIF UF-1100 detector in a Zeiss Supra 55 VP FEG SEM operated at 20 kV. The working distance was 16.1 mm and the nominal sample tilt was 70<span class=\"math-tex\">\\(^{\\circ}\\)</span>. The nominal step size is 40 &mu;m, so the scan covers a nominal area of (2 x 2) &mu;m<sup>2</sup>.</p>\n\n<p>The patterns are stored in NORDIF&#39;s binary file format (Pattern.dat) with the top-left pixel in the top-left pattern as the first byte, and the bottom-right pixel in the bottom-right pattern as the last byte. The patterns can be opened in for example the open-source Python package kikuchipy (https://github.com/pyxem/kikuchipy) with the following commands:</p>\n\n<pre><code class=\"language-python\">import kikuchipy as kp\ns = kp.load(\"Pattern.dat\")</code></pre>",
+    "related_identifiers": null
+  },
+  "files": [
+    {
+      "key": "ebsd_si_wafer.zip",
+      "size": 311310347,
+      "checksum": "md5:444ec4188ba8c8bda5948c2bf4f9a672",
+      "links": {
+        "self": "https://zenodo.org/api/records/7491388/files/ebsd_si_wafer.zip/content"
+      }
+    }
+  ]
+}

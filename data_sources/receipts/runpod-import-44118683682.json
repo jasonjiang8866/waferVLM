@@ -1,0 +1,27 @@
+{
+  "status": "partial_or_failed",
+  "run_id": "44118683682",
+  "attempt": "1",
+  "source_sha": "40b50e340d03bd0bcc2569e305abf96cd09250c1",
+  "image": "python@sha256:05a994d2344eb364cc186910f4fc8786a38215f39f00d0acc25bff33a08f4177",
+  "volume_id": "cmvwmviz9000007jteci4ajn8",
+  "approved_budget_usd": 0.5,
+  "sizes": {
+    "download_bytes": 491223979,
+    "expanded_bytes_ceiling": 843751708,
+    "peak_bytes_ceiling": 1334975687,
+    "limit_bytes": 10000000000
+  },
+  "aggregate_work_seconds_cap": 1500,
+  "stages": [],
+  "cleanup": {
+    "status": "cleanup_verified",
+    "deleted_ids": [
+      "92rbh6cu5uw4tg"
+    ],
+    "remaining_owned_pods": []
+  },
+  "controller_elapsed_seconds": 3.939,
+  "compute_cost_upper_estimate_usd": 0.000109,
+  "estimate_note": "Conservative compute estimate; excludes persistent storage and request fees. Not a provider billing hard cap."
+}

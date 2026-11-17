@@ -2,10 +2,28 @@ name: RunPod observation and offline contract
 on:
   pull_request:
   workflow_dispatch:
+    inputs:
+      storage_action:
+        description: Storage observation or explicitly approved import
+        type: choice
+        options: [observe, import]
+        default: observe
+      confirm_paid_storage_import:
+        description: User approved CPU import costs (never needed for observation)
+        type: boolean
+        default: false
+      approved_storage_budget_usd:
+        description: Approved import budget including temporary compute, disk and requests (0.50-1.00 USD)
+        type: string
+        default: '0'
+      global_volume_id:
+        description: Existing Global Volume ID; empty selects unique volume or wafervlm-public-datasets
+        type: string
+        default: ''
 permissions:
   contents: read
 concurrency:
-  group: wafervlm-observation-${{ github.ref }}
+  group: ${{ inputs.storage_action == 'import' && 'wafervlm-dataset-import' || format('wafervlm-observation-{0}', github.ref) }}
   cancel-in-progress: false
 env:
   BROKER_SHA: dfd8c3c7250ac5a73c4c703932e9fb93d07dcb45
@@ -74,5 +92,84 @@ jobs:
         with:
           name: wafervlm-preflight-${{ github.run_id }}-${{ github.run_attempt }}
           path: out/
+          retention-days: 30
+          if-no-files-found: error
+  storage-observe:
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      github.repository == 'jasonjiang8866/waferVLM' &&
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feat/wafer-dataset-collection')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: GET-only Global Volume and CPU inventory
+        env:
+          RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY }}
+        run: python -m runpod.storage_preflight --output storage-observation
+      - name: Publish sanitized storage observation
+        if: always()
+        run: |
+          if [ -f storage-observation/summary.md ]; then cat storage-observation/summary.md >> "$GITHUB_STEP_SUMMARY"; fi
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: wafervlm-storage-preflight-${{ github.run_id }}-${{ github.run_attempt }}
+          path: storage-observation/
+          retention-days: 30
+          if-no-files-found: error
+  storage-import:
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      github.repository == 'jasonjiang8866/waferVLM' &&
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feat/wafer-dataset-collection') &&
+      inputs.storage_action == 'import' && inputs.confirm_paid_storage_import
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Offline collection and lifecycle contracts
+        run: python -m unittest discover -s data_sources/tests -p 'test_*.py' -v
+      - name: Import public data and verify a fresh Global Volume mount
+        env:
+          RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY }}
+          APPROVED_STORAGE_BUDGET: ${{ inputs.approved_storage_budget_usd }}
+          TARGET_GLOBAL_VOLUME: ${{ inputs.global_volume_id }}
+        run: >-
+          python -m runpod.storage_import import --confirm-paid
+          --approved-budget-usd "$APPROVED_STORAGE_BUDGET"
+          --volume-id "$TARGET_GLOBAL_VOLUME" --output storage-import
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: wafervlm-storage-import-${{ github.run_id }}-${{ github.run_attempt }}
+          path: storage-import/
+          retention-days: 30
+          if-no-files-found: warn
+  storage-cleanup:
+    needs: storage-import
+    if: always() && needs.storage-import.result != 'skipped'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Independently remove only this run's owned temporary CPU Pods
+        env:
+          RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY }}
+        run: python -m runpod.storage_import cleanup --output storage-cleanup
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: wafervlm-storage-cleanup-${{ github.run_id }}-${{ github.run_attempt }}
+          path: storage-cleanup/
           retention-days: 30
           if-no-files-found: error

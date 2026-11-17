@@ -1,0 +1,55 @@
+{
+  "id": 16895427,
+  "doi": "10.5281/zenodo.16895427",
+  "created": "2025-08-22T07:32:59.415084+00:00",
+  "modified": "2025-08-22T07:32:59.694297+00:00",
+  "retrieved_date": "2026-11-17",
+  "source": "https://zenodo.org/api/records/16895427",
+  "metadata": {
+    "title": "Carinthia-S dataset",
+    "doi": "10.5281/zenodo.16895427",
+    "publication_date": "2025-08-20",
+    "license": {
+      "id": "cc-by-4.0"
+    },
+    "creators": [
+      {
+        "name": "Kofler, Corinna",
+        "affiliation": "KAI Kompetenzzentrum Automobil- und Industrieelektronik GmbH",
+        "orcid": "0000-0003-4056-2617"
+      },
+      {
+        "name": "Hasić, Vahidin",
+        "affiliation": "University of Sarajevo, Faculty of Electrical Engineering",
+        "orcid": "0009-0003-6306-8037"
+      }
+    ],
+    "description": "<p>The&nbsp;<em>Carinthia-S dataset</em> is an enhanced version of the original publicly available Carinthia dataset (refer to the \"Additional details\" section), augmented with expert-validated binary segmentation masks for each defect image. It contains Scanning Electron Microscope (SEM) images of defects observed on a single production layer of unstructured semiconductor wafers, along with their corresponding segmentation masks. The dataset comprises 4,591 images, each paired with a segmentation mask, unevenly distributed across six defect classes. The dataset's description is available in the 'carinthia-s_dataset.html' file, and the images themselves can be found in the 'data.zip' file.</p>",
+    "related_identifiers": [
+      {
+        "identifier": "10.5281/zenodo.10696644",
+        "relation": "isDerivedFrom",
+        "resource_type": "dataset",
+        "scheme": "doi"
+      }
+    ]
+  },
+  "files": [
+    {
+      "key": "data.zip",
+      "size": 139225942,
+      "checksum": "md5:3a41242574635cf1302fab15accb7730",
+      "links": {
+        "self": "https://zenodo.org/api/records/16895427/files/data.zip/content"
+      }
+    },
+    {
+      "key": "carinthia-s_dataset.html",
+      "size": 2104107,
+      "checksum": "md5:4d9ca3ed51dfc97444939f742496d2d9",
+      "links": {
+        "self": "https://zenodo.org/api/records/16895427/files/carinthia-s_dataset.html/content"
+      }
+    }
+  ]
+}
