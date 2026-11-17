@@ -40,6 +40,7 @@ class RepeatContinuation(unittest.TestCase):
                 self.receipt['new_outputs'].append(name)
         write_jsonl(f.data / 'validation.jsonl', self.reference)
         self.out = f.root / 'resumed'
+        self.endpoints = f.root / 'endpoints.json'; write_json(self.endpoints, self.rows)
 
     def run_resume(self, fail=False):
         executed = []
@@ -57,7 +58,7 @@ class RepeatContinuation(unittest.TestCase):
              patch.object(c, 'prepare_endpoints', return_value=self.rows), \
              patch.object(c, 'run_process', side_effect=evaluate) as original:
             try:
-                report = resume.resume_validation(self.fixture.data, 'endpoints', self.out, 'source', 1200)
+                report = resume.resume_validation(self.fixture.data, self.endpoints, self.out, 'source', 1200)
             finally:
                 self.assertIs(c.run_process, original)
         return report, executed
@@ -84,7 +85,7 @@ class RepeatContinuation(unittest.TestCase):
     def test_untrusted_partial_rejected_before_any_inference(self):
         bad = self.fixture.root / 'bad.zip'; bad.write_bytes(b'not the reviewed artifact')
         with patch.object(c, 'run_process') as process, self.assertRaisesRegex(ValueError, 'checksum'):
-            resume.resume_validation(self.fixture.data, 'endpoints', self.out, bad, 1200)
+            resume.resume_validation(self.fixture.data, self.endpoints, self.out, bad, 1200)
         process.assert_not_called()
 
     def test_resume_reserves_30_plus_10_minutes_within_existing_total(self):

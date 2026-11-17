@@ -3,6 +3,7 @@ import argparse
 import json
 import os
 import shutil
+import signal
 import tempfile
 import zipfile
 from pathlib import Path
@@ -174,6 +175,7 @@ def reconcile_partial(output, prior_usd, prior_seconds):
 def resume_validation(dataset, endpoints, output, source, timeout_seconds):
     from wafervlm import confirmation as c
     from wafervlm.core import write_json
+    endpoints = json.loads(Path(endpoints).read_text())
     with tempfile.TemporaryDirectory() as tmp:
         previous, receipt = verify_source(source, Path(tmp) / 'source')
         reusable = {r['output'] for r in receipt['reused']}
@@ -218,6 +220,9 @@ if __name__ == '__main__':
     resume.add_argument('--timeout-seconds', type=int, required=True)
     args = vars(parser.parse_args())
     if args.pop('mode') == 'resume':
+        def interrupted(signum, frame):
+            raise KeyboardInterrupt('Continuation interrupted; preserve completed evidence')
+        signal.signal(signal.SIGTERM, interrupted)
         resume_validation(**args)
     else:
         from runpod.vlm_ledger import REPEAT_ATTEMPTS
