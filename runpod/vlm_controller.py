@@ -128,7 +128,9 @@ def quote(rate, ledger=None):
             if (ledger.get('resume_capacity_run_id') != CAPACITY_PIN['run_id']
                     or not finite(spent_retry, .001)):
                 raise ValueError('Capacity rejection must be reconciled before fallback')
-            maximum -= math.ceil(spent_retry)
+            # Slower approved fallback GPUs need headroom for the same four passes.
+            # Reallocate existing campaign time; keep the USD/runtime totals intact.
+            maximum = 45 * 60 - math.ceil(spent_retry)
             if maximum < 1200:
                 raise ValueError('Insufficient continuation allowance for four passes')
     elif evaluation() and (not finite(spent) or spent > 3540):

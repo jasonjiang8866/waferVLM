@@ -24,8 +24,10 @@ promoted on this evidence alone.
 
 The rejected create adds a conservative 144.352 seconds / US$0.036045 to the
 ledger despite no confirmed allocation. Current totals are **US$9.015289 /
-699.642 minutes**. Deducting that elapsed time leaves **1655 work seconds plus
-600 cleanup seconds**, within the original continuation's 40-minute reserve.
+699.642 minutes**. For the potentially slower fallback GPU, reallocate 15 more minutes from the
+existing campaign allowance. Deducting the rejected attempt leaves **2555 work
+seconds plus 600 cleanup seconds**. The shared continuation slice, including the
+rejection, is bounded by 55 minutes and approximately US$0.65 at the MIG ceiling.
 MIG is capped at US$0.69/hour; RTX 3090 at US$0.50/hour, plus the same temporary
 disk. The cumulative US$30 / 1100-minute limits remain unchanged. Actual invoices
 may be lower than this conservative intent-to-absence accounting.

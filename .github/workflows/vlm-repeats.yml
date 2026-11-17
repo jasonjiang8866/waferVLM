@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       confirm_paid:
-        description: 'Use the extended US$30 / 1100-minute total authorization to resume 14/18 verified passes (30 work + 10 cleanup minutes)'
+        description: 'Use the extended US$30 / 1100-minute total authorization to resume 14/18 verified passes (45 shared work + 10 cleanup minutes; includes rejected attempt)'
         type: boolean
         required: true
         default: false

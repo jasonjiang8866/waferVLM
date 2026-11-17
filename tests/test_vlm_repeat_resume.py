@@ -107,10 +107,10 @@ class RepeatContinuation(unittest.TestCase):
                     resume_retry_seconds=144.35189819335938)
         with patch.dict(os.environ,WAFER_VLM_PHASE='repeat',WAFER_VLM_RESUME='1',WAFER_VLM_RESUME_RETRY='1'):
             q=controller.quote(.69,ledger)
-            self.assertEqual(q['work_seconds'],1655)
-            self.assertLess(q['planned_total_usd'],9.5785295)
-            self.assertLess(q['planned_total_seconds'],41834.144988689426+2400)
-            for change in (dict(ledger,resume_retry_seconds=700),dict(ledger,resume_capacity_run_id=0),
+            self.assertEqual(q['work_seconds'],2555)
+            self.assertLess(q['planned_total_usd'],9.63)
+            self.assertLess(q['planned_total_seconds'],41834.144988689426+3300)
+            for change in (dict(ledger,resume_retry_seconds=1600),dict(ledger,resume_capacity_run_id=0),
                            dict(ledger,resume_retry_seconds=float('nan'))):
                 with self.assertRaises(ValueError):controller.quote(.69,change)
 
