@@ -34,7 +34,7 @@ The [independent cleanup](https://github.com/jasonjiang8866/waferVLM/actions/run
 confirmed three consecutive absence checks after the primary cleanup. No
 persistent volume was created.
 
-## One allocation, two missing processes
+## Original final-two plan (expanded below on 2026-11-17)
 
 - Copy all 16 verified output directories, then run only
   `seed123-step250-repeat2` and `seed123-step250-repeat3` in fresh processes.
@@ -147,3 +147,45 @@ US$1.39/hour ceiling plus temporary disk, the next increment is at most about
 788.882811 minutes**, no higher than the preceding final-two envelope. The same
 US$30 /1100-minute campaign, expiry, frozen evaluator/image and untouched holdout
 apply. No extra experiment budget is requested.
+
+
+## Approved global GPU expansion (2026-11-17)
+
+The user approved merging PR #46 and explicitly allowed RTX 3090 /4090 /5090,
+RTX PRO 6000 Server /Workstation and PRO 6000 MIG in every region. This supersedes
+the earlier MIG exclusion. The final-two controller now queries all eight exact
+RunPod GPU IDs, including Workstation Max-Q and MIG 24 GB /48 GB, with CUDA >=12.8
+and no country or datacenter restriction. All fresh eligible regions for the
+selected model are passed to RunPod; a catalog entry is not guaranteed capacity.
+The existing SECURE cloud mode is retained.
+
+Operational hourly ceilings within the existing US$30 /1100-minute campaign:
+
+| GPU | USD/hour ceiling |
+|---|---:|
+| RTX 3090 | 0.50 |
+| RTX 4090 | 0.89 |
+| RTX 5090 | 1.39 |
+| PRO 6000 Server /Workstation /Max-Q | 2.69 |
+| PRO 6000 MIG 24 GB | 0.69 |
+| PRO 6000 MIG 48 GB | 1.39 |
+
+The PRO limits use the current [RunPod pricing page](https://www.runpod.io/pricing)
+as a conservative operating ceiling; every launch still requires fresh catalog
+prices and a post-allocation rate check. They do not expand the total budget.
+The maximum incremental estimate at 2.69/hour is approximately US$2.1404 including
+60 GB temporary disk and the cleanup reserve; planned cumulative usage stays
+below US$11.67 /789 minutes. Work remains 37m35s plus 10m cleanup.
+
+Prefer fresh placements to the known failed GPU/region pair even after its
+30-minute cooldown. Among fresh choices, order 4090, 5090, 3090, full PRO 6000
+(Server, Workstation, Max-Q), MIG 48 GB, MIG 24 GB. During cooldown the failed
+pair is excluded; after expiry it can be used if no fresh alternative is available.
+This is one create request, not a loop of speculative paid attempts.
+
+Independent cleanup reconstructs recorded spend directly from an exactly owned
+Pod, without rerunning launch price/receipt admission. This allows cleanup of a
+newly allowed PRO GPU even when the independent workflow has no local intent or
+continuation flags. Ownership, mount checks and consecutive absence evidence
+remain required. The evaluator, model image, frozen weights, data and held-out
+reservation are unchanged. The study remains 16/18 until new verified results exist.

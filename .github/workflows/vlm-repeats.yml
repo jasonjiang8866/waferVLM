@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       confirm_paid:
-        description: 'Complete the final two passes from the verified 16/18 archive; one create, 37m35s work + 10m cleanup after reconciled capacity rejection; within US$30 / 1100 minutes'
+        description: 'Complete the final two passes from the verified 16/18 archive; global approved GPU selection; one create, 37m35s work + 10m cleanup; within US$30 / 1100 minutes'
         type: boolean
         required: true
         default: false
