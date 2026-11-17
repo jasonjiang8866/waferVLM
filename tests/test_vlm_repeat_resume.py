@@ -100,6 +100,20 @@ class RepeatContinuation(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     controller.quote(.89, changed)
 
+    def test_capacity_recovery_deducts_failed_elapsed_time_without_resetting_caps(self):
+        from runpod.vlm_repeat_capacity import PIN
+        ledger=dict(usd=9.015288746456742,seconds=41978.496886882785,
+                    resume_source_run_id=resume.PIN['run_id'],resume_capacity_run_id=PIN['run_id'],
+                    resume_retry_seconds=144.35189819335938)
+        with patch.dict(os.environ,WAFER_VLM_PHASE='repeat',WAFER_VLM_RESUME='1',WAFER_VLM_RESUME_RETRY='1'):
+            q=controller.quote(.69,ledger)
+            self.assertEqual(q['work_seconds'],2555)
+            self.assertLess(q['planned_total_usd'],9.63)
+            self.assertLess(q['planned_total_seconds'],41834.144988689426+3300)
+            for change in (dict(ledger,resume_retry_seconds=1600),dict(ledger,resume_capacity_run_id=0),
+                           dict(ledger,resume_retry_seconds=float('nan'))):
+                with self.assertRaises(ValueError):controller.quote(.69,change)
+
 
 if __name__ == '__main__':
     unittest.main()

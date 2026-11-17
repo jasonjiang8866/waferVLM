@@ -23,6 +23,7 @@ import urllib.request
 from pathlib import Path
 
 from runpod.vlm_repeat_resume import enabled as resuming, PIN as RESUME_PIN, GPU as RESUME_GPU, RESUME_WORK_SECONDS, RESUME_EXPIRES
+from runpod.vlm_repeat_capacity import enabled as resume_retry, PIN as CAPACITY_PIN
 
 from runpod.provider import (
     MIG,
@@ -122,6 +123,16 @@ def quote(rate, ledger=None):
         if ledger is None or ledger.get('resume_source_run_id') != RESUME_PIN['run_id']:
             raise ValueError('Verified partial receipt is required before continuation')
         maximum = RESUME_WORK_SECONDS
+        if resume_retry():
+            spent_retry = ledger.get('resume_retry_seconds')
+            if (ledger.get('resume_capacity_run_id') != CAPACITY_PIN['run_id']
+                    or not finite(spent_retry, .001)):
+                raise ValueError('Capacity rejection must be reconciled before fallback')
+            # Slower approved fallback GPUs need headroom for the same four passes.
+            # Reallocate existing campaign time; keep the USD/runtime totals intact.
+            maximum = 45 * 60 - math.ceil(spent_retry)
+            if maximum < 1200:
+                raise ValueError('Insufficient continuation allowance for four passes')
     elif evaluation() and (not finite(spent) or spent > 3540):
         raise ValueError('Repeat evaluation allowance exhausted')
     else:
@@ -234,7 +245,8 @@ def preflight(api):
     if any(p.get("env", {}).get(OWNER) == REPOSITORY for p in pods):
         raise RuntimeError("An owned Pod already exists; cleanup and inspect before launch")
     choices, catalog = [], []
-    for name in ((RESUME_GPU,) if evaluation() and resuming() else GPUS):
+    repeat_gpus = (MIG, 'NVIDIA GeForce RTX 3090') if resume_retry() else (RESUME_GPU,)
+    for name in (repeat_gpus if evaluation() and resuming() else GPUS):
         minimum_cuda = MIN_CUDA_BY_GPU[name]
         entry = {"gpu": name, "min_cuda_version": minimum_cuda, "rate": None, "regions": []}
         try:
@@ -408,6 +420,9 @@ def cleanup(api):
                     raise RuntimeError("Missing cumulative cost recovery metadata")
                 if evaluation() and resuming():
                     prior['resume_source_run_id'] = RESUME_PIN['run_id']
+                    if resume_retry():
+                        prior['resume_capacity_run_id'] = CAPACITY_PIN['run_id']
+                        prior['resume_retry_seconds'] = float(matches[0]['env']['WAFER_RESUME_RETRY_SECONDS'])
                 state.update(
                     started_epoch=started,
                     cost=quote(float(matches[0]["env"]["WAFER_RATE"]), prior),
@@ -570,6 +585,8 @@ def launch(api):
         payload['env'].pop('WAFER_SEED')
         if resuming():
             payload['env']['WAFER_VLM_RESUME'] = '1'
+            if resume_retry():
+                payload['env']['WAFER_RESUME_RETRY_SECONDS'] = str(evidence['ledger']['resume_retry_seconds'])
         payload['env']['WAFER_INPUT_MANIFEST_SHA'] = spec['input_manifest_sha256']
     handlers = {
         s: signal.signal(s, interrupt) for s in (signal.SIGALRM, signal.SIGTERM, signal.SIGINT)

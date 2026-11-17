@@ -33,6 +33,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: python -m runpod.vlm_repeat_resume verify --output vlm-receipt-check
+      - name: Reconcile the capacity-rejected continuation without a GPU
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python -m runpod.vlm_repeat_capacity --output vlm-receipt-check
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: vlm-receipt-verification-${{ github.run_id }}
@@ -40,6 +44,7 @@ jobs:
             vlm-receipt-check/receipt-summary.json
             vlm-receipt-check/input-verification.json
             vlm-receipt-check/resume-verification.json
+            vlm-receipt-check/capacity-recovery.json
           if-no-files-found: error
   protocol:
     runs-on: ubuntu-24.04

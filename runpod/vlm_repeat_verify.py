@@ -46,13 +46,15 @@ def verify_repeat_archive(archive, spec):
         for r in records:
             if r.get('adapter_sha256') != weights.get((r.get('seed'), r.get('step'))):
                 raise ValueError('Pass does not use frozen weights')
+        reused_outputs = set()
         if 'resume_source_run_id' in spec:
-            from runpod.vlm_repeat_resume import PIN, RECEIPT
+            from runpod.vlm_repeat_resume import PIN, RECEIPT, GPU as original_gpu
             receipt = json.loads(RECEIPT.read_text())
             if (spec['resume_source_run_id'] != PIN['run_id']
                     or json.loads((repeats / 'resume.json').read_text()) != receipt):
                 raise ValueError('Continuation source receipt mismatch')
             for old in receipt['reused']:
+                reused_outputs.add(old['output'])
                 folder = repeats / old['output']
                 if (sha256_file(folder / 'checksums.json') != old['checksums_sha256']
                         or sha256_file(folder / 'predictions.jsonl') != old['predictions_sha256']):
@@ -60,9 +62,11 @@ def verify_repeat_archive(archive, spec):
         elif (repeats / 'resume.json').exists():
             raise ValueError('Unexpected continuation output')
         report = summarize_repeats(records, read_jsonl(repeats / 'validation-reference.jsonl'), base=repeats)
-        for env in report['environments']:
+        ordered = sorted(records, key=lambda r: (r['seed'], r['step'], r['repeat']))
+        for record, env in zip(ordered, report['environments']):
+            expected_gpu = original_gpu if record['output'] in reused_outputs else hardware['gpu']
             if (env['source_sha'] != spec['source_sha'] or env['image_digest'] != spec['image'].split('@')[1]
-                    or env['gpu'] != hardware['gpu']):
+                    or env['gpu'] != expected_gpu):
                 raise ValueError('Evaluation process provenance mismatch')
         if report != json.loads((repeats / 'summary.json').read_text()):
             raise ValueError('Saved summary differs from recomputed predictions')
