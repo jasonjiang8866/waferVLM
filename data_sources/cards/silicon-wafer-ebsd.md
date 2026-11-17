@@ -13,7 +13,8 @@
 - Good projects: orientation / pattern-quality maps and self-supervised microscopy
   representation. Neighboring scan points are correlated; split spatially or by
   acquisition, not by random pixels.
-- Global Volume: **not imported**. Retain the original ZIP on the volume; expand
+- Global Volume: **imported and independently verified across EU-RO-1 → US-CA-2**;
+  see the [verified location and receipts](../RUNPOD.md#verified-import). Retain the original ZIP on the volume; expand
   locally and use the official reader in a separate experiment environment.
 
 Citation: dataset DOI https://doi.org/10.5281/zenodo.7491388 and the associated

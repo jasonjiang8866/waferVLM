@@ -3,6 +3,11 @@
 Keep this collection in **waferVLM**, alongside the existing experiment. Start here
 when choosing data for a new project. Sources were checked on **2026-11-17**.
 
+**First cloud batch accepted:** 3 datasets / 24 files / **491,223,979 bytes** are
+stored on RunPod Global Volume, verified from a second Pod in another region.
+All temporary import/verification Pods were removed. See [locations, costs and
+receipts](RUNPOD.md#verified-import).
+
 ## Available sources
 
 | Dataset / data card | Modality and scale | Size | Collection status / useful next project |

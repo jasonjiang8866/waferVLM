@@ -21,7 +21,8 @@
 - **Overlap:** original Carinthia image family plus masks; never split the two
   releases across training and evaluation as independent datasets.
 - Local full download and preview extraction verified. [12 original image/mask
-  pairs](../samples/carinthia-s/README.md) are in Git. Global Volume: **not imported**.
+  pairs](../samples/carinthia-s/README.md) are in Git. Global Volume: **imported and independently verified across EU-RO-1 → US-CA-2**;
+  see the [verified location and receipts](../RUNPOD.md#verified-import).
 - Good projects: defect retrieval, rare-class analysis, classification + mask
   localization. Limits: severe imbalance, single layer, center/border/imaging
   artifacts; no reliable factory-wide or root-cause claims from these labels.

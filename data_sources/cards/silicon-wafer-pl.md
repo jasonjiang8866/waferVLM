@@ -13,7 +13,8 @@
 - Proposed use: condition comparisons, line profiles, quantitative image changes,
   microscopy QA. Confirm RAW numeric encoding/endianness before visualizing it;
   do not infer this only from the file size.
-- Global Volume: **not imported**. The source SEM PNG can be kept in Git as a
+- Global Volume: **imported and independently verified across EU-RO-1 → US-CA-2**;
+  see the [verified location and receipts](../RUNPOD.md#verified-import). The original SEM PNG is in Git as a
   small, attributed example; full files use the same download/import recipe.
 
 Citation: use the creator list and associated paper identifiers in the provider

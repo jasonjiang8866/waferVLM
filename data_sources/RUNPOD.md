@@ -26,6 +26,46 @@ named for waferVLM. No resources were changed. Six 2-vCPU flavors were listed;
 This is catalog evidence, not a capacity reservation. See the
 [sanitized receipt](receipts/runpod-storage-preflight-44113725134.json).
 
+## Verified import
+
+[Run 44119575118](https://github.com/jasonjiang8866/waferVLM/actions/runs/44119575118)
+completed successfully on **2026-11-17 at 23:57 SGT**, from source
+`0ac3a8ac6aff1faf8eff0d0901b0c76d1b267363`.
+
+- Existing Global Volume: `cmvwmviz9000007jteci4ajn8`.
+- Attach at `/wafer-public-data` (a future Pod may use another verified mount).
+- Collection root: `/wafer-public-data/waferVLM-datasets/`.
+- Importer: `2pq709fikorje7` in **EU-RO-1**; independent reader:
+  `ny3ubrxr1g0s2j` in **US-CA-2**. Both were 2-vCPU `cpu3c` at US$0.06/hour.
+- All **24 files / 491,223,979 bytes** passed byte size, publisher MD5, pinned
+  SHA256 and ZIP CRC/expansion checks on the importer and fresh-mounted reader.
+- Both Pods were deleted. Independent cleanup job `134169342931` also confirmed
+  no owned temporary Pods remained. The Global Volume and datasets remain.
+
+| Dataset | Immutable directory under collection root | Payload bytes |
+|---|---|---:|
+| Carinthia-S | `carinthia-s/zenodo-16895427/` | 141,330,049 |
+| Silicon wafer PL / SEM / CSV | `silicon-wafer-pl/zenodo-19603335/` | 38,583,583 |
+| Silicon wafer EBSD | `silicon-wafer-ebsd/zenodo-7491388/` | 311,310,347 |
+
+Each directory contains original files plus a last-written `receipt.json`.
+Keep these versions immutable; use `verify-volume` when attaching to a new Pod.
+Do **not** rerun `import` for these same versions: it intentionally refuses to
+replace existing data. Future additions need a new reviewed catalog batch.
+
+Evidence: [import + independent readback](receipts/runpod-import-44119575118.json),
+[independent cleanup](receipts/runpod-cleanup-44119575118.json), and the
+[authorization/execution ledger](receipts/collection-execution.json).
+The accepted controller took **197.201 seconds**. Together with the first failed
+attempt, controller time was **201.140 seconds** and the conservative compute
+estimate was **US$0.005587**. This is not a provider bill; temporary disk, request
+fees and ongoing storage are additional. No compute remains running for this task.
+
+Both successful Pods initially returned exec 404, then 409, then became ready.
+The bounded readiness wait resolved this observed startup sequence without
+recreating a Pod or retrying the data worker. This evidence supports startup lag
+for these runs; it does not imply every 404 is retryable.
+
 ## Actions import and authorized budget
 
 Use the existing **RunPod observation and offline contract** workflow
@@ -86,7 +126,7 @@ Before provisioning, inspect existing owned Pods/volumes, reuse a suitable Globa
 Volume when possible, verify region/cloud compatibility and an exact compute
 price/runtime/cleanup bound. Data storage below 10 GB is within the user's
 collection request; the older model-training budgets are not a new upload-Pod
-budget. Resolve the uploader compute cost if a new Pod is necessary. Keep the
+budget. This task has its own US$10 / 500-minute authorization. Keep the
 account key in GitHub Actions Secrets; do not send it to a Pod.
 
 ## Commands on a verified, already attached Pod
