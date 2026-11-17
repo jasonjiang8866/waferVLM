@@ -25,6 +25,7 @@ from pathlib import Path
 from runpod.vlm_repeat_resume import enabled as resuming, PIN as RESUME_PIN, GPU as RESUME_GPU, RESUME_WORK_SECONDS, RESUME_EXPIRES
 from runpod.vlm_repeat_resume import finishing, active_pin, FINISH_RECEIPT, FINISH_PIN_FILE
 from runpod.vlm_repeat_capacity import enabled as resume_retry, PIN as CAPACITY_PIN
+from runpod.vlm_repeat_finish_capacity import PIN as FINISH_CAPACITY_PIN
 
 from runpod.provider import (
     MIG,
@@ -49,7 +50,17 @@ GPU_CAPS = {
     "NVIDIA GeForce RTX 3090": 0.50,
     "NVIDIA GeForce RTX 5090": 1.19,
 }
-MIN_CUDA_BY_GPU = {name: "12.8" for name in GPU_CAPS}
+# User expanded the final-two GPU/region scope on 2026-11-17. These
+# operational ceilings fit the existing campaign; they are not new budgets.
+PRO = "NVIDIA RTX PRO 6000 Blackwell Server Edition"
+WORKSTATION = "NVIDIA RTX PRO 6000 Blackwell Workstation Edition"
+MAX_Q = "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition"
+MIG48 = "NVIDIA RTX PRO 6000 Blackwell Server Edition MIG 2g.48gb"
+FINISH_CAPS = {**GPU_CAPS, "NVIDIA GeForce RTX 5090": 1.39,
+               PRO: 2.69, WORKSTATION: 2.69, MAX_Q: 2.69, MIG48: 1.39}
+FINISH_GPUS = ("NVIDIA GeForce RTX 4090", "NVIDIA GeForce RTX 5090",
+               "NVIDIA GeForce RTX 3090", PRO, WORKSTATION, MAX_Q, MIG48, MIG)
+MIN_CUDA_BY_GPU = {name: "12.8" for name in FINISH_CAPS}
 GPUS = ("NVIDIA GeForce RTX 4090", MIG, "NVIDIA GeForce RTX 3090", "NVIDIA GeForce RTX 5090")
 OWNER = "WAFER_MANAGED_BY"
 AUTHORIZATION = "wafer-20261107-usd20"
@@ -126,10 +137,10 @@ def identity():
 
 
 def gpu_price_caps():
-    """The final-two slice has a separate reviewed 5090 price ceiling."""
+    """Broader GPU authorization applies only to this final-two slice."""
     caps = dict(GPU_CAPS)
     if evaluation() and resuming() and resume_retry() and finishing():
-        caps["NVIDIA GeForce RTX 5090"] = 1.39
+        caps = dict(FINISH_CAPS)
     return caps
 
 
@@ -150,7 +161,13 @@ def quote(rate, ledger=None):
         if finishing():
             if not resume_retry() or ledger.get('resume_capacity_run_id') != CAPACITY_PIN['run_id']:
                 raise ValueError('Finish requires the complete reconciled attempt chain')
-            maximum = 40 * 60
+            finish_elapsed = ledger.get('finish_capacity_seconds')
+            if (ledger.get('finish_capacity_run_id') != FINISH_CAPACITY_PIN['run_id']
+                    or not finite(finish_elapsed, .001)):
+                raise ValueError('Final capacity rejection must be reconciled before retry')
+            maximum = 40 * 60 - math.ceil(finish_elapsed)
+            if maximum < 1200:
+                raise ValueError('Insufficient final continuation time')
         elif resume_retry():
             spent_retry = ledger.get('resume_retry_seconds')
             if (ledger.get('resume_capacity_run_id') != CAPACITY_PIN['run_id']
@@ -276,7 +293,7 @@ def preflight(api):
     caps = gpu_price_caps()
     repeat_gpus = (MIG, 'NVIDIA GeForce RTX 3090') if resume_retry() else (RESUME_GPU,)
     if finishing():
-        repeat_gpus = (RESUME_GPU, 'NVIDIA GeForce RTX 5090', 'NVIDIA GeForce RTX 3090')
+        repeat_gpus = FINISH_GPUS
     for name in (repeat_gpus if evaluation() and resuming() else GPUS):
         minimum_cuda = MIN_CUDA_BY_GPU[name]
         entry = {"gpu": name, "min_cuda_version": minimum_cuda, "rate": None,
@@ -304,13 +321,35 @@ def preflight(api):
                 if d.get("availability") in {"LOW", "MEDIUM", "HIGH"}
                 and re.fullmatch(r"[A-Za-z0-9-]+", d.get("id", ""))
             )
+            if evaluation() and resuming() and finishing():
+                rejected = evidence['ledger'].get('finish_rejected_placements')
+                if (not isinstance(rejected, list) or not rejected
+                        or any(not isinstance(p, dict) or set(p) != {'gpu', 'region', 'retry_after_epoch'}
+                               or not isinstance(p['gpu'], str) or p['gpu'] not in caps
+                               or not finite(p['retry_after_epoch'], .001) or not isinstance(p['region'], str)
+                               or not re.fullmatch(r'[A-Za-z0-9-]+', p['region']) for p in rejected)):
+                    raise ValueError('Verified rejected placements required')
+                excluded = {p['region'] for p in rejected
+                            if p['gpu'] == name and time.time() < p['retry_after_epoch']}
+                entry.update(observed_regions=regions, excluded_regions=sorted(set(regions) & excluded))
+                regions = [r for r in regions if r not in excluded]
+                # Even after cooldown, prefer a different placement when one
+                # exists. Pass every fresh eligible region to the scheduler.
+                failed = {p['region'] for p in rejected if p['gpu'] == name}
+                fresh = [r for r in regions if r not in failed]
+                entry['previously_rejected_regions'] = sorted(set(regions) & failed)
+                entry['placement_retry'] = bool(regions) and not fresh
+                if fresh:
+                    regions = fresh
             entry["regions"] = regions
             if not finite(rate, 0.001) or rate > caps[name]:
                 raise ValueError("Per-model approved price exceeded")
             cost = quote(rate, evidence["ledger"])
             entry["status"] = "available" if regions else "no_capacity"
+            if not regions and entry.get('excluded_regions'):
+                entry['status'] = 'rejected_placement_excluded'
             if regions:
-                choices.append((rate, name, regions, cost))
+                choices.append((rate, name, regions, cost, entry.get('placement_retry', False)))
         except ValueError:
             entry["status"] = "quote_rejected"
         except RuntimeError as exc:
@@ -331,7 +370,7 @@ def preflight(api):
     if not choices:
         raise RuntimeError("No approved GPU with verified price/capacity")
     priority = repeat_gpus if evaluation() and resuming() else GPUS
-    rate, name, regions, cost = min(choices, key=lambda c: (priority.index(c[1]), c[0]))
+    rate, name, regions, cost, _ = min(choices, key=lambda c: (c[4], priority.index(c[1]), c[0]))
     evidence.update(
         status="preflight_passed",
         read_only=True,
@@ -452,14 +491,18 @@ def cleanup(api):
                 }
                 if (evaluation() or training_seed() == 123) and not {'WAFER_PRIOR_USD', 'WAFER_PRIOR_SECONDS'} <= matches[0]['env'].keys():
                     raise RuntimeError("Missing cumulative cost recovery metadata")
-                if evaluation() and resuming():
-                    prior['resume_source_run_id'] = active_pin()['run_id']
-                    if resume_retry():
-                        prior['resume_capacity_run_id'] = CAPACITY_PIN['run_id']
-                        prior['resume_retry_seconds'] = float(matches[0]['env']['WAFER_RESUME_RETRY_SECONDS'])
+                rate = float(matches[0]['env']['WAFER_RATE'])
+                if (not finite(rate, .001) or not finite(prior['usd'])
+                        or not finite(prior['seconds']) or prior['usd'] < PRIOR_SPEND_RESERVE
+                        or prior['seconds'] < PRIOR_RUNTIME_RESERVE_SECONDS):
+                    raise RuntimeError('Invalid recovered cost metadata')
+                # Cleanup is not a new admission. New price ceilings, exhausted
+                # budgets or missing launch receipts must not prevent deletion.
                 state.update(
                     started_epoch=started,
-                    cost=quote(float(matches[0]["env"]["WAFER_RATE"]), prior),
+                    cost=dict(gpu_hourly_usd=rate, disk_hourly_usd=DISK_HOURLY,
+                              prior_spend_reserve_usd=prior['usd'],
+                              prior_runtime_reserve_seconds=prior['seconds']),
                 )
             state["pod_id"] = pod_id
             save("provision.json", state)

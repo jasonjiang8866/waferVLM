@@ -41,6 +41,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: python -m runpod.vlm_repeat_resume verify-finish --output vlm-receipt-check
+      - name: Reconcile final-two capacity rejection and both cleanup paths without a GPU
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python -m runpod.vlm_repeat_finish_capacity --output vlm-receipt-check
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: vlm-receipt-verification-${{ github.run_id }}
@@ -50,6 +54,7 @@ jobs:
             vlm-receipt-check/resume-verification.json
             vlm-receipt-check/capacity-recovery.json
             vlm-receipt-check/finish-verification.json
+            vlm-receipt-check/finish-capacity-recovery.json
           if-no-files-found: error
   protocol:
     runs-on: ubuntu-24.04

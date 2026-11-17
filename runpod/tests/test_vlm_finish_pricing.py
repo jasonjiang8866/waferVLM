@@ -1,7 +1,9 @@
 import json
 import os
 import tempfile
+import time
 import unittest
+import urllib.parse
 from pathlib import Path
 from unittest.mock import Mock, patch
 
@@ -12,7 +14,11 @@ class FinishPricing(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory(); self.addCleanup(self.tmp.cleanup)
         self.out = Path(self.tmp.name)
-        self.ledger = dict(usd=9.472521519981784, seconds=44333.58444801331,
+        self.ledger = dict(usd=9.528627960290688, seconds=44477.96864977837,
+                           finish_capacity_run_id=c.FINISH_CAPACITY_PIN['run_id'],
+                           finish_capacity_seconds=144.38420176506042,
+                           finish_rejected_placements=[dict(gpu='NVIDIA GeForce RTX 5090', region='FAILED-1',
+                                                            retry_after_epoch=time.time()+3600)],
                            resume_source_run_id=999, resume_capacity_run_id=c.CAPACITY_PIN['run_id'],
                            attempts=[dict(seed=s, accepted=True) for s in (42, 123)])
         self.env = dict(WAFER_VLM_PHASE='repeat', WAFER_VLM_RESUME='1',
@@ -22,14 +28,15 @@ class FinishPricing(unittest.TestCase):
                   patch.object(c, 'active_pin', return_value={'run_id': 999})):
             p.start(); self.addCleanup(p.stop)
 
-    def preflight(self, model='5090', rate=1.39, extra=None):
+    def preflight(self, model='5090', rate=1.39, extra=None, regions=None):
         api = Mock(); api.listing.return_value = []
         available = {model: rate, **(extra or {})}
 
         def catalog(url):
-            selected = next((m for m in available if m in url), None)
+            gpu = urllib.parse.unquote(url.split('/catalog/gpus/')[1].split('?')[0])
+            selected = next((m for m in available if m == gpu or gpu.endswith('RTX ' + m)), None)
             return dict(price={'secure': available[selected] if selected else .5},
-                        dataCenters=[dict(id='TEST-1', availability='HIGH')] if selected else [])
+                        dataCenters=[dict(id=r, availability='HIGH') for r in (regions or ['TEST-1'])] if selected else [])
 
         api.call.side_effect = catalog
         with patch.object(c, 'provenance', return_value={}), \
@@ -40,13 +47,16 @@ class FinishPricing(unittest.TestCase):
                 return c.preflight(api)
             finally:
                 self.assertTrue(all(len(call.args) == 1 for call in api.call.call_args_list))
+                self.assertEqual(len(api.call.call_args_list), len(c.FINISH_GPUS))
+                self.assertTrue(all('minCudaVersion=12.8' in call.args[0]
+                                    and 'dataCenterIds=' not in call.args[0] for call in api.call.call_args_list))
 
     def test_live_5090_quote_fits_only_the_final_two_envelope(self):
         result = self.preflight()
         self.assertEqual(result['gpu'], 'NVIDIA GeForce RTX 5090')
         cost = result['cost']
-        self.assertEqual((cost['work_seconds'], cost['cleanup_seconds']), (2400, 600))
-        self.assertAlmostEqual(cost['planned_total_usd'] - self.ledger['usd'], 1.1657738095238095)
+        self.assertEqual((cost['work_seconds'], cost['cleanup_seconds']), (2255, 600))
+        self.assertAlmostEqual(cost['planned_total_usd'] - self.ledger['usd'], (1.39 + c.DISK_HOURLY) * 2855 / 3600)
         self.assertLess(cost['planned_total_usd'], 10.64)
         self.assertLess(cost['planned_total_seconds'], 790 * 60)
         self.assertEqual(cost['approved_usd'], 30)
@@ -71,21 +81,84 @@ class FinishPricing(unittest.TestCase):
             with self.subTest(model=model), self.assertRaisesRegex(RuntimeError, 'No approved GPU'):
                 self.preflight(model, rate)
 
+    def test_recently_rejected_pair_is_excluded_without_mutating_provider(self):
+        self.ledger['finish_rejected_placements'][0]['region'] = 'TEST-1'
+        with self.assertRaisesRegex(RuntimeError, 'No approved GPU'):
+            self.preflight()
+        rows = json.loads((self.out / 'preflight.json').read_text())['catalog']
+        row = next(r for r in rows if '5090' in r['gpu'])
+        self.assertEqual(row['status'], 'rejected_placement_excluded')
+        self.assertEqual(row['observed_regions'], ['TEST-1'])
+        self.assertEqual(row['excluded_regions'], ['TEST-1'])
+        self.assertEqual(row['regions'], [])
+        # A different authorized GPU in that region remains eligible.
+        self.assertEqual(self.preflight(extra={'4090': .89})['gpu'], 'NVIDIA GeForce RTX 4090')
+
+    def test_missing_or_malformed_rejection_evidence_blocks(self):
+        for value in (None, [], [{'gpu': 'unknown', 'region': 'TEST-1'}],
+                      [{'gpu': 'NVIDIA GeForce RTX 5090', 'region': []}]):
+            self.ledger['finish_rejected_placements'] = value
+            with self.subTest(value=value), self.assertRaisesRegex(RuntimeError, 'No approved GPU'):
+                self.preflight()
+
+    def test_expired_cooldown_requires_fresh_capacity_but_does_not_ban_region(self):
+        self.ledger['finish_rejected_placements'][0].update(region='TEST-1', retry_after_epoch=1)
+        result = self.preflight()
+        self.assertEqual(result['gpu'], 'NVIDIA GeForce RTX 5090')
+        self.assertEqual(result['regions'], ['TEST-1'])
+
     def test_training_and_other_continuations_keep_the_original_ceiling(self):
         for change in [dict(WAFER_VLM_PHASE='training'), dict(WAFER_VLM_RESUME='0'),
                        dict(WAFER_VLM_RESUME_RETRY='0'), dict(WAFER_VLM_FINISH='0')]:
             with self.subTest(change=change), patch.dict(os.environ, change):
                 self.assertEqual(c.gpu_price_caps()['NVIDIA GeForce RTX 5090'], 1.19)
+                self.assertNotIn(c.PRO, c.gpu_price_caps())
                 with self.assertRaises(ValueError): c.quote(1.39, self.ledger)
         self.assertEqual(c.GPU_CAPS['NVIDIA GeForce RTX 5090'], 1.19)
 
     def test_changed_rate_cannot_bypass_receipts_or_campaign_caps(self):
         for change in [dict(usd=29), dict(seconds=64000), dict(resume_source_run_id=0),
-                       dict(resume_capacity_run_id=0)]:
+                       dict(resume_capacity_run_id=0), dict(finish_capacity_run_id=0),
+                       dict(finish_capacity_seconds=1201), dict(finish_capacity_seconds=float('nan'))]:
             with self.subTest(change=change), self.assertRaises(ValueError):
                 c.quote(1.39, dict(self.ledger, **change))
-        for rate in [float('nan'), float('inf'), 0, 1.40]:
+        for rate in [float('nan'), float('inf'), 0, 2.70]:
             with self.subTest(rate=rate), self.assertRaises(ValueError): c.quote(rate, self.ledger)
+
+    def test_each_newly_authorized_gpu_can_use_all_global_regions(self):
+        for gpu in (c.PRO, c.WORKSTATION, c.MAX_Q, c.MIG48, c.MIG):
+            with self.subTest(gpu=gpu):
+                result = self.preflight(gpu, c.FINISH_CAPS[gpu], regions=['US-1', 'EU-1', 'AP-1'])
+                self.assertEqual(result['gpu'], gpu)
+                self.assertEqual(result['regions'], ['AP-1', 'EU-1', 'US-1'])
+                self.assertLess(result['cost']['planned_total_usd'], 11.67)
+                with self.assertRaisesRegex(RuntimeError, 'No approved GPU'):
+                    self.preflight(gpu, c.FINISH_CAPS[gpu] + .01)
+
+    def test_fresh_placement_beats_failed_pair_after_cooldown(self):
+        self.ledger['finish_rejected_placements'][0].update(region='TEST-1', retry_after_epoch=1)
+        result = self.preflight(extra={c.PRO: 2.69})
+        self.assertEqual(result['gpu'], c.PRO)
+        result = self.preflight(regions=['TEST-1', 'EU-NEW', 'AP-NEW'])
+        self.assertEqual(result['gpu'], 'NVIDIA GeForce RTX 5090')
+        self.assertEqual(result['regions'], ['AP-NEW', 'EU-NEW'])
+
+    def test_recovered_cleanup_does_not_reapply_launch_price_or_receipt_gates(self):
+        for resumed in ('0', '1'):
+            pod = dict(id='owned1', name=c.AUTHORIZATION+'-vlmrepeats-1234', env={
+                c.OWNER:c.REPOSITORY, 'WAFER_RUN_ID':'1234', 'WAFER_AUTHORIZATION':c.AUTHORIZATION,
+                'WAFER_EXPERIMENT':'vlm-repeats', 'WAFER_STARTED':str(time.time()-60),
+                'WAFER_RATE':'2.69', 'WAFER_PRIOR_USD':str(self.ledger['usd']),
+                'WAFER_PRIOR_SECONDS':str(self.ledger['seconds'])})
+            (self.out/'provision.json').unlink(missing_ok=True)
+            api=Mock(); api.listing.side_effect=[[pod], [], [], []]
+            with self.subTest(resumed=resumed), patch.dict(os.environ, WAFER_VLM_RESUME=resumed), \
+                 patch.object(c.time, 'sleep'), patch.object(c, 'quote', side_effect=AssertionError('not admission')):
+                c.cleanup(api)
+            api.call.assert_called_once_with('/pods/owned1', 'DELETE')
+            clean=json.loads((self.out/'cleanup.json').read_text())
+            self.assertEqual(clean['status'], 'verified_absent')
+            self.assertGreater(clean['estimated_total_usd'], self.ledger['usd'])
 
 
 if __name__ == '__main__':
