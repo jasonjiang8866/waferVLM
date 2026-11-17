@@ -163,6 +163,33 @@ class RepeatArchive(unittest.TestCase):
                     self.assertEqual((out/'acceptance.json').exists(),not corrupt)
                     self.assertEqual(sum(x.args[1:2]==('POST',) for x in api.call.call_args_list),1)
 
+    def test_finish_retains_original_gpu_then_mig_then_new_allocation_origins(self):
+        from runpod import vlm_repeat_resume as resume
+        from runpod.provider import MIG
+        def receipt(count, source):
+            return dict(source_run_id=source, reused=[dict(output=r['output'],
+                checksums_sha256=sha256_file(self.repeats/r['output']/'checksums.json'),
+                predictions_sha256=sha256_file(self.repeats/r['output']/'predictions.jsonl'))
+                for r in self.records[:count]])
+        original=self.fixture.root/'original.json';write_json(original,receipt(14,resume.PIN['run_id']))
+        for r in self.records[14:16]:
+            folder=self.repeats/r['output'];run=json.loads((folder/'run.json').read_text())
+            run['gpu']=MIG;run['host']='mig-host';write_json(folder/'run.json',run);seal_output(folder)
+        source=resume.finish_pin()
+        finish=self.fixture.root/'finish.json';record=receipt(16,source['run_id']);write_json(finish,record)
+        write_json(self.repeats/'resume.json',record)
+        reference=[json.loads(x) for x in (self.repeats/'validation-reference.jsonl').read_text().splitlines()]
+        write_json(self.repeats/'summary.json',c.summarize_repeats(self.records,reference,base=self.repeats))
+        spec=dict(self.spec,resume_source_run_id=source['run_id'])
+        with patch.object(resume,'RECEIPT',original),patch.object(resume,'FINISH_RECEIPT',finish):
+            accepted=verifier.verify_repeat_archive(self.pack(),spec)
+            self.assertFalse(accepted['summary']['same_environment'])
+            self.assertEqual([e['gpu'] for e in accepted['summary']['environments']],
+                             [self.spec['gpu']]*14+[MIG]*2+[self.spec['gpu']]*2)
+            with patch.object(resume,'finish_pin',return_value={**source,'gpu':'wrong GPU'}), \
+                    self.assertRaisesRegex(ValueError,'process provenance mismatch'):
+                verifier.verify_repeat_archive(self.pack(),spec)
+
 
 if __name__ == '__main__':
     unittest.main()
