@@ -1,5 +1,9 @@
 # Complete the timed-out 14/18 VLM repeat study
 
+**2026-11-17 outcome:** the bounded fallback reached 16/18 and timed out again.
+Results were retrieved and both cleanup checks passed. The [measured failure and
+final-two-pass plan](vlm-repeat-finish.md) supersede the prospective budget below.
+
 Prepared 2026-11-17. This continuation is validation only; it does not train a
 model, change the frozen recipe, select the best repeat, or access the holdout.
 

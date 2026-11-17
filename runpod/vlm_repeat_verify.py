@@ -48,9 +48,12 @@ def verify_repeat_archive(archive, spec):
                 raise ValueError('Pass does not use frozen weights')
         reused_outputs = set()
         if 'resume_source_run_id' in spec:
-            from runpod.vlm_repeat_resume import PIN, RECEIPT, GPU as original_gpu
-            receipt = json.loads(RECEIPT.read_text())
-            if (spec['resume_source_run_id'] != PIN['run_id']
+            from runpod.vlm_repeat_resume import PIN, RECEIPT, GPU as original_gpu, FINISH_RECEIPT, finish_pin
+            source = PIN if spec['resume_source_run_id'] == PIN['run_id'] else finish_pin()
+            receipt_path = RECEIPT if source == PIN else FINISH_RECEIPT
+            original_outputs = {r['output'] for r in json.loads(RECEIPT.read_text())['reused']}
+            receipt = json.loads(receipt_path.read_text())
+            if (spec['resume_source_run_id'] != source['run_id']
                     or json.loads((repeats / 'resume.json').read_text()) != receipt):
                 raise ValueError('Continuation source receipt mismatch')
             for old in receipt['reused']:
@@ -64,7 +67,10 @@ def verify_repeat_archive(archive, spec):
         report = summarize_repeats(records, read_jsonl(repeats / 'validation-reference.jsonl'), base=repeats)
         ordered = sorted(records, key=lambda r: (r['seed'], r['step'], r['repeat']))
         for record, env in zip(ordered, report['environments']):
-            expected_gpu = original_gpu if record['output'] in reused_outputs else hardware['gpu']
+            if record['output'] in reused_outputs:
+                expected_gpu = original_gpu if record['output'] in original_outputs else source['gpu']
+            else:
+                expected_gpu = hardware['gpu']
             if (env['source_sha'] != spec['source_sha'] or env['image_digest'] != spec['image'].split('@')[1]
                     or env['gpu'] != expected_gpu):
                 raise ValueError('Evaluation process provenance mismatch')

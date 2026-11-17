@@ -23,6 +23,7 @@ import urllib.request
 from pathlib import Path
 
 from runpod.vlm_repeat_resume import enabled as resuming, PIN as RESUME_PIN, GPU as RESUME_GPU, RESUME_WORK_SECONDS, RESUME_EXPIRES
+from runpod.vlm_repeat_resume import finishing, active_pin, FINISH_RECEIPT, FINISH_PIN_FILE
 from runpod.vlm_repeat_capacity import enabled as resume_retry, PIN as CAPACITY_PIN
 
 from runpod.provider import (
@@ -120,10 +121,14 @@ def quote(rate, ledger=None):
     hourly = rate + DISK_HOURLY
     spent = 0 if ledger is None else ledger.get('repeat_seconds', 0)
     if evaluation() and resuming():
-        if ledger is None or ledger.get('resume_source_run_id') != RESUME_PIN['run_id']:
+        if ledger is None or ledger.get('resume_source_run_id') != active_pin()['run_id']:
             raise ValueError('Verified partial receipt is required before continuation')
         maximum = RESUME_WORK_SECONDS
-        if resume_retry():
+        if finishing():
+            if not resume_retry() or ledger.get('resume_capacity_run_id') != CAPACITY_PIN['run_id']:
+                raise ValueError('Finish requires the complete reconciled attempt chain')
+            maximum = 40 * 60
+        elif resume_retry():
             spent_retry = ledger.get('resume_retry_seconds')
             if (ledger.get('resume_capacity_run_id') != CAPACITY_PIN['run_id']
                     or not finite(spent_retry, .001)):
@@ -246,6 +251,8 @@ def preflight(api):
         raise RuntimeError("An owned Pod already exists; cleanup and inspect before launch")
     choices, catalog = [], []
     repeat_gpus = (MIG, 'NVIDIA GeForce RTX 3090') if resume_retry() else (RESUME_GPU,)
+    if finishing():
+        repeat_gpus = (RESUME_GPU, 'NVIDIA GeForce RTX 5090', 'NVIDIA GeForce RTX 3090')
     for name in (repeat_gpus if evaluation() and resuming() else GPUS):
         minimum_cuda = MIN_CUDA_BY_GPU[name]
         entry = {"gpu": name, "min_cuda_version": minimum_cuda, "rate": None, "regions": []}
@@ -419,7 +426,7 @@ def cleanup(api):
                 if (evaluation() or training_seed() == 123) and not {'WAFER_PRIOR_USD', 'WAFER_PRIOR_SECONDS'} <= matches[0]['env'].keys():
                     raise RuntimeError("Missing cumulative cost recovery metadata")
                 if evaluation() and resuming():
-                    prior['resume_source_run_id'] = RESUME_PIN['run_id']
+                    prior['resume_source_run_id'] = active_pin()['run_id']
                     if resume_retry():
                         prior['resume_capacity_run_id'] = CAPACITY_PIN['run_id']
                         prior['resume_retry_seconds'] = float(matches[0]['env']['WAFER_RESUME_RETRY_SECONDS'])
@@ -493,6 +500,8 @@ def worker_code():
              'runpod/vlm_repeat_resume.py', 'docs/evidence/vlm-repeat-resume.json',
              'runpod/confirmation_verify.py', 'runpod/confirmation_contract.py', 'runpod/provider.py',
              'runpod/vlm-completed.json', 'docs/evidence/vlm-six-endpoints.json']
+    if finishing():
+        names += [str(p.relative_to(ROOT)) for p in (FINISH_RECEIPT, FINISH_PIN_FILE)]
     bundle = base64.b64encode(gzip.compress(json.dumps({n: (ROOT / n).read_text() for n in names}).encode(), mtime=0)).decode()
     return ("import base64,gzip,json,pathlib,runpy,os;os.chdir('/app');"
             "payload=json.loads(gzip.decompress(base64.b64decode(" + repr(bundle) + ")));"
@@ -525,7 +534,7 @@ def launch(api):
         spec.update(phase='validation-repeats', config_sha256=evidence['config_sha256'],
                     input_manifest_sha256=evidence['inputs']['manifest_sha256'])
         if resuming():
-            spec['resume_source_run_id'] = RESUME_PIN['run_id']
+            spec['resume_source_run_id'] = active_pin()['run_id']
     else:
         spec['seed'] = training_seed()
         launch_plan(spec)
@@ -585,6 +594,8 @@ def launch(api):
         payload['env'].pop('WAFER_SEED')
         if resuming():
             payload['env']['WAFER_VLM_RESUME'] = '1'
+            if finishing():
+                payload['env']['WAFER_VLM_FINISH'] = '1'
             if resume_retry():
                 payload['env']['WAFER_RESUME_RETRY_SECONDS'] = str(evidence['ledger']['resume_retry_seconds'])
         payload['env']['WAFER_INPUT_MANIFEST_SHA'] = spec['input_manifest_sha256']
