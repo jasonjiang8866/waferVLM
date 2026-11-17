@@ -12,7 +12,10 @@ class FinishPricing(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory(); self.addCleanup(self.tmp.cleanup)
         self.out = Path(self.tmp.name)
-        self.ledger = dict(usd=9.472521519981784, seconds=44333.58444801331,
+        self.ledger = dict(usd=9.528627960290688, seconds=44477.96864977837,
+                           finish_capacity_run_id=c.FINISH_CAPACITY_PIN['run_id'],
+                           finish_capacity_seconds=144.38420176506042,
+                           finish_rejected_placements=[dict(gpu='NVIDIA GeForce RTX 5090', region='FAILED-1')],
                            resume_source_run_id=999, resume_capacity_run_id=c.CAPACITY_PIN['run_id'],
                            attempts=[dict(seed=s, accepted=True) for s in (42, 123)])
         self.env = dict(WAFER_VLM_PHASE='repeat', WAFER_VLM_RESUME='1',
@@ -45,8 +48,8 @@ class FinishPricing(unittest.TestCase):
         result = self.preflight()
         self.assertEqual(result['gpu'], 'NVIDIA GeForce RTX 5090')
         cost = result['cost']
-        self.assertEqual((cost['work_seconds'], cost['cleanup_seconds']), (2400, 600))
-        self.assertAlmostEqual(cost['planned_total_usd'] - self.ledger['usd'], 1.1657738095238095)
+        self.assertEqual((cost['work_seconds'], cost['cleanup_seconds']), (2255, 600))
+        self.assertAlmostEqual(cost['planned_total_usd'] - self.ledger['usd'], (1.39 + c.DISK_HOURLY) * 2855 / 3600)
         self.assertLess(cost['planned_total_usd'], 10.64)
         self.assertLess(cost['planned_total_seconds'], 790 * 60)
         self.assertEqual(cost['approved_usd'], 30)
@@ -71,6 +74,26 @@ class FinishPricing(unittest.TestCase):
             with self.subTest(model=model), self.assertRaisesRegex(RuntimeError, 'No approved GPU'):
                 self.preflight(model, rate)
 
+    def test_recently_rejected_pair_is_excluded_without_mutating_provider(self):
+        self.ledger['finish_rejected_placements'][0]['region'] = 'TEST-1'
+        with self.assertRaisesRegex(RuntimeError, 'No approved GPU'):
+            self.preflight()
+        rows = json.loads((self.out / 'preflight.json').read_text())['catalog']
+        row = next(r for r in rows if '5090' in r['gpu'])
+        self.assertEqual(row['status'], 'rejected_placement_excluded')
+        self.assertEqual(row['observed_regions'], ['TEST-1'])
+        self.assertEqual(row['excluded_regions'], ['TEST-1'])
+        self.assertEqual(row['regions'], [])
+        # A different authorized GPU in that region remains eligible.
+        self.assertEqual(self.preflight(extra={'4090': .89})['gpu'], 'NVIDIA GeForce RTX 4090')
+
+    def test_missing_or_malformed_rejection_evidence_blocks(self):
+        for value in (None, [], [{'gpu': 'unknown', 'region': 'TEST-1'}],
+                      [{'gpu': 'NVIDIA GeForce RTX 5090', 'region': []}]):
+            self.ledger['finish_rejected_placements'] = value
+            with self.subTest(value=value), self.assertRaisesRegex(RuntimeError, 'No approved GPU'):
+                self.preflight()
+
     def test_training_and_other_continuations_keep_the_original_ceiling(self):
         for change in [dict(WAFER_VLM_PHASE='training'), dict(WAFER_VLM_RESUME='0'),
                        dict(WAFER_VLM_RESUME_RETRY='0'), dict(WAFER_VLM_FINISH='0')]:
@@ -81,7 +104,8 @@ class FinishPricing(unittest.TestCase):
 
     def test_changed_rate_cannot_bypass_receipts_or_campaign_caps(self):
         for change in [dict(usd=29), dict(seconds=64000), dict(resume_source_run_id=0),
-                       dict(resume_capacity_run_id=0)]:
+                       dict(resume_capacity_run_id=0), dict(finish_capacity_run_id=0),
+                       dict(finish_capacity_seconds=1201), dict(finish_capacity_seconds=float('nan'))]:
             with self.subTest(change=change), self.assertRaises(ValueError):
                 c.quote(1.39, dict(self.ledger, **change))
         for rate in [float('nan'), float('inf'), 0, 1.40]:

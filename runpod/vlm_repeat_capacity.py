@@ -21,11 +21,14 @@ def enabled():
     return os.environ.get('WAFER_VLM_RESUME_RETRY') == '1'
 
 
-def reconcile(output, prior_usd, prior_seconds):
+def reconcile(output, prior_usd, prior_seconds, *, pin=PIN, source_pin=None,
+              receipts=None, evidence_name='capacity-recovery.json'):
     from runpod import vlm_ledger as ledger
     from runpod.vlm_repeat_resume import PIN as source, RECEIPT
     from runpod.provider import finite
-    p = PIN
+    p = pin
+    source = source if source_pin is None else source_pin
+    receipts = {'resume-verification.json': json.loads(RECEIPT.read_text())} if receipts is None else receipts
     run = ledger.request(f"{ledger.BASE}/actions/runs/{p['run_id']}", token=os.environ['GH_TOKEN'])
     expected = dict(head_sha=p['controller_sha'], run_attempt=1, status='completed',
                     conclusion='failure', event='workflow_dispatch', head_branch='main',
@@ -36,7 +39,7 @@ def reconcile(output, prior_usd, prior_seconds):
     with zipfile.ZipFile(io.BytesIO(raw)) as z:
         if sorted(z.namelist()) != sorted(['cleanup.json', 'create-error.json',
                 'dataset-metadata/dataset.json', 'input-verification.json', 'launch-spec.json',
-                'ledger.json', 'preflight.json', 'provision.json', 'resume-verification.json']):
+                'ledger.json', 'preflight.json', 'provision.json', *receipts]):
             raise RuntimeError('Unexpected capacity-rejection evidence')
     error, clean, spec, intent = [ledger.zip_json(raw, n + '.json') for n in
                                  ('create-error', 'cleanup', 'launch-spec', 'provision')]
@@ -56,7 +59,7 @@ def reconcile(output, prior_usd, prior_seconds):
             or clean.get('creation_confirmed') is not False or clean.get('consecutive_absent_checks', 0) < 8
             or clean.get('within_budget') is not True or clean.get('within_runtime') is not True
             or clean.get('persistent_volumes_created') is not False
-            or ledger.zip_json(raw, 'resume-verification.json') != json.loads(RECEIPT.read_text())):
+            or any(ledger.zip_json(raw, name) != expected for name, expected in receipts.items())):
         raise RuntimeError('Capacity rejection lacks exact ownership, budget or absence evidence')
     usd, seconds, elapsed = [clean[k] for k in
                             ('estimated_total_usd', 'estimated_total_seconds', 'elapsed_billing_bound_s')]
@@ -74,7 +77,7 @@ def reconcile(output, prior_usd, prior_seconds):
         raise RuntimeError('Independent capacity-rejection cleanup mismatch')
     ledger.verify_marker(ledger.artifact_bytes(p['marker_artifact_id'], p['marker_sha256'], 64000),
                          p['run_id'], True, p['controller_sha'], 'repeat')
-    (Path(output) / 'capacity-recovery.json').write_text(json.dumps(dict(
+    (Path(output) / evidence_name).write_text(json.dumps(dict(
         status='verified_absent', source_run_id=p['run_id'], elapsed_billing_bound_s=elapsed,
         cumulative_usd=usd, cumulative_seconds=seconds), indent=2) + '\n')
     return p, usd, seconds, elapsed

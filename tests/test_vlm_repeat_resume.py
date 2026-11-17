@@ -95,13 +95,15 @@ class RepeatContinuation(unittest.TestCase):
     def test_finish_requires_reconciled_16_pass_receipt_and_preserves_aggregate_caps(self):
         from runpod.vlm_repeat_capacity import PIN
         pin = dict(run_id=999, result_artifact_id=1000, result_sha256='e'*64)
-        ledger = dict(usd=9.472521519981784, seconds=44333.58444801331,
+        ledger = dict(usd=9.528627960290688, seconds=44477.96864977837,
+                      finish_capacity_run_id=controller.FINISH_CAPACITY_PIN['run_id'],
+                      finish_capacity_seconds=144.38420176506042,
                       resume_source_run_id=pin['run_id'], resume_capacity_run_id=PIN['run_id'])
         with patch.object(resume,'finish_pin',return_value=pin), \
                 patch.dict(os.environ, WAFER_VLM_PHASE='repeat', WAFER_VLM_RESUME='1',
                         WAFER_VLM_RESUME_RETRY='1', WAFER_VLM_FINISH='1'):
             q = controller.quote(1.19, ledger)
-            self.assertEqual(q['work_seconds'],2400)
+            self.assertEqual(q['work_seconds'],2255)
             self.assertEqual(q['cleanup_seconds'],600)
             self.assertLess(q['planned_total_usd'],10.48)
             self.assertLess(q['planned_total_seconds'],790*60)

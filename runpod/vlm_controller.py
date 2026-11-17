@@ -25,6 +25,7 @@ from pathlib import Path
 from runpod.vlm_repeat_resume import enabled as resuming, PIN as RESUME_PIN, GPU as RESUME_GPU, RESUME_WORK_SECONDS, RESUME_EXPIRES
 from runpod.vlm_repeat_resume import finishing, active_pin, FINISH_RECEIPT, FINISH_PIN_FILE
 from runpod.vlm_repeat_capacity import enabled as resume_retry, PIN as CAPACITY_PIN
+from runpod.vlm_repeat_finish_capacity import PIN as FINISH_CAPACITY_PIN
 
 from runpod.provider import (
     MIG,
@@ -150,7 +151,13 @@ def quote(rate, ledger=None):
         if finishing():
             if not resume_retry() or ledger.get('resume_capacity_run_id') != CAPACITY_PIN['run_id']:
                 raise ValueError('Finish requires the complete reconciled attempt chain')
-            maximum = 40 * 60
+            finish_elapsed = ledger.get('finish_capacity_seconds')
+            if (ledger.get('finish_capacity_run_id') != FINISH_CAPACITY_PIN['run_id']
+                    or not finite(finish_elapsed, .001)):
+                raise ValueError('Final capacity rejection must be reconciled before retry')
+            maximum = 40 * 60 - math.ceil(finish_elapsed)
+            if maximum < 1200:
+                raise ValueError('Insufficient final continuation time')
         elif resume_retry():
             spent_retry = ledger.get('resume_retry_seconds')
             if (ledger.get('resume_capacity_run_id') != CAPACITY_PIN['run_id']
@@ -304,11 +311,23 @@ def preflight(api):
                 if d.get("availability") in {"LOW", "MEDIUM", "HIGH"}
                 and re.fullmatch(r"[A-Za-z0-9-]+", d.get("id", ""))
             )
+            if evaluation() and resuming() and finishing():
+                rejected = evidence['ledger'].get('finish_rejected_placements')
+                if (not isinstance(rejected, list) or not rejected
+                        or any(not isinstance(p, dict) or set(p) != {'gpu', 'region'}
+                               or p['gpu'] not in GPU_CAPS or not isinstance(p['region'], str)
+                               or not re.fullmatch(r'[A-Za-z0-9-]+', p['region']) for p in rejected)):
+                    raise ValueError('Verified rejected placements required')
+                excluded = {p['region'] for p in rejected if p['gpu'] == name}
+                entry.update(observed_regions=regions, excluded_regions=sorted(set(regions) & excluded))
+                regions = [r for r in regions if r not in excluded]
             entry["regions"] = regions
             if not finite(rate, 0.001) or rate > caps[name]:
                 raise ValueError("Per-model approved price exceeded")
             cost = quote(rate, evidence["ledger"])
             entry["status"] = "available" if regions else "no_capacity"
+            if not regions and entry.get('excluded_regions'):
+                entry['status'] = 'rejected_placement_excluded'
             if regions:
                 choices.append((rate, name, regions, cost))
         except ValueError:
