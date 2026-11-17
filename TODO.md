@@ -1,6 +1,6 @@
 # waferVLM TODO — after validation-selected checkpoint 250
 
-Updated 2026-11-11 (Singapore time). This is the next-stage plan; unchecked items
+Updated 2026-11-18 (Singapore time). This is the next-stage plan; unchecked items
 are not completed experiments or new paid-launch authorization.
 
 ## Completed baseline
@@ -17,7 +17,7 @@ are not completed experiments or new paid-launch authorization.
 - [x] Update README/results/recovery instructions and verify temporary Pod
   deletion. See [the completed-run report](docs/checkpoint-200-release.md).
 
-**Current status:** the [200→300 continuation](docs/continuation-300-results.md) completed and validation selected checkpoint 250 (78.125% accuracy / 0.773992 macro-F1 / 0 invalid outputs). Full checkpoints, raw predictions and evidence are preserved in [continuation-300-v1](https://github.com/jasonjiang8866/waferVLM/releases/tag/continuation-300-v1). Both cleanup paths verified Pod absence. No new test or holdout inference ran. The earlier diagnostic parity failures remain rejected; the unchanged unprofiled implementation was retained. Fresh seeds [42](docs/vlm-seed42-results.md) and [123](docs/vlm-seed123-results.md) have completed 250 steps and passed independent full-state verification. Six endpoints are frozen; [18 validation repeats](docs/vlm-repeat-execution.md) and the final holdout study remain pending.
+**Current status:** the [200→300 continuation](docs/continuation-300-results.md) completed and validation selected checkpoint 250 (78.125% accuracy / 0.773992 macro-F1 / 0 invalid outputs). Full checkpoints, raw predictions and evidence are preserved in [continuation-300-v1](https://github.com/jasonjiang8866/waferVLM/releases/tag/continuation-300-v1). Both cleanup paths verified Pod absence. No new test or holdout inference ran. The earlier diagnostic parity failures remain rejected; the unchanged unprofiled implementation was retained. Fresh seeds [42](docs/vlm-seed42-results.md) and [123](docs/vlm-seed123-results.md) have completed 250 steps and passed independent full-state verification. Six endpoints are frozen. [All 18 validation repeats are complete and independently verified](docs/vlm-repeat-results.md), with both cleanup paths verified. The first-pass step-250 gain failed to replicate in both confirmation seeds; the 148-image holdout remains untouched and all seven predeclared models remain in the final study.
 
 ## P1 — diagnose performance before more training
 
@@ -118,7 +118,7 @@ Completed in [run 42682266526](https://github.com/jasonjiang8866/waferVLM/action
 - [x] Prepare a [paired independent-seed plan](docs/seed-confirmation-plan.md), fixed steps 200/250, repeated fixed-weight evaluation and a separate compute estimate.
 - [x] Implement and run seeds 42/123, preserving the data protocol, full resume states, original artifacts and verified cleanup.
 - [x] Reconstruct and freeze all six step-200/250 checkpoints from the four original ZIPs.
-- [ ] Run and independently analyze all 18 fresh-process validation passes; report the first pass and every repeat. Existing single-seed gains remain exploratory.
+- [x] Run and independently analyze all 18 fresh-process validation passes; report the first pass and every repeat. See [complete results](docs/vlm-repeat-results.md); mixed-hardware repeat differences are preserved.
 - [ ] Freeze the final models/comparisons, then evaluate the new holdout once
   per predeclared model/seed. Report accuracy, macro-F1, per-class recall,
   invalid rate, uncertainty across lots/seeds, inference time and peak memory.
@@ -138,6 +138,8 @@ outside this eight-label experiment.
 - [ ] Freeze per-arm learning rates, run seeds 42/123, and publish all results. Predeclare any extension of the final holdout study before opening it.
 
 ### Existing Qwen authorization record
+
+**Latest reconciled total (2026-11-18): US$10.610880 / 771.549163 minutes**, including all previous failed attempts and the successful final-two continuation. The last run added US$0.139056 / 9.281467 minutes; both cleanup paths verified absence. The existing US$30 / 1,100-minute authorization is unchanged. Reconcile run `44124342191` before any new paid admission; do not rerun the completed repeats. The earlier planning figures below are historical.
 
 User extension on 2026-11-09 (SGT): **+US$10 / +600 minutes**.
 After the completed continuation, conservative cumulative usage is **US$5.903039 / 491.911 minutes**, including prior upward-rounded reserves. The continuation added **US$0.523039 / 34.911 lifecycle minutes**. Total authorization remains **US$30 / 1,100 minutes**; estimates include ephemeral disk and are not provider invoices or a hard cap. Both cleanup paths verified the owned Pod absent.
