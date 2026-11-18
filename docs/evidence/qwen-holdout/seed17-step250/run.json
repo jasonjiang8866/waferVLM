@@ -1,0 +1,12 @@
+{
+  "adapter_sha256": "393cf3d37544d37df03549826dab4a782d396fcc9f039dc5db954fb377c50161",
+  "controller": "10ec5eb23e0e9f4d1b3cdee24de164655ada926a",
+  "endpoint": "seed17-step250",
+  "gpu": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+  "image": "sha256:a6d31b4f12c2c3ee64c59d08b1e67c89e9bbf9b46cbdb4179417f1d1efa3fa79",
+  "manifest_sha256": "f08050ef4fcaca3b9c35ad29905a63957a375af7a024b69e0281968d06f4564f",
+  "model": "Qwen/Qwen3.5-0.8B",
+  "peak_allocated_bytes": 1816530944,
+  "prompt": "Classify the defect pattern in this wafer map. Yellow cells are defective, blue cells are good dies, and black is outside the wafer. Return exactly one label from: center, donut, edge-loc, edge-ring, loc, near-full, random, scratch. Do not explain.",
+  "revision": "2fc06364715b967f1860aea9cf38778875588b17"
+}

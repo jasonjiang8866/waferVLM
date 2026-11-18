@@ -1,0 +1,8 @@
+{
+  "status": "verified_absent",
+  "name": "wafer-20261107-usd20-vlmholdout-44307271887",
+  "checked_epoch": 1795007361.2015252,
+  "consecutive_absent_checks": 3,
+  "creation_confirmed": false,
+  "cost": "unverified_no_local_intent"
+}
