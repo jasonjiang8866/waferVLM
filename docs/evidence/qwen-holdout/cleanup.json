@@ -1,0 +1,14 @@
+{
+  "status": "verified_absent",
+  "name": "wafer-20261107-usd20-vlmholdout-44307271887",
+  "checked_epoch": 1795007308.985673,
+  "consecutive_absent_checks": 3,
+  "creation_confirmed": true,
+  "elapsed_billing_bound_s": 1035.0335638523102,
+  "estimated_total_usd": 11.423145429775294,
+  "within_budget": true,
+  "estimated_total_seconds": 47473.351095590595,
+  "within_runtime": true,
+  "persistent_volumes_created": false,
+  "cost_basis": "conservative_intent_to_absence_estimate_not_invoice"
+}

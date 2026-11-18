@@ -1,0 +1,14 @@
+{
+  "status": "accepted",
+  "profiles": [
+    "final-holdout"
+  ],
+  "source_sha": "11d2e5f088b350dd9391864dbe2869417fff5af7",
+  "controller_sha": "10ec5eb23e0e9f4d1b3cdee24de164655ada926a",
+  "config_sha256": "d44e509c2304d9efe8fad7e53ad53a9f5fee81e7f82e2f5cb5a9c688db62e49a",
+  "input_manifest_sha256": "f08050ef4fcaca3b9c35ad29905a63957a375af7a024b69e0281968d06f4564f",
+  "archive": {
+    "size": 82127,
+    "sha256": "fc869f8e0ba8006170486b07ffedd9da4a6ae85baae96b09b3a5ab2a5e5fdd8d"
+  }
+}

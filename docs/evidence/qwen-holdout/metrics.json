@@ -1,0 +1,1104 @@
+{
+  "confirmation_seed_dispersion": {
+    "accuracy": {
+      "mean": -0.02702702702702703,
+      "sample_sd": 0.019110994086122945
+    },
+    "macro_f1": {
+      "mean": -0.030936968282523403,
+      "sample_sd": 0.023305309340971414
+    }
+  },
+  "models": {
+    "original": {
+      "n": 148,
+      "accuracy": 0.13513513513513514,
+      "macro_f1": 0.030487804878048783,
+      "invalid_rate": 0.02702702702702703,
+      "per_class": {
+        "center": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 20
+        },
+        "donut": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 20
+        },
+        "edge-loc": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 20
+        },
+        "edge-ring": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 20
+        },
+        "loc": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 20
+        },
+        "near-full": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 8
+        },
+        "random": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 20
+        },
+        "scratch": {
+          "precision": 0.1388888888888889,
+          "recall": 1.0,
+          "f1": 0.24390243902439027,
+          "support": 20
+        }
+      },
+      "confusion_matrix": {
+        "center": {
+          "center": 0,
+          "donut": 0,
+          "edge-loc": 0,
+          "edge-ring": 0,
+          "loc": 0,
+          "near-full": 0,
+          "random": 0,
+          "scratch": 20,
+          "invalid": 0
+        },
+        "donut": {
+          "center": 0,
+          "donut": 0,
+          "edge-loc": 0,
+          "edge-ring": 0,
+          "loc": 0,
+          "near-full": 0,
+          "random": 0,
+          "scratch": 19,
+          "invalid": 1
+        },
+        "edge-loc": {
+          "center": 0,
+          "donut": 0,
+          "edge-loc": 0,
+          "edge-ring": 0,
+          "loc": 0,
+          "near-full": 0,
+          "random": 0,
+          "scratch": 19,
+          "invalid": 1
+        },
+        "edge-ring": {
+          "center": 0,
+          "donut": 0,
+          "edge-loc": 0,
+          "edge-ring": 0,
+          "loc": 0,
+          "near-full": 0,
+          "random": 0,
+          "scratch": 20,
+          "invalid": 0
+        },
+        "loc": {
+          "center": 0,
+          "donut": 0,
+          "edge-loc": 0,
+          "edge-ring": 0,
+          "loc": 0,
+          "near-full": 0,
+          "random": 0,
+          "scratch": 20,
+          "invalid": 0
+        },
+        "near-full": {
+          "center": 0,
+          "donut": 0,
+          "edge-loc": 0,
+          "edge-ring": 0,
+          "loc": 0,
+          "near-full": 0,
+          "random": 0,
+          "scratch": 8,
+          "invalid": 0
+        },
+        "random": {
+          "center": 0,
+          "donut": 0,
+          "edge-loc": 0,
+          "edge-ring": 0,
+          "loc": 0,
+          "near-full": 0,
+          "random": 0,
+          "scratch": 18,
+          "invalid": 2
+        },
+        "scratch": {
+          "center": 0,
+          "donut": 0,
+          "edge-loc": 0,
+          "edge-ring": 0,
+          "loc": 0,
+          "near-full": 0,
+          "random": 0,
+          "scratch": 20,
+          "invalid": 0
+        }
+      },
+      "mean_generation_seconds": 0.48380109133712895,
+      "peak_allocated_bytes": 1794885632
+    },
+    "seed17-step200": {
+      "n": 148,
+      "accuracy": 0.6959459459459459,
+      "macro_f1": 0.7059100167581063,
+      "invalid_rate": 0.0,
+      "per_class": {
+        "center": {
+          "precision": 0.56,
+          "recall": 0.7,
+          "f1": 0.6222222222222222,
+          "support": 20
+        },
+        "donut": {
+          "precision": 0.9166666666666666,
+          "recall": 0.55,
+          "f1": 0.6874999999999999,
+          "support": 20
+        },
+        "edge-loc": {
+          "precision": 0.5652173913043478,
+          "recall": 0.65,
+          "f1": 0.6046511627906976,
+          "support": 20
+        },
+        "edge-ring": {
+          "precision": 0.9,
+          "recall": 0.9,
+          "f1": 0.9,
+          "support": 20
+        },
+        "loc": {
+          "precision": 0.6428571428571429,
+          "recall": 0.45,
+          "f1": 0.5294117647058824,
+          "support": 20
+        },
+        "near-full": {
+          "precision": 0.8,
+          "recall": 1.0,
+          "f1": 0.888888888888889,
+          "support": 8
+        },
+        "random": {
+          "precision": 0.6666666666666666,
+          "recall": 0.9,
+          "f1": 0.7659574468085106,
+          "support": 20
+        },
+        "scratch": {
+          "precision": 0.7058823529411765,
+          "recall": 0.6,
+          "f1": 0.6486486486486486,
+          "support": 20
+        }
+      },
+      "confusion_matrix": {
+        "center": {
+          "center": 14,
+          "donut": 1,
+          "edge-loc": 1,
+          "edge-ring": 0,
+          "loc": 1,
+          "near-full": 1,
+          "random": 1,
+          "scratch": 1,
+          "invalid": 0
+        },
+        "donut": {
+          "center": 3,
+          "donut": 11,
+          "edge-loc": 0,
+          "edge-ring": 0,
+          "loc": 2,
+          "near-full": 0,
+          "random": 4,
+          "scratch": 0,
+          "invalid": 0
+        },
+        "edge-loc": {
+          "center": 0,
+          "donut": 0,
+          "edge-loc": 13,
+          "edge-ring": 2,
+          "loc": 1,
+          "near-full": 0,
+          "random": 3,
+          "scratch": 1,
+          "invalid": 0
+        },
+        "edge-ring": {
+          "center": 0,
+          "donut": 0,
+          "edge-loc": 2,
+          "edge-ring": 18,
+          "loc": 0,
+          "near-full": 0,
+          "random": 0,
+          "scratch": 0,
+          "invalid": 0
+        },
+        "loc": {
+          "center": 7,
+          "donut": 0,
+          "edge-loc": 1,
+          "edge-ring": 0,
+          "loc": 9,
+          "near-full": 0,
+          "random": 0,
+          "scratch": 3,
+          "invalid": 0
+        },
+        "near-full": {
+          "center": 0,
+          "donut": 0,
+          "edge-loc": 0,
+          "edge-ring": 0,
+          "loc": 0,
+          "near-full": 8,
+          "random": 0,
+          "scratch": 0,
+          "invalid": 0
+        },
+        "random": {
+          "center": 0,
+          "donut": 0,
+          "edge-loc": 1,
+          "edge-ring": 0,
+          "loc": 0,
+          "near-full": 1,
+          "random": 18,
+          "scratch": 0,
+          "invalid": 0
+        },
+        "scratch": {
+          "center": 1,
+          "donut": 0,
+          "edge-loc": 5,
+          "edge-ring": 0,
+          "loc": 1,
+          "near-full": 0,
+          "random": 1,
+          "scratch": 12,
+          "invalid": 0
+        }
+      },
+      "mean_generation_seconds": 0.5477684797845762,
+      "peak_allocated_bytes": 1816530944
+    },
+    "seed17-step250": {
+      "n": 148,
+      "accuracy": 0.7027027027027027,
+      "macro_f1": 0.7118537268913209,
+      "invalid_rate": 0.0,
+      "per_class": {
+        "center": {
+          "precision": 0.7777777777777778,
+          "recall": 0.7,
+          "f1": 0.7368421052631577,
+          "support": 20
+        },
+        "donut": {
+          "precision": 0.5862068965517241,
+          "recall": 0.85,
+          "f1": 0.6938775510204082,
+          "support": 20
+        },
+        "edge-loc": {
+          "precision": 0.6923076923076923,
+          "recall": 0.45,
+          "f1": 0.5454545454545455,
+          "support": 20
+        },
+        "edge-ring": {
+          "precision": 0.7727272727272727,
+          "recall": 0.85,
+          "f1": 0.8095238095238095,
+          "support": 20
+        },
+        "loc": {
+          "precision": 0.5263157894736842,
+          "recall": 0.5,
+          "f1": 0.5128205128205129,
+          "support": 20
+        },
+        "near-full": {
+          "precision": 0.8,
+          "recall": 1.0,
+          "f1": 0.888888888888889,
+          "support": 8
+        },
+        "random": {
+          "precision": 0.8333333333333334,
+          "recall": 0.75,
+          "f1": 0.7894736842105262,
+          "support": 20
+        },
+        "scratch": {
+          "precision": 0.7368421052631579,
+          "recall": 0.7,
+          "f1": 0.717948717948718,
+          "support": 20
+        }
+      },
+      "confusion_matrix": {
+        "center": {
+          "center": 14,
+          "donut": 2,
+          "edge-loc": 0,
+          "edge-ring": 0,
+          "loc": 3,
+          "near-full": 0,
+          "random": 1,
+          "scratch": 0,
+          "invalid": 0
+        },
+        "donut": {
+          "center": 1,
+          "donut": 17,
+          "edge-loc": 0,
+          "edge-ring": 0,
+          "loc": 2,
+          "near-full": 0,
+          "random": 0,
+          "scratch": 0,
+          "invalid": 0
+        },
+        "edge-loc": {
+          "center": 0,
+          "donut": 0,
+          "edge-loc": 9,
+          "edge-ring": 4,
+          "loc": 3,
+          "near-full": 0,
+          "random": 1,
+          "scratch": 3,
+          "invalid": 0
+        },
+        "edge-ring": {
+          "center": 0,
+          "donut": 1,
+          "edge-loc": 2,
+          "edge-ring": 17,
+          "loc": 0,
+          "near-full": 0,
+          "random": 0,
+          "scratch": 0,
+          "invalid": 0
+        },
+        "loc": {
+          "center": 3,
+          "donut": 5,
+          "edge-loc": 0,
+          "edge-ring": 0,
+          "loc": 10,
+          "near-full": 0,
+          "random": 0,
+          "scratch": 2,
+          "invalid": 0
+        },
+        "near-full": {
+          "center": 0,
+          "donut": 0,
+          "edge-loc": 0,
+          "edge-ring": 0,
+          "loc": 0,
+          "near-full": 8,
+          "random": 0,
+          "scratch": 0,
+          "invalid": 0
+        },
+        "random": {
+          "center": 0,
+          "donut": 2,
+          "edge-loc": 0,
+          "edge-ring": 1,
+          "loc": 0,
+          "near-full": 2,
+          "random": 15,
+          "scratch": 0,
+          "invalid": 0
+        },
+        "scratch": {
+          "center": 0,
+          "donut": 2,
+          "edge-loc": 2,
+          "edge-ring": 0,
+          "loc": 1,
+          "near-full": 0,
+          "random": 1,
+          "scratch": 14,
+          "invalid": 0
+        }
+      },
+      "mean_generation_seconds": 0.5393926046884656,
+      "peak_allocated_bytes": 1816530944
+    },
+    "seed42-step200": {
+      "n": 148,
+      "accuracy": 0.6486486486486487,
+      "macro_f1": 0.6500240691758641,
+      "invalid_rate": 0.0,
+      "per_class": {
+        "center": {
+          "precision": 0.46875,
+          "recall": 0.75,
+          "f1": 0.5769230769230769,
+          "support": 20
+        },
+        "donut": {
+          "precision": 0.6428571428571429,
+          "recall": 0.45,
+          "f1": 0.5294117647058824,
+          "support": 20
+        },
+        "edge-loc": {
+          "precision": 0.5555555555555556,
+          "recall": 0.25,
+          "f1": 0.3448275862068966,
+          "support": 20
+        },
+        "edge-ring": {
+          "precision": 0.9444444444444444,
+          "recall": 0.85,
+          "f1": 0.8947368421052632,
+          "support": 20
+        },
+        "loc": {
+          "precision": 0.7272727272727273,
+          "recall": 0.4,
+          "f1": 0.5161290322580645,
+          "support": 20
+        },
+        "near-full": {
+          "precision": 0.8,
+          "recall": 1.0,
+          "f1": 0.888888888888889,
+          "support": 8
+        },
+        "random": {
+          "precision": 0.6923076923076923,
+          "recall": 0.9,
+          "f1": 0.7826086956521738,
+          "support": 20
+        },
+        "scratch": {
+          "precision": 0.5714285714285714,
+          "recall": 0.8,
+          "f1": 0.6666666666666666,
+          "support": 20
+        }
+      },
+      "confusion_matrix": {
+        "center": {
+          "center": 15,
+          "donut": 1,
+          "edge-loc": 1,
+          "edge-ring": 0,
+          "loc": 0,
+          "near-full": 1,
+          "random": 1,
+          "scratch": 1,
+          "invalid": 0
+        },
+        "donut": {
+          "center": 6,
+          "donut": 9,
+          "edge-loc": 0,
+          "edge-ring": 0,
+          "loc": 1,
+          "near-full": 0,
+          "random": 4,
+          "scratch": 0,
+          "invalid": 0
+        },
+        "edge-loc": {
+          "center": 3,
+          "donut": 0,
+          "edge-loc": 5,
+          "edge-ring": 1,
+          "loc": 1,
+          "near-full": 0,
+          "random": 2,
+          "scratch": 8,
+          "invalid": 0
+        },
+        "edge-ring": {
+          "center": 0,
+          "donut": 0,
+          "edge-loc": 3,
+          "edge-ring": 17,
+          "loc": 0,
+          "near-full": 0,
+          "random": 0,
+          "scratch": 0,
+          "invalid": 0
+        },
+        "loc": {
+          "center": 8,
+          "donut": 1,
+          "edge-loc": 0,
+          "edge-ring": 0,
+          "loc": 8,
+          "near-full": 0,
+          "random": 0,
+          "scratch": 3,
+          "invalid": 0
+        },
+        "near-full": {
+          "center": 0,
+          "donut": 0,
+          "edge-loc": 0,
+          "edge-ring": 0,
+          "loc": 0,
+          "near-full": 8,
+          "random": 0,
+          "scratch": 0,
+          "invalid": 0
+        },
+        "random": {
+          "center": 0,
+          "donut": 1,
+          "edge-loc": 0,
+          "edge-ring": 0,
+          "loc": 0,
+          "near-full": 1,
+          "random": 18,
+          "scratch": 0,
+          "invalid": 0
+        },
+        "scratch": {
+          "center": 0,
+          "donut": 2,
+          "edge-loc": 0,
+          "edge-ring": 0,
+          "loc": 1,
+          "near-full": 0,
+          "random": 1,
+          "scratch": 16,
+          "invalid": 0
+        }
+      },
+      "mean_generation_seconds": 0.5495374654183743,
+      "peak_allocated_bytes": 1816530944
+    },
+    "seed42-step250": {
+      "n": 148,
+      "accuracy": 0.6081081081081081,
+      "macro_f1": 0.6026077586206896,
+      "invalid_rate": 0.0,
+      "per_class": {
+        "center": {
+          "precision": 0.391304347826087,
+          "recall": 0.9,
+          "f1": 0.5454545454545454,
+          "support": 20
+        },
+        "donut": {
+          "precision": 0.8333333333333334,
+          "recall": 0.5,
+          "f1": 0.625,
+          "support": 20
+        },
+        "edge-loc": {
+          "precision": 0.4444444444444444,
+          "recall": 0.2,
+          "f1": 0.2758620689655173,
+          "support": 20
+        },
+        "edge-ring": {
+          "precision": 1.0,
+          "recall": 0.65,
+          "f1": 0.787878787878788,
+          "support": 20
+        },
+        "loc": {
+          "precision": 0.8,
+          "recall": 0.2,
+          "f1": 0.32000000000000006,
+          "support": 20
+        },
+        "near-full": {
+          "precision": 0.8571428571428571,
+          "recall": 0.75,
+          "f1": 0.7999999999999999,
+          "support": 8
+        },
+        "random": {
+          "precision": 0.72,
+          "recall": 0.9,
+          "f1": 0.7999999999999999,
+          "support": 20
+        },
+        "scratch": {
+          "precision": 0.5483870967741935,
+          "recall": 0.85,
+          "f1": 0.6666666666666665,
+          "support": 20
+        }
+      },
+      "confusion_matrix": {
+        "center": {
+          "center": 18,
+          "donut": 0,
+          "edge-loc": 0,
+          "edge-ring": 0,
+          "loc": 0,
+          "near-full": 0,
+          "random": 2,
+          "scratch": 0,
+          "invalid": 0
+        },
+        "donut": {
+          "center": 8,
+          "donut": 10,
+          "edge-loc": 0,
+          "edge-ring": 0,
+          "loc": 1,
+          "near-full": 0,
+          "random": 1,
+          "scratch": 0,
+          "invalid": 0
+        },
+        "edge-loc": {
+          "center": 6,
+          "donut": 0,
+          "edge-loc": 4,
+          "edge-ring": 0,
+          "loc": 0,
+          "near-full": 0,
+          "random": 1,
+          "scratch": 9,
+          "invalid": 0
+        },
+        "edge-ring": {
+          "center": 1,
+          "donut": 0,
+          "edge-loc": 5,
+          "edge-ring": 13,
+          "loc": 0,
+          "near-full": 0,
+          "random": 0,
+          "scratch": 1,
+          "invalid": 0
+        },
+        "loc": {
+          "center": 11,
+          "donut": 1,
+          "edge-loc": 0,
+          "edge-ring": 0,
+          "loc": 4,
+          "near-full": 0,
+          "random": 0,
+          "scratch": 4,
+          "invalid": 0
+        },
+        "near-full": {
+          "center": 0,
+          "donut": 0,
+          "edge-loc": 0,
+          "edge-ring": 0,
+          "loc": 0,
+          "near-full": 6,
+          "random": 2,
+          "scratch": 0,
+          "invalid": 0
+        },
+        "random": {
+          "center": 0,
+          "donut": 1,
+          "edge-loc": 0,
+          "edge-ring": 0,
+          "loc": 0,
+          "near-full": 1,
+          "random": 18,
+          "scratch": 0,
+          "invalid": 0
+        },
+        "scratch": {
+          "center": 2,
+          "donut": 0,
+          "edge-loc": 0,
+          "edge-ring": 0,
+          "loc": 0,
+          "near-full": 0,
+          "random": 1,
+          "scratch": 17,
+          "invalid": 0
+        }
+      },
+      "mean_generation_seconds": 0.558582430655283,
+      "peak_allocated_bytes": 1816530944
+    },
+    "seed123-step200": {
+      "n": 148,
+      "accuracy": 0.6959459459459459,
+      "macro_f1": 0.703456867383766,
+      "invalid_rate": 0.0,
+      "per_class": {
+        "center": {
+          "precision": 0.6818181818181818,
+          "recall": 0.75,
+          "f1": 0.7142857142857143,
+          "support": 20
+        },
+        "donut": {
+          "precision": 0.5517241379310345,
+          "recall": 0.8,
+          "f1": 0.6530612244897959,
+          "support": 20
+        },
+        "edge-loc": {
+          "precision": 0.5,
+          "recall": 0.7,
+          "f1": 0.5833333333333334,
+          "support": 20
+        },
+        "edge-ring": {
+          "precision": 0.8695652173913043,
+          "recall": 1.0,
+          "f1": 0.9302325581395349,
+          "support": 20
+        },
+        "loc": {
+          "precision": 0.8,
+          "recall": 0.4,
+          "f1": 0.5333333333333333,
+          "support": 20
+        },
+        "near-full": {
+          "precision": 0.8888888888888888,
+          "recall": 1.0,
+          "f1": 0.9411764705882353,
+          "support": 8
+        },
+        "random": {
+          "precision": 0.8333333333333334,
+          "recall": 0.75,
+          "f1": 0.7894736842105262,
+          "support": 20
+        },
+        "scratch": {
+          "precision": 0.7777777777777778,
+          "recall": 0.35,
+          "f1": 0.48275862068965514,
+          "support": 20
+        }
+      },
+      "confusion_matrix": {
+        "center": {
+          "center": 15,
+          "donut": 2,
+          "edge-loc": 2,
+          "edge-ring": 0,
+          "loc": 0,
+          "near-full": 0,
+          "random": 1,
+          "scratch": 0,
+          "invalid": 0
+        },
+        "donut": {
+          "center": 1,
+          "donut": 16,
+          "edge-loc": 0,
+          "edge-ring": 0,
+          "loc": 1,
+          "near-full": 0,
+          "random": 2,
+          "scratch": 0,
+          "invalid": 0
+        },
+        "edge-loc": {
+          "center": 1,
+          "donut": 1,
+          "edge-loc": 14,
+          "edge-ring": 3,
+          "loc": 0,
+          "near-full": 0,
+          "random": 0,
+          "scratch": 1,
+          "invalid": 0
+        },
+        "edge-ring": {
+          "center": 0,
+          "donut": 0,
+          "edge-loc": 0,
+          "edge-ring": 20,
+          "loc": 0,
+          "near-full": 0,
+          "random": 0,
+          "scratch": 0,
+          "invalid": 0
+        },
+        "loc": {
+          "center": 5,
+          "donut": 4,
+          "edge-loc": 2,
+          "edge-ring": 0,
+          "loc": 8,
+          "near-full": 0,
+          "random": 0,
+          "scratch": 1,
+          "invalid": 0
+        },
+        "near-full": {
+          "center": 0,
+          "donut": 0,
+          "edge-loc": 0,
+          "edge-ring": 0,
+          "loc": 0,
+          "near-full": 8,
+          "random": 0,
+          "scratch": 0,
+          "invalid": 0
+        },
+        "random": {
+          "center": 0,
+          "donut": 2,
+          "edge-loc": 2,
+          "edge-ring": 0,
+          "loc": 0,
+          "near-full": 1,
+          "random": 15,
+          "scratch": 0,
+          "invalid": 0
+        },
+        "scratch": {
+          "center": 0,
+          "donut": 4,
+          "edge-loc": 8,
+          "edge-ring": 0,
+          "loc": 1,
+          "near-full": 0,
+          "random": 0,
+          "scratch": 7,
+          "invalid": 0
+        }
+      },
+      "mean_generation_seconds": 0.5676824272434444,
+      "peak_allocated_bytes": 1816530944
+    },
+    "seed123-step250": {
+      "n": 148,
+      "accuracy": 0.6824324324324325,
+      "macro_f1": 0.6889992413738937,
+      "invalid_rate": 0.0,
+      "per_class": {
+        "center": {
+          "precision": 0.8333333333333334,
+          "recall": 0.5,
+          "f1": 0.625,
+          "support": 20
+        },
+        "donut": {
+          "precision": 0.7142857142857143,
+          "recall": 0.75,
+          "f1": 0.7317073170731706,
+          "support": 20
+        },
+        "edge-loc": {
+          "precision": 0.75,
+          "recall": 0.3,
+          "f1": 0.4285714285714285,
+          "support": 20
+        },
+        "edge-ring": {
+          "precision": 0.8,
+          "recall": 1.0,
+          "f1": 0.888888888888889,
+          "support": 20
+        },
+        "loc": {
+          "precision": 0.5294117647058824,
+          "recall": 0.45,
+          "f1": 0.48648648648648646,
+          "support": 20
+        },
+        "near-full": {
+          "precision": 0.8888888888888888,
+          "recall": 1.0,
+          "f1": 0.9411764705882353,
+          "support": 8
+        },
+        "random": {
+          "precision": 0.8333333333333334,
+          "recall": 0.75,
+          "f1": 0.7894736842105262,
+          "support": 20
+        },
+        "scratch": {
+          "precision": 0.47368421052631576,
+          "recall": 0.9,
+          "f1": 0.6206896551724138,
+          "support": 20
+        }
+      },
+      "confusion_matrix": {
+        "center": {
+          "center": 10,
+          "donut": 1,
+          "edge-loc": 1,
+          "edge-ring": 0,
+          "loc": 5,
+          "near-full": 0,
+          "random": 1,
+          "scratch": 2,
+          "invalid": 0
+        },
+        "donut": {
+          "center": 0,
+          "donut": 15,
+          "edge-loc": 0,
+          "edge-ring": 0,
+          "loc": 3,
+          "near-full": 0,
+          "random": 1,
+          "scratch": 1,
+          "invalid": 0
+        },
+        "edge-loc": {
+          "center": 0,
+          "donut": 1,
+          "edge-loc": 6,
+          "edge-ring": 4,
+          "loc": 0,
+          "near-full": 0,
+          "random": 0,
+          "scratch": 9,
+          "invalid": 0
+        },
+        "edge-ring": {
+          "center": 0,
+          "donut": 0,
+          "edge-loc": 0,
+          "edge-ring": 20,
+          "loc": 0,
+          "near-full": 0,
+          "random": 0,
+          "scratch": 0,
+          "invalid": 0
+        },
+        "loc": {
+          "center": 2,
+          "donut": 1,
+          "edge-loc": 0,
+          "edge-ring": 0,
+          "loc": 9,
+          "near-full": 0,
+          "random": 0,
+          "scratch": 8,
+          "invalid": 0
+        },
+        "near-full": {
+          "center": 0,
+          "donut": 0,
+          "edge-loc": 0,
+          "edge-ring": 0,
+          "loc": 0,
+          "near-full": 8,
+          "random": 0,
+          "scratch": 0,
+          "invalid": 0
+        },
+        "random": {
+          "center": 0,
+          "donut": 2,
+          "edge-loc": 1,
+          "edge-ring": 1,
+          "loc": 0,
+          "near-full": 1,
+          "random": 15,
+          "scratch": 0,
+          "invalid": 0
+        },
+        "scratch": {
+          "center": 0,
+          "donut": 1,
+          "edge-loc": 0,
+          "edge-ring": 0,
+          "loc": 0,
+          "near-full": 0,
+          "random": 1,
+          "scratch": 18,
+          "invalid": 0
+        }
+      },
+      "mean_generation_seconds": 0.5376145099189426,
+      "peak_allocated_bytes": 1816530944
+    }
+  },
+  "paired_step250_minus_200": {
+    "17": {
+      "delta": {
+        "accuracy": 0.006756756756756799,
+        "macro_f1": 0.005943710133214597
+      },
+      "percentile_95": {
+        "accuracy": [
+          -0.0604026845637583,
+          0.0738255033557047
+        ],
+        "macro_f1": [
+          -0.05995998089489739,
+          0.07001463952664844
+        ]
+      }
+    },
+    "42": {
+      "delta": {
+        "accuracy": -0.04054054054054057,
+        "macro_f1": -0.04741631055517448
+      },
+      "percentile_95": {
+        "accuracy": [
+          -0.10810810810810811,
+          0.027210884353741416
+        ],
+        "macro_f1": [
+          -0.12287910575927857,
+          0.024935072188232398
+        ]
+      }
+    },
+    "123": {
+      "delta": {
+        "accuracy": -0.013513513513513487,
+        "macro_f1": -0.014457626009872326
+      },
+      "percentile_95": {
+        "accuracy": [
+          -0.09333333333333338,
+          0.06756756756756754
+        ],
+        "macro_f1": [
+          -0.08968145285897396,
+          0.06188643851881259
+        ]
+      }
+    }
+  },
+  "bootstrap_seed": 20261110,
+  "bootstrap_resamples": 10000,
+  "rows": 1036,
+  "manifest_sha256": "f08050ef4fcaca3b9c35ad29905a63957a375af7a024b69e0281968d06f4564f"
+}
