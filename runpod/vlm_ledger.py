@@ -91,6 +91,9 @@ def verify_marker(data, run, current=False, controller_sha=None, seed=42):
                     'run_id': str(run)}
         expected.update({'phase': 'validation-repeats', 'workload': 'vlm-repeats'} if seed == 'repeat'
                         else {'seed': seed, 'workload': f'vlm-seed{seed}'})
+        if seed == 'holdout':
+            expected.update(phase='final-holdout', workload='vlm-holdout')
+            expected.pop('seed', None)
         if intent != expected:
             raise RuntimeError('Current launch intent mismatch')
 
@@ -329,14 +332,14 @@ def reconcile(run, require_current, output, seed=42):
     """Unknown/missing/expired attempts block launch, including another agent's attempt."""
     output = Path(output)
     output.mkdir(parents=True, exist_ok=True)
-    if seed not in {42, 123, 'repeat'}:
+    if seed not in {42, 123, 'repeat', 'holdout'}:
         raise RuntimeError('Unsupported ledger seed')
     precreate = reconciled_precreate()
     completed, total_usd, total_seconds = completed_receipts(output)
     training_seconds = total_seconds
     failed_repeats, total_usd, total_seconds = repeat_failures(output, total_usd, total_seconds)
     from runpod.vlm_repeat_resume import enabled, reconcile_partial, finishing, finish_pin, FINISH_RECEIPT
-    if seed == 'repeat' and enabled():
+    if seed in ('repeat','holdout') and enabled():
         partial, total_usd, total_seconds = reconcile_partial(output, total_usd, total_seconds)
         failed_repeats.append(partial)
         from runpod.vlm_repeat_capacity import enabled as retrying, reconcile as capacity_reconcile
@@ -359,6 +362,23 @@ def reconcile(run, require_current, output, seed=42):
                     output, total_usd, total_seconds)
                 failed_repeats.append(startup_failure)
                 rejected.append(placement)
+    if seed == 'holdout':
+        from runpod.vlm_holdout_inputs import reconcile as reconcile_holdout
+        success, total_usd, total_seconds = reconcile_holdout(total_usd, total_seconds)
+        failed_repeats.append(success)
+        history = request(f'{BASE}/actions/workflows/vlm-holdout.yml/runs?event=workflow_dispatch&per_page=100',
+                          token=os.environ['GH_TOKEN'])
+        if history['total_count'] != len(history['workflow_runs']):
+            raise RuntimeError('Incomplete holdout history')
+        for row in history['workflow_runs']:
+            if str(row['id']) == str(run):
+                continue
+            jobs = request(f"{BASE}/actions/runs/{row['id']}/jobs", token=os.environ['GH_TOKEN'])
+            launches = [s for j in jobs['jobs'] for s in j['steps']
+                        if s['name'] == 'Evaluate seven endpoints, retrieve evidence, delete Pod']
+            if row['run_attempt'] != 1 or len(launches) != 1 or launches[0]['conclusion'] != 'skipped':
+                raise RuntimeError('Review prior holdout exposure before another inference')
+
     # Run history survives deleted/expired artifacts. A previous paid step must
     # be reconciled explicitly; only visibly skipped paid steps are read-only.
     for page in range(1, 101):
@@ -493,7 +513,7 @@ def reconcile(run, require_current, output, seed=42):
         raise RuntimeError('Historical cumulative consumption/cleanup mismatch')
     ledger = dict(usd=total_usd, seconds=total_seconds, attempts=sorted(attempts, key=lambda a:a['run_id']))
     ledger['repeat_seconds'] = total_seconds - training_seconds
-    if seed == 'repeat' and enabled():
+    if seed in ('repeat','holdout') and enabled():
         ledger['resume_source_run_id'] = partial['run_id']
         if retrying():
             ledger.update(resume_capacity_run_id=capacity['run_id'], resume_retry_seconds=retry_seconds)
