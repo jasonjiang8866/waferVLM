@@ -1,5 +1,7 @@
 # Finish the last two validation repeats
 
+**2026-11-18 completion:** [all 18 passes are independently verified](vlm-repeat-results.md), with 2,880 predictions and both cleanup paths confirmed. The incomplete-run descriptions below are retained as history. Quality/generalization remain unaccepted; the holdout is untouched.
+
 Prepared 2026-11-17 after the measured MIG timeout. This is one new bounded
 allocation within the existing US$30 / 1100-minute campaign, after closing and
 reconciling the previous two-attempt continuation slice.

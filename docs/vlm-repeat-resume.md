@@ -1,5 +1,7 @@
 # Complete the timed-out 14/18 VLM repeat study
 
+**2026-11-18 completion:** [all 18 passes are independently verified](vlm-repeat-results.md), with 2,880 predictions and both cleanup paths confirmed. The incomplete-run descriptions below are retained as history. Quality/generalization remain unaccepted; the holdout is untouched.
+
 **2026-11-17 outcome:** the bounded fallback reached 16/18 and timed out again.
 Results were retrieved and both cleanup checks passed. The [measured failure and
 final-two-pass plan](vlm-repeat-finish.md) supersede the prospective budget below.

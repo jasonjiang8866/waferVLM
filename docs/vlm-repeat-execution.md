@@ -1,5 +1,7 @@
 # Frozen six-checkpoint validation repeats
 
+**2026-11-18 completion:** [all 18 passes are independently verified](vlm-repeat-results.md), with 2,880 predictions and both cleanup paths confirmed. The incomplete-run descriptions below are retained as history. Quality/generalization remain unaccepted; the holdout is untouched.
+
 Prepared 2026-11-15 SGT. [Seed 42](vlm-seed42-results.md) and
 [seed 123](vlm-seed123-results.md) completed fresh 0-to-250 training. Seed 17
 reuses the two pinned released full checkpoints. The [six-endpoint matrix](evidence/vlm-six-endpoints.json)
