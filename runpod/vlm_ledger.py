@@ -366,12 +366,17 @@ def reconcile(run, require_current, output, seed=42):
         from runpod.vlm_holdout_inputs import reconcile as reconcile_holdout
         success, total_usd, total_seconds = reconcile_holdout(total_usd, total_seconds)
         failed_repeats.append(success)
+        from runpod import vlm_holdout_capacity
+        rejected_holdout, total_usd, total_seconds, placement = vlm_holdout_capacity.reconcile(
+            total_usd, total_seconds)
+        failed_repeats.append(rejected_holdout)
+        rejected.append(placement)
         history = request(f'{BASE}/actions/workflows/vlm-holdout.yml/runs?event=workflow_dispatch&per_page=100',
                           token=os.environ['GH_TOKEN'])
         if history['total_count'] != len(history['workflow_runs']):
             raise RuntimeError('Incomplete holdout history')
         for row in history['workflow_runs']:
-            if str(row['id']) == str(run):
+            if str(row['id']) == str(run) or row['id'] == rejected_holdout['run_id']:
                 continue
             jobs = request(f"{BASE}/actions/runs/{row['id']}/jobs", token=os.environ['GH_TOKEN'])
             launches = [s for j in jobs['jobs'] for s in j['steps']

@@ -79,5 +79,7 @@ if __name__ == '__main__':
         weights(archive,Path(tmp)/'unpacked')
         with zipfile.ZipFile(archive) as z:
             prior=json.loads(z.read('launch-spec.json'))['ledger']
-        reconcile(prior['usd'],prior['seconds'])
+        _, usd, seconds = reconcile(prior['usd'],prior['seconds'])
+        from runpod import vlm_holdout_capacity
+        vlm_holdout_capacity.reconcile(usd, seconds)
     print('Verified six frozen adapters, completed run and independent cleanup.')

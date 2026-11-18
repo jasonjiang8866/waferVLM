@@ -396,7 +396,13 @@ def preflight(api):
     if not choices:
         raise RuntimeError("No approved GPU with verified price/capacity")
     priority = repeat_gpus if evaluation() and resuming() else GPUS
-    rate, name, regions, cost, _ = min(choices, key=lambda c: (c[4], priority.index(c[1]), c[0]))
+    def placement_order(choice):
+        rate, gpu, regions, _, previously_rejected = choice
+        # Prefer a GPU with several eligible sites for a one-shot holdout deployment.
+        breadth = -len(regions) if holdout() else 0
+        return previously_rejected, breadth, priority.index(gpu), rate
+
+    rate, name, regions, cost, _ = min(choices, key=placement_order)
     evidence.update(
         status="preflight_passed",
         read_only=True,

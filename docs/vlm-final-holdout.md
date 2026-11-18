@@ -24,3 +24,15 @@ of cleanup within the existing US$30 and 1,100 minutes. A subsequent attempt
 requires reconciling any previous paid dispatch and any partial holdout exposure.
 The workflow saves partial worker evidence when available, and a second workflow
 independently checks removal of the originating Pod.
+
+The [first dispatch](https://github.com/jasonjiang8866/waferVLM/actions/runs/44303065030)
+received a capacity rejection when creating an RTX 4090 in EU-RO-1. RunPod
+returned no Pod ID. The controller recorded eight absence checks, and the
+[independent cleanup](https://github.com/jasonjiang8866/waferVLM/actions/runs/44304259531)
+recorded three more. No worker started or accessed the holdout. The conservative
+cumulative estimate through cleanup is US$10.647178 and 773.97 minutes.
+
+For the next dispatch the controller verifies both archived receipts, carries
+the full estimate forward, and excludes the rejected placement for one hour.
+It prefers GPU types with more eligible regions among fresh, price-approved
+placements, then applies the existing GPU priority to ties.
