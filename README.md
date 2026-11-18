@@ -13,6 +13,18 @@ waferVLM gives [`Qwen/Qwen3.5-0.8B`](https://huggingface.co/Qwen/Qwen3.5-0.8B) a
 
 The new **DINOv3 ViT-S/16 comparison** reads the same maps with a vision encoder and an eight-class prediction head. A frozen-backbone linear baseline measures what its pretrained features already know; vision-side LoRA measures the benefit of adapting those features.
 
+## Qwen validation across training seeds
+
+**Training from step 200 to 250 improved macro-F1 for exploratory seed 17. Both independent confirmation seeds scored lower at step 250.** Each checkpoint was evaluated three times on the same 160 wafer maps. The table uses the first pass for every checkpoint, as specified before evaluation.
+
+| Training seed | Step 200 macro-F1 | Step 250 macro-F1 | Change (250 − 200) |
+|---|---:|---:|---:|
+| 17 (exploratory) | 0.7443 | 0.7740 | +0.0297 |
+| 42 (confirmation) | 0.7081 | 0.6229 | -0.0852 |
+| 123 (confirmation) | 0.7982 | 0.7440 | -0.0541 |
+
+All 18 passes and 2,880 predictions were independently verified. Repeats ran across RTX 4090 and RTX PRO 6000 MIG hosts. Evaluation on the reserved 148 maps from unseen lots is pending. [All repeat scores and hardware details](docs/vlm-repeat-results.md) · [Evaluation protocol](docs/seed-confirmation-plan.md)
+
 ![Checkpoint-250 inference examples: one real scratch map correctly labeled scratch, and another misclassified as loc.](docs/showcase/checkpoint-250/inference.png)
 
 These are **recorded checkpoint-250 validation predictions**, including a mistake. [Inspect the full prompt, sample IDs, original predictions and reproduction steps](docs/showcase/checkpoint-250/README.md).
@@ -23,13 +35,13 @@ These are **recorded checkpoint-250 validation predictions**, including a mistak
 
 The labels above are **dataset annotations**. These examples were selected for visible morphology, not prediction success. Normal (`none`) and unknown defects are outside this eight-class experiment.
 
-## Latest results: DINOv3 vision fine-tuning
+## DINOv3 vision fine-tuning on seed 17
 
 The [2026-11-15 RTX 5090 run](https://github.com/jasonjiang8866/waferVLM/actions/runs/43716864164) completed all six seed-17 trials: three learning rates per DINOv3 arm, **10 epochs / 990 optimizer updates each**. Both selected models were reloaded in fresh processes, and the temporary Pod was independently verified absent.
 
 | Model · same 160 validation maps | Correct | Accuracy | Macro-F1 |
 |---|---:|---:|---:|
-| Qwen3.5-0.8B · checkpoint 250 | 125/160 | 78.125% | 0.773992 |
+| Qwen3.5-0.8B · seed 17, checkpoint 250 | 125/160 | 78.125% | 0.773992 |
 | DINOv3 · frozen backbone + linear head | 134/160 | 83.750% | 0.836449 |
 | **DINOv3 · Q/V LoRA + linear head** | **139/160** | **86.875%** | **0.867173** |
 
@@ -74,7 +86,7 @@ Counts cover the **entire validation split**, not just the displayed thumbnails.
 
 ## Qwen checkpoints and model download
 
-**Latest released Qwen development result:** validation selected **checkpoint-250** after continuing the released full checkpoint 200 to 300 at constant LR 5e-5. On the same 160 validation maps, step 250 reached **78.125% accuracy / 0.773992 macro-F1**, with **0 invalid outputs**. No new test or final-holdout inference ran. This is a single-seed development result requiring confirmation.
+**Released Qwen checkpoint (seed 17).** validation selected **checkpoint-250** after continuing the released full checkpoint 200 to 300 at constant LR 5e-5. On the same 160 validation maps, step 250 reached **78.125% accuracy / 0.773992 macro-F1**, with **0 invalid outputs**. No new test or final-holdout inference ran.
 
 **Download:** [continuation-300-v1 Release](https://github.com/jasonjiang8866/waferVLM/releases/tag/continuation-300-v1) — selected inference adapter, full resumable 250/300 checkpoints, raw predictions, reports and SHA256 checks. See [results and recovery instructions](docs/continuation-300-results.md). The earlier [checkpoint-200 Release](https://github.com/jasonjiang8866/waferVLM/releases/tag/checkpoint-200-v1) remains available.
 
@@ -90,8 +102,6 @@ Counts cover the **entire validation split**, not just the displayed thumbnails.
 The unchanged step-200 adapter changed five predictions relative to its historical GPU/host run. That cross-run macro-F1 difference (0.026833) is similar to the continuation gain (0.029697); this does not yet establish a robust improvement. The historical **64.375% test accuracy / 0.636059 macro-F1** belongs to checkpoint 200 only, not checkpoint 250 or 300.
 
 **Diagnostics:** [recovered performance evidence](docs/checkpoint-200-diagnostics.md) and [preserved diagnostic Release](https://github.com/jasonjiang8866/waferVLM/releases/tag/checkpoint-200-diagnostics-v1). CUDA execution is confirmed. Two unprofiled four-step probes on RTX 4090 averaged 12.82/12.98 seconds per new optimizer step; both diagnostic runs remain rejected under the original numerical-parity gate. Repeated unprofiled runs also vary. No diagnostic weights are promoted.
-
-**Confirmation progress:** fresh seeds [42](docs/vlm-seed42-results.md) and [123](docs/vlm-seed123-results.md) completed 250 steps. The [frozen validation study is now 18/18 complete](docs/vlm-repeat-results.md): all 2,880 predictions, six adapter identities and 16 reused pass trees passed independent verification; both cleanup paths verified the final Pod absent. **The step-250 gain did not replicate:** first-pass macro-F1 changed by +0.029697 for exploratory seed 17, but -0.085240 / -0.054142 for confirmation seeds 42 / 123. Reported repeat variation spans RTX 4090 and PRO 6000 MIG hosts and is not a controlled hardware comparison. Execution is accepted; model quality/generalization remain unaccepted. The 148-image unseen-lot study is still untouched and will retain the original model plus all six predeclared endpoints. See [results and next steps](docs/vlm-repeat-results.md), the [fixed protocol](docs/seed-confirmation-plan.md) and [TODO](TODO.md).
 
 **Historical test results (through checkpoint 200):**
 
