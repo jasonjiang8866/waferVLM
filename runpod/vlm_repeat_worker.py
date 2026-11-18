@@ -82,7 +82,7 @@ def work():
         w.write('cpu-start.json', w.cpu_snapshot())
         if (os.environ.get('WAFERVLM_SOURCE_SHA') != result['source_sha']
                 or w.digest(w.ROOT / 'configs/seed-confirmation.json') != result['config_sha256']
-                or w.digest(FROZEN) != result['input_manifest_sha256']):
+                or w.digest(w.ROOT/'docs/evidence/final-holdout-v1/manifest.jsonl' if os.environ.get('WAFER_VLM_PHASE')=='holdout' else FROZEN) != result['input_manifest_sha256']):
             raise ValueError('Pinned image/config/input identity mismatch')
         import torch
         if not torch.cuda.is_available() or not torch.cuda.is_bf16_supported():
@@ -113,6 +113,18 @@ def work():
             if code:
                 raise RuntimeError('Evaluation subprocess failed: ' + phase)
 
+        if os.environ.get('WAFER_VLM_PHASE') == 'holdout':
+            from runpod.vlm_holdout_inputs import pin, weights
+            w.RESULT['phase'] = 'inputs'
+            paths = archives('/workspace/inputs', request_input_url, deadline-180,
+                             pins={'completed-repeats': pin()})
+            adapters = weights(paths['completed-repeats'], Path('/workspace/completed'))
+            dataset = Path('/workspace/unseen-lots')
+            run('data', ['-m','runpod.vlm_holdout','render','/workspace/wafer-source',str(dataset)],1200)
+            run('holdout', ['-m','runpod.vlm_holdout','study',str(dataset),str(adapters),
+                           str(w.OUT/'holdout')],3600)
+            result.update(status='accepted', profiles=['final-holdout'])
+            return
         dataset = Path('/workspace/wafer-data')
         run('data', ['scripts/prepare_public_data.py', '--trust-pickle',
                     '--cache', '/workspace/wafer-source', '--output', str(dataset)], 1200)

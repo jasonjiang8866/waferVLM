@@ -37,6 +37,9 @@ def inputs():
 
 
 def transfer_inputs():
+    if os.environ.get('WAFER_VLM_PHASE') == 'holdout':
+        from runpod.vlm_holdout_inputs import pin
+        return {'completed-repeats': pin()}
     from runpod.vlm_repeat_resume import enabled, transfer_pin
     return dict(inputs(), **({'repeat-partial': transfer_pin()} if enabled() else {}))
 

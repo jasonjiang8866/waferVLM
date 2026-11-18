@@ -79,6 +79,9 @@ PRIOR_SPEND_RESERVE = 5.903039  # cumulative conservative estimate, rounded UP
 APPROVED_USD = 30.0
 
 
+from runpod.vlm_holdout_inputs import enabled as holdout
+
+
 def training_seed():
     value = os.environ.get("WAFER_VLM_SEED", "42")
     if value not in {"42", "123"}:
@@ -88,20 +91,26 @@ def training_seed():
 
 def evaluation():
     phase = os.environ.get('WAFER_VLM_PHASE', 'training')
-    if phase not in {'training', 'repeat'}:
+    if phase not in {'training', 'repeat', 'holdout'}:
         raise RuntimeError('Unsupported VLM phase')
-    return phase == 'repeat'
+    return phase in ('repeat', 'holdout')
 
 
 def ledger_seed():
+    if holdout():
+        return "holdout"
     return 'repeat' if evaluation() else training_seed()
 
 
 def pod_label():
+    if holdout():
+        return "vlmholdout"
     return 'vlmrepeats' if evaluation() else f'vlm{training_seed()}'
 
 
 def experiment():
+    if holdout():
+        return "vlm-holdout"
     return 'vlm-repeats' if evaluation() else "vlm-seed" + str(training_seed())
 
 
@@ -296,7 +305,11 @@ def preflight(api):
         if not all(any(a.get('seed') == s and a.get('accepted') is True for a in attempts) for s in (42, 123)):
             raise RuntimeError('Both new seeds must be accepted before repeats')
         from runpod.vlm_repeat_inputs import preflight_inputs
-        evidence['inputs'] = preflight_inputs(OUT)
+        if holdout():
+            from runpod.vlm_holdout import DIGEST
+            evidence['inputs'] = {'manifest_sha256': DIGEST}
+        else:
+            evidence['inputs'] = preflight_inputs(OUT)
     elif training_seed() == 123 and not any(a.get("seed") == 42 and a.get("accepted") is True for a in attempts):
         raise RuntimeError("Seed 42 acceptance and cleanup must be pinned before seed 123")
     pods = api.listing("/pods", "pods")
@@ -583,6 +596,9 @@ def worker_code():
              'runpod/vlm_repeat_resume.py', 'docs/evidence/vlm-repeat-resume.json',
              'runpod/confirmation_verify.py', 'runpod/confirmation_contract.py', 'runpod/provider.py',
              'runpod/vlm-completed.json', 'docs/evidence/vlm-six-endpoints.json']
+    if holdout():
+        names += ['runpod/vlm_holdout.py', 'runpod/vlm_holdout_inputs.py',
+                  'docs/evidence/final-holdout-v1/manifest.jsonl', 'docs/evidence/vlm-repeat-complete.json']
     if finishing():
         names += [str(p.relative_to(ROOT)) for p in (FINISH_RECEIPT, FINISH_PIN_FILE)]
     bundle = base64.b64encode(gzip.compress(json.dumps({n: (ROOT / n).read_text() for n in names}).encode(), mtime=0)).decode()
@@ -616,7 +632,9 @@ def launch(api):
     if evaluation():
         spec.update(phase='validation-repeats', config_sha256=evidence['config_sha256'],
                     input_manifest_sha256=evidence['inputs']['manifest_sha256'])
-        if resuming():
+        if holdout():
+            spec['phase'] = 'final-holdout'
+        elif resuming():
             spec['resume_source_run_id'] = active_pin()['run_id']
     else:
         spec['seed'] = training_seed()
@@ -675,7 +693,9 @@ def launch(api):
     }
     if evaluation():
         payload['env'].pop('WAFER_SEED')
-        if resuming():
+        if holdout():
+            payload['env']['WAFER_VLM_PHASE'] = 'holdout'
+        elif resuming():
             payload['env']['WAFER_VLM_RESUME'] = '1'
             if finishing():
                 payload['env']['WAFER_VLM_FINISH'] = '1'
@@ -771,7 +791,7 @@ def launch(api):
                     except RuntimeError:
                         deliveries[key] = attempts + 1
             phase = result.get("phase")
-            if phase != last_phase and phase in {"starting", "data", "training", "inputs", "validation"}:
+            if phase != last_phase and phase in {"starting", "data", "training", "inputs", "validation", "holdout"}:
                 print("Worker phase: " + phase, flush=True)
                 last_phase = phase
             progress = result.get("progress", {})
@@ -816,12 +836,19 @@ def launch(api):
                     result.get("source_sha") != SOURCE
                     or result.get("config_sha256") != evidence["config_sha256"]
                     or result.get("controller_sha") != evidence["controller_sha"]
-                    or result.get("profiles") != (["validation-repeats"] if evaluation() else ["seed-confirmation"])
+                    or result.get("profiles") != (["final-holdout"] if holdout() else ["validation-repeats"] if evaluation() else ["seed-confirmation"])
                     or (not evaluation() and result.get("seed") != training_seed())
                     or not (OUT / "experiment.tar.gz").is_file()
                 ):
                     raise RuntimeError("Result provenance/completeness mismatch")
-                if evaluation():
+                if holdout():
+                    import tempfile
+                    from runpod.confirmation_verify import unpack
+                    from runpod.vlm_holdout import analyze
+                    with tempfile.TemporaryDirectory() as tmp:
+                        results = unpack(OUT/'experiment.tar.gz', Path(tmp)/'unpacked')
+                        accepted = analyze(results/'holdout', spec['gpu'], IMAGE.split('@')[1], spec['controller_sha'])
+                elif evaluation():
                     from runpod.vlm_repeat_verify import verify_repeat_archive
                     accepted = verify_repeat_archive(OUT / 'experiment.tar.gz', spec)
                 else:
