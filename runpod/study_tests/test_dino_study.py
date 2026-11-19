@@ -95,18 +95,77 @@ class StudyTests(unittest.TestCase):
             with self.assertRaises(ValueError): check_history(dict(total_count=len(rows),workflow_runs=rows), {'1'})
 
     def test_overlay_keeps_original_training_code_and_no_holdout_in_validation(self):
-        import base64, gzip, ast
+        import base64, lzma, ast
         code, digest = controller.overlay('validation')
         compile(code,'worker-overlay','exec')
         tree = ast.parse(code)
         packed = next(n.args[0].value for n in ast.walk(tree) if isinstance(n,ast.Call)
                       and isinstance(n.func,ast.Attribute) and n.func.attr=='b64decode')
-        raw = gzip.decompress(base64.b64decode(packed))
+        raw = lzma.decompress(base64.b64decode(packed))
         self.assertEqual(hashlib.sha256(raw).hexdigest(),digest)
         files = json.loads(raw)
         self.assertFalse(any(n.startswith(('src/','scripts/')) or 'holdout' in n for n in files))
         self.assertNotIn('configs/dinov3.json',files)
         self.assertEqual(json.loads(files['configs/dinov3-confirmation.json']),study.plan())
+
+    def test_holdout_overlay_roundtrips_frozen_bytes_below_transport_bound(self):
+        import ast, base64, gzip, lzma, shlex
+        code,digest=controller.overlay('holdout')
+        compile(code,'holdout-overlay','exec')
+        packed=next(n.args[0].value for n in ast.walk(ast.parse(code))
+                    if isinstance(n,ast.Call) and isinstance(n.func,ast.Attribute)
+                    and n.func.attr=='b64decode')
+        raw=lzma.decompress(base64.b64decode(packed))
+        self.assertEqual(hashlib.sha256(raw).hexdigest(),digest)
+        files=json.loads(raw)
+        for name,content in files.items():
+            self.assertEqual(content.encode(),(controller.ROOT/name).read_bytes())
+        self.assertEqual(hashlib.sha256(files['docs/evidence/dinov3-six-endpoints.json'].encode()).hexdigest(),
+                         '1b676ad216cc437f68718ca1e592628d2b4826e97f767c4daa8ff4ab11844202')
+        # The original GZIP/base64 alone crossed 64 KiB for these real inputs.
+        self.assertGreater(len(base64.b64encode(gzip.compress(raw,mtime=0))),64*1024)
+        command='exec /app/.venv/bin/python -u -c '+shlex.quote(code)
+        self.assertLess(len(command.encode()),56*1024)
+        receipt=controller.check_create_payload(dict(cmd=[command],env={'reserved':'x'*4000}))
+        self.assertLess(receipt['json_bytes'],60*1024)
+        with self.assertRaisesRegex(ValueError,'transport bound'):
+            controller.check_create_payload(dict(cmd=[command],env={'oversized':'x'*10000}))
+        with self.assertRaisesRegex(ValueError,'transport bound'):
+            controller.check_create_payload(dict(cmd=['界'*11000]))
+
+    def test_real_holdout_create_envelope_and_oversize_prevent_post(self):
+        import os
+        from contextlib import ExitStack
+        p=study.plan();ledger=dict(usd=1.2,seconds=4000)
+        spec=dict(run_id='123',phase='holdout',controller_sha='c'*40,
+                  gpu='NVIDIA GeForce RTX 4090',regions=['EUR-IS-1'],ledger=ledger,
+                  cost=controller.quote(.89,'NVIDIA GeForce RTX 4090',ledger),
+                  plan_sha256=hashlib.sha256(study.PLAN.read_bytes()).hexdigest(),
+                  frozen_sha256=hashlib.sha256(study.FROZEN.read_bytes()).hexdigest())
+        meta=dict(name=controller.AUTH+'-123',workflow_run=dict(id=123,head_sha='c'*40),expired=False)
+        for oversized in (False,True):
+            with tempfile.TemporaryDirectory() as tmp, ExitStack() as stack:
+                stack.enter_context(patch.object(controller,'OUT',Path(tmp)))
+                stack.enter_context(patch.object(controller,'preflight',return_value=spec))
+                stack.enter_context(patch.object(controller,'request',return_value=meta))
+                stack.enter_context(patch.object(controller,'cleanup'))
+                stack.enter_context(patch.object(controller.signal,'signal'))
+                stack.enter_context(patch.object(controller.signal,'alarm'))
+                stack.enter_context(patch.object(controller.secrets,'token_urlsafe',return_value='test-only'))
+                stack.enter_context(patch.dict(os.environ,AUTHORIZATION_ARTIFACT_ID='123',GH_TOKEN='test-only'))
+                if oversized:stack.enter_context(patch.object(controller,'overlay',return_value=('x'*70000,'d'*64)))
+                api=Mock();api.call.side_effect=RuntimeError('stop before network')
+                if oversized:
+                    with self.assertRaisesRegex(ValueError,'transport bound'):controller.launch(api)
+                    api.call.assert_not_called()
+                else:
+                    with self.assertRaisesRegex(RuntimeError,'stop before network'):controller.launch(api)
+                    api.call.assert_called_once()
+                    path,method,payload=api.call.call_args.args
+                    self.assertEqual((path,method),('/pods','POST'))
+                    receipt=json.loads((Path(tmp)/'create-payload-size.json').read_text())
+                    self.assertEqual(receipt['json_bytes'],len(json.dumps(payload).encode()))
+                    self.assertLess(receipt['json_bytes'],60*1024)
 
     def test_guard_failure_never_creates_and_cleanup_uses_exact_owner(self):
         api=Mock()

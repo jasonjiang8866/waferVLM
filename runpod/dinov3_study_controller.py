@@ -1,6 +1,6 @@
 """Bounded DINO-only controller; reuse the verified image and freeze before holdout."""
 import base64
-import gzip
+import lzma
 import hashlib
 import json
 import os
@@ -32,6 +32,7 @@ WORK_SECONDS = 2700
 CLEANUP_SECONDS = 600
 CATALOG_OBSERVATIONS = 20
 CATALOG_PAUSE_SECONDS = 15
+CREATE_PAYLOAD_MAX_BYTES = 60 * 1024
 RUNTIME_FILES = ['src/wafervlm/' + n + '.py' for n in
                  ('dinov3','core','experiment','data','acquisition','vision_comparison','confirmation')]
 RUNTIME_FILES += ['scripts/run_dinov3.py','scripts/prepare_public_data.py','configs/dinov3.json','uv.lock',
@@ -125,14 +126,24 @@ def overlay(phase):
         raise ValueError('Unknown phase')
     payload = json.dumps({n:(ROOT/n).read_text() for n in files}, sort_keys=True).encode()
     digest = hashlib.sha256(payload).hexdigest()
-    packed = base64.b64encode(gzip.compress(payload, mtime=0)).decode()
-    code = ("import base64,gzip,json,pathlib,runpy,os,hashlib;os.chdir('/app');"
-            "raw=gzip.decompress(base64.b64decode(" + repr(packed) + "));"
+    packed = base64.b64encode(lzma.compress(payload)).decode()
+    code = ("import base64,lzma,json,pathlib,runpy,os,hashlib;os.chdir('/app');"
+            "raw=lzma.decompress(base64.b64decode(" + repr(packed) + "));"
             "assert hashlib.sha256(raw).hexdigest()==os.environ['DINO_OVERLAY_SHA256'];"
             "payload=json.loads(raw);"
             "[(pathlib.Path(n).parent.mkdir(parents=True,exist_ok=True),pathlib.Path(n).write_text(v)) for n,v in payload.items()];"
             "runpy.run_module('runpod.dinov3_study_worker',run_name='__main__')")
     return code, digest
+
+
+def check_create_payload(payload):
+    # Local conservative transport bound, not a documented provider API limit.
+    size = len(json.dumps(payload).encode())
+    command_size = sum(len(c.encode()) for c in payload.get('cmd', []))
+    if size > CREATE_PAYLOAD_MAX_BYTES:
+        raise ValueError('Create payload exceeds the local 60 KiB transport bound')
+    return dict(json_bytes=size, command_bytes=command_size,
+                maximum_json_bytes=CREATE_PAYLOAD_MAX_BYTES)
 
 
 def select_capacity(api, candidates, ledger):
@@ -298,6 +309,8 @@ def launch(api):
     handlers={s:signal.signal(s,interrupt) for s in (signal.SIGALRM,signal.SIGTERM,signal.SIGINT)}
     signal.alarm(WORK_SECONDS)
     try:
+        stage('create_payload')
+        save('create-payload-size.json',check_create_payload(payload))
         stage('create_pod')
         pod=api.call('/pods','POST',payload)  # One create only. Ambiguous failures go directly to reconciliation.
         pid=pod.get('id','')
