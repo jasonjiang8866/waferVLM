@@ -65,6 +65,8 @@ Selected learning rates: linear **0.003** (epoch 10); LoRA **0.0001**, head **0.
 
 ## Where does DINOv3 get confused?
 
+On the **16 maps missed by all six Qwen checkpoints**, DINOv3 linear rescues **7** and vision LoRA **6**. Both rescue **3 of the 7 shared `loc` misses**; four remain difficult. This Qwen-selected diagnostic subset differs from the full 160-map comparison. [Exact paired counts, all IDs, real loc images and morphology review](docs/showcase/dinov3-qwen-paired/README.md). Cross-seed DINO confirmation and unseen-lot results remain pending.
+
 Read **columns as true labels** and **rows as predicted labels**. Each column contains 20 maps; each non-empty cell shows a real input, the complete count and the percentage of its true class. The selected LoRA model gets **139/160** correct. Its weakest class is `loc` (**13/20 correct**), followed by `edge-loc` (**15/20**).
 
 [![DINOv3 LoRA wafer-map confusion matrix: X is true label, Y is predicted label; counts cover all 160 validation maps.](docs/showcase/dinov3-seed17/lora-image-confusion-matrix.png)](docs/showcase/dinov3-seed17/lora-image-confusion-matrix.png)
