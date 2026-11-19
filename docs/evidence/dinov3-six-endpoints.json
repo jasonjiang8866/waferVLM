@@ -1,0 +1,214 @@
+{
+  "schema": 1,
+  "plan_sha256": "dd063d8add284fb7890e983b5090b0f697042e92c8a8cc09e0ae26e75518de67",
+  "validation_run_id": "44537796019",
+  "validation_controller_sha": "cf55c9277c3c5da3278d5a46733ae648d03bbdac",
+  "artifact": {
+    "artifact_id": 14538331200,
+    "zip_sha256": "5435fbbf51a77e0e667966539d77316174a020cafc54e607800b42f582b4eef2",
+    "inner_sha256": "69151af34def08224af0d6d12b00105937440d94812a6e19ff39a05157e36b00"
+  },
+  "endpoints": [
+    {
+      "name": "seed17-linear",
+      "seed": 17,
+      "mode": "linear",
+      "learning_rate": 0.003,
+      "selected_epoch": 10,
+      "weight_sha256": "ffd76f22ac6838095cd6673a1c018369976d4c58d54ad66a1058e3928a8359f2",
+      "base_weights_sha256": "4610ad75edef83e75afdebf162d148dc628045ea6cbb83d67d4708c709c4f91d",
+      "training_source_sha": "c255bec677ba4b525e4997af60d9020592e15a46",
+      "training_image": "sha256:d64ef98a018ce25d41add6a8c3a65225ab83f22addb16ab47959e0c5b01ab329",
+      "training_gpu": "NVIDIA GeForce RTX 5090",
+      "training_checksums": {
+        "history.json": "46c7d015781da0efb8a765ee2d238e6080a34ba11f8750ec0f898b813f82c067",
+        "metrics.json": "9f6fa5a7e00192dd325c3f669369c9aee5c4f3b216194ddb2c2e45a7fd8bb91f",
+        "predictions.jsonl": "91c22bf1c0d84e8fb0b40b7a3fbf0de61137ecadc0de7d129d9db8f3e711806b",
+        "run.json": "6e988661db023b23b81ebb9d999d4370b83487d4935d3af7ead2ab477d9fa5e5",
+        "selected.safetensors": "ffd76f22ac6838095cd6673a1c018369976d4c58d54ad66a1058e3928a8359f2",
+        "status.json": "41d6f336e8ce9551efa7a9cd626412e1c295d197140372a23f2d858130368b86",
+        "training.json": "27e9b49328efe3291a3bca0d1d44871862464d934d2022c24d26ad8f00af107c"
+      }
+    },
+    {
+      "name": "seed17-lora",
+      "seed": 17,
+      "mode": "lora",
+      "learning_rate": 0.0001,
+      "selected_epoch": 5,
+      "weight_sha256": "4cc6b86b051a079602d3791311aeb5b3b2ca51109f4404a7cc7afa9744059c6d",
+      "base_weights_sha256": "4610ad75edef83e75afdebf162d148dc628045ea6cbb83d67d4708c709c4f91d",
+      "training_source_sha": "c255bec677ba4b525e4997af60d9020592e15a46",
+      "training_image": "sha256:d64ef98a018ce25d41add6a8c3a65225ab83f22addb16ab47959e0c5b01ab329",
+      "training_gpu": "NVIDIA GeForce RTX 5090",
+      "training_checksums": {
+        "history.json": "5d1b2a11d5716a1b71f81db49279a2c084b3337c83e43284d3b0ef7584ae6d56",
+        "metrics.json": "8d62f37a09761298948bcb24bf9f58d8f3a70e74ca834426fd4b4502494d6a54",
+        "predictions.jsonl": "9332e3723d354f9e84de47ddfa1e5caf17e014330da31d079031ba2fbd8461d9",
+        "run.json": "7334f865492afd54c34b0d51545dac8996808db2f8b2e54c9395c400ae38ebc5",
+        "selected.safetensors": "4cc6b86b051a079602d3791311aeb5b3b2ca51109f4404a7cc7afa9744059c6d",
+        "status.json": "41d6f336e8ce9551efa7a9cd626412e1c295d197140372a23f2d858130368b86",
+        "training.json": "4055ebc74eaaf138ca72eac48d310f3065c5df44be458f6e3eae04bfe3808461"
+      }
+    },
+    {
+      "name": "seed42-linear",
+      "seed": 42,
+      "mode": "linear",
+      "learning_rate": 0.003,
+      "selected_epoch": 9,
+      "weight_sha256": "f1f04666e18e7eb97df127a69282f7d7ce331c0b83ee5ad1d2f5bace1c35f70a",
+      "base_weights_sha256": "4610ad75edef83e75afdebf162d148dc628045ea6cbb83d67d4708c709c4f91d",
+      "training_source_sha": "c255bec677ba4b525e4997af60d9020592e15a46",
+      "training_image": "sha256:d64ef98a018ce25d41add6a8c3a65225ab83f22addb16ab47959e0c5b01ab329",
+      "training_gpu": "NVIDIA GeForce RTX 4090",
+      "training_checksums": {
+        "history.json": "bc28558d5e3b3822b6686598ba4f40b61e59091cb64ec90b829ef06e26f2b44c",
+        "metrics.json": "ae930e254cc66c469ec6b7da82d61d10fcab07f2d133da5e3431c5bcf04f93f7",
+        "predictions.jsonl": "b9cc5b0a85c73e2ef3dc89b03bb376dd24931d97626b3b04e34859dd0707998e",
+        "run.json": "c61d2065bf0356c3c9e1041f67ac42a8f74fbfbc81ce0307c13889be80e8e010",
+        "selected.safetensors": "f1f04666e18e7eb97df127a69282f7d7ce331c0b83ee5ad1d2f5bace1c35f70a",
+        "status.json": "41d6f336e8ce9551efa7a9cd626412e1c295d197140372a23f2d858130368b86",
+        "training.json": "2e8d4543027a814bf3b5e3a2e75e8b8797086beadbd70211ae60aee9a544f607"
+      }
+    },
+    {
+      "name": "seed42-lora",
+      "seed": 42,
+      "mode": "lora",
+      "learning_rate": 0.0001,
+      "selected_epoch": 5,
+      "weight_sha256": "e394ec4f7b183bda3022de1547ed7f8a3471b1a378db0fa67fdd2a2154239a68",
+      "base_weights_sha256": "4610ad75edef83e75afdebf162d148dc628045ea6cbb83d67d4708c709c4f91d",
+      "training_source_sha": "c255bec677ba4b525e4997af60d9020592e15a46",
+      "training_image": "sha256:d64ef98a018ce25d41add6a8c3a65225ab83f22addb16ab47959e0c5b01ab329",
+      "training_gpu": "NVIDIA GeForce RTX 4090",
+      "training_checksums": {
+        "history.json": "2923f919ba8965fa4253e3427215f31f2305c3bfc8001d9889c6fe2011f51376",
+        "metrics.json": "903de4024b63e55f6358b9cbff838a449cb1574651a0b0f2734a66cf12816a65",
+        "predictions.jsonl": "283ce8664be05ab52b8e72524fa62fc14899a6d555d5d19bd2a480c8526e8cc1",
+        "run.json": "fd37e1d1a311e23795ef59fdf6231f3a91f25e5733615911f97d2fbad4f448a7",
+        "selected.safetensors": "e394ec4f7b183bda3022de1547ed7f8a3471b1a378db0fa67fdd2a2154239a68",
+        "status.json": "41d6f336e8ce9551efa7a9cd626412e1c295d197140372a23f2d858130368b86",
+        "training.json": "d5e24bd5228d56e30ffcfd4ddc5ee3150621ea334607291c9718ef30800c1403"
+      }
+    },
+    {
+      "name": "seed123-linear",
+      "seed": 123,
+      "mode": "linear",
+      "learning_rate": 0.003,
+      "selected_epoch": 10,
+      "weight_sha256": "c2f25d50d51b28ea2e156b23b883476ea7d5ccf911fef5862527b08a7eeb3bf7",
+      "base_weights_sha256": "4610ad75edef83e75afdebf162d148dc628045ea6cbb83d67d4708c709c4f91d",
+      "training_source_sha": "c255bec677ba4b525e4997af60d9020592e15a46",
+      "training_image": "sha256:d64ef98a018ce25d41add6a8c3a65225ab83f22addb16ab47959e0c5b01ab329",
+      "training_gpu": "NVIDIA GeForce RTX 4090",
+      "training_checksums": {
+        "history.json": "76eecac1b9e0c578698d8fd971f30e86a0560e1c35b6119ecc7e15f2ad4a0e64",
+        "metrics.json": "d08e95620d02b1eb29afeb0b6c4a20ff4d3262a5461b4f19056573315b33868e",
+        "predictions.jsonl": "1f8c33ddd8eeab079babe943ae43e6207c177a7f8b54d541e297f04d6bda19a8",
+        "run.json": "e5f34e1cf3d02a9916f429f139e6a1859797cebf310df4b1fed21a1b9b666dd7",
+        "selected.safetensors": "c2f25d50d51b28ea2e156b23b883476ea7d5ccf911fef5862527b08a7eeb3bf7",
+        "status.json": "41d6f336e8ce9551efa7a9cd626412e1c295d197140372a23f2d858130368b86",
+        "training.json": "6ac780f1768de05ee7353e62ff566769b9ca751f41472551b347c17a0ea398ae"
+      }
+    },
+    {
+      "name": "seed123-lora",
+      "seed": 123,
+      "mode": "lora",
+      "learning_rate": 0.0001,
+      "selected_epoch": 3,
+      "weight_sha256": "325702074f26e847e65a276271b26f25b91a15888efe1068c1df91795c588abb",
+      "base_weights_sha256": "4610ad75edef83e75afdebf162d148dc628045ea6cbb83d67d4708c709c4f91d",
+      "training_source_sha": "c255bec677ba4b525e4997af60d9020592e15a46",
+      "training_image": "sha256:d64ef98a018ce25d41add6a8c3a65225ab83f22addb16ab47959e0c5b01ab329",
+      "training_gpu": "NVIDIA GeForce RTX 4090",
+      "training_checksums": {
+        "history.json": "8fe704a71cdd990d81805fbecaefd6803a519a1a0aaa6d76695bdac0d2dbb525",
+        "metrics.json": "1189c74765dd5add3638d5cf099d685b275a923454489317d5da00b5e6fc9fce",
+        "predictions.jsonl": "f0bdb517a3596541397c71846d5f7ec8612476040f8a3fa7f159f795e82e8ceb",
+        "run.json": "db6db0609c6ad6e40d826c7839203ed27cb280bc5336107a0b58d86280f2bcbf",
+        "selected.safetensors": "325702074f26e847e65a276271b26f25b91a15888efe1068c1df91795c588abb",
+        "status.json": "41d6f336e8ce9551efa7a9cd626412e1c295d197140372a23f2d858130368b86",
+        "training.json": "934ed8fc998e39d890d5daa90dd71637c74b4ab8d7a74d4e5a382905dbf7913f"
+      }
+    }
+  ],
+  "manifests": {
+    "training_dataset_sha256": "c588b3ef59d9dba57cfc745ec20db903e6ff2dcc75504112348f8b9f1ad3ab68",
+    "validation": {
+      "path": "docs/showcase/dinov3-seed17/validation.jsonl",
+      "sha256": "3243e450163721eecac5ce5f4667f9a93599674337fed46e5e40ddeb940ab54f",
+      "maps": 160
+    },
+    "holdout": {
+      "path": "docs/evidence/final-holdout-v1/manifest.jsonl",
+      "sha256": "f08050ef4fcaca3b9c35ad29905a63957a375af7a024b69e0281968d06f4564f",
+      "maps": 148,
+      "lot_groups": 143
+    }
+  },
+  "preprocessing": {
+    "image_size": 256,
+    "image_mean": [
+      0.485,
+      0.456,
+      0.406
+    ],
+    "image_std": [
+      0.229,
+      0.224,
+      0.225
+    ],
+    "resize": false,
+    "crop": false,
+    "augmentation": false,
+    "pooling": "cls_and_mean_patch_without_registers"
+  },
+  "inference": {
+    "batch_size": 8,
+    "precision": "bf16_autocast_fp32_parameters",
+    "decoding": "argmax",
+    "label_order": [
+      "center",
+      "donut",
+      "edge-loc",
+      "edge-ring",
+      "loc",
+      "near-full",
+      "random",
+      "scratch"
+    ],
+    "validation_passes": 3,
+    "primary_validation_pass": 1,
+    "holdout_passes_per_model": 1,
+    "expected_holdout_predictions": 888
+  },
+  "statistics": {
+    "primary_pair": "within-seed vision LoRA minus frozen-backbone linear",
+    "bootstrap_unit": "lot_group",
+    "bootstrap_resamples": 10000,
+    "bootstrap_seed": 20261110,
+    "interval": "paired percentile 95%",
+    "undefined_f1": 0,
+    "fixed_classes": [
+      "center",
+      "donut",
+      "edge-loc",
+      "edge-ring",
+      "loc",
+      "near-full",
+      "random",
+      "scratch"
+    ]
+  },
+  "qwen_holdout_comparator": {
+    "seed": 17,
+    "step": 250,
+    "predictions_sha256": "0678856688f78f33331544a39ea443ed4fdb0d58252396068ba107eccb0cb67d"
+  },
+  "disclosure": "Additional prespecified DINO comparison on the already-public Qwen holdout; no holdout-based selection.",
+  "holdout_predictions_read": false
+}
