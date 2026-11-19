@@ -30,6 +30,8 @@ DISK_GB = 60
 DISK_RATE = DISK_GB * .10 / (28 * 24)
 WORK_SECONDS = 2700
 CLEANUP_SECONDS = 600
+CATALOG_OBSERVATIONS = 20
+CATALOG_PAUSE_SECONDS = 15
 RUNTIME_FILES = ['src/wafervlm/' + n + '.py' for n in
                  ('dinov3','core','experiment','data','acquisition','vision_comparison','confirmation')]
 RUNTIME_FILES += ['scripts/run_dinov3.py','scripts/prepare_public_data.py','configs/dinov3.json','uv.lock',
@@ -136,7 +138,7 @@ def overlay(phase):
 def select_capacity(api, candidates, ledger):
     """Reobserve transient catalog shortages; never retry a create request."""
     observations = []
-    for attempt in range(4):
+    for attempt in range(CATALOG_OBSERVATIONS):
         for gpu in candidates:
             query = urllib.parse.urlencode(dict(include='AVAILABILITY',product='POD',cloud='SECURE',count=1,minCudaVersion='12.8'))
             catalog = api.call('/catalog/gpus/'+urllib.parse.quote(gpu,safe='')+'?'+query)
@@ -146,8 +148,8 @@ def select_capacity(api, candidates, ledger):
             save('catalog.json', observations)
             if regions and finite(rate,.001) and rate <= GPU_CAPS[gpu]:
                 return gpu,regions,quote(rate,gpu,ledger)
-        if attempt < 3:
-            time.sleep(15)
+        if attempt + 1 < CATALOG_OBSERVATIONS:
+            time.sleep(CATALOG_PAUSE_SECONDS)
     raise ValueError('No approved GPU capacity at the CUDA minimum and price cap')
 
 

@@ -150,8 +150,9 @@ class StudyTests(unittest.TestCase):
         api.call.return_value=dict(price=dict(secure=1.40),dataCenters=[dict(id='EUR-IS-1',availability='HIGH')])
         with tempfile.TemporaryDirectory() as tmp, patch.object(controller,'OUT',Path(tmp)), patch.object(controller.time,'sleep') as sleep:
             with self.assertRaises(ValueError):controller.select_capacity(api,[gpu],dict(usd=.71,seconds=2000))
-            self.assertEqual(api.call.call_count,4)
-            self.assertEqual(sleep.call_count,3)
+            self.assertEqual(api.call.call_count,20)
+            self.assertEqual(sleep.call_count,19)
+            self.assertEqual(sum(c.args[0] for c in sleep.call_args_list),285)
 
     def test_cleanup_requires_consecutive_inventory_absence(self):
         api=Mock();api.listing.return_value=[]
