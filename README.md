@@ -141,7 +141,7 @@ The unchanged step-200 adapter changed five predictions relative to its historic
 
 ## What is included
 
-- [DINOv3 visual comparison](docs/dinov3-baseline.md): frozen linear probe and vision LoRA, fixed-data validation, and paired wafer-map visualizations. The [six-trial seed-17 GPU sweep is complete](docs/dinov3-seed17-results.md); independent-seed confirmation remains pending.
+- [DINOv3 visual comparison](docs/dinov3-baseline.md): frozen linear probe and vision LoRA, fixed-data validation, and paired wafer-map visualizations. The [six-trial seed-17 GPU sweep is complete](docs/dinov3-seed17-results.md); [three-seed confirmation is complete](docs/dinov3-confirmation-results.md).
 - WM-811K import with source checksum verification, deterministic rendering, whole-lot splitting, duplicate-map isolation, and artifact auditing.
 - Qwen3.5's pinned processor and model revision; answer-only loss; vision tower frozen; LoRA on language projections including Gated DeltaNet layers.
 - Zero-shot evaluation, fixed-budget SFT, adapted-model evaluation, and paired accuracy / macro-F1 comparison.
@@ -227,7 +227,7 @@ Individual stages are available through `wafervlm evaluate`, `train` and `compar
 
 ## RunPod
 
-**DINOv3 has a separate US$10 / 500-minute authorization.** Through the completed three-seed validation and all prior DINO attempts, conservative cumulative usage is **US$1.0627674 / 57.1092 minutes**. The latest Pod is independently verified absent; no persistent volume was created. These are lifecycle estimates, not invoices. See [DINO cost and cleanup evidence](docs/dinov3-confirmation-results.md#cost-cleanup-and-reproducibility) and the [original seed-17 receipt](docs/dinov3-seed17-results.md#cost-and-cleanup).
+**DINOv3 has a separate US$10 / 500-minute authorization.** Through the completed three-seed validation and the first holdout allocation failure, conservative cumulative usage is **US$1.1195446 / 60.8989 minutes**. The latest Pod is independently verified absent; no persistent volume was created. These are lifecycle estimates, not invoices. See [DINO cost and cleanup evidence](docs/dinov3-confirmation-results.md#cost-cleanup-and-reproducibility) and the [original seed-17 receipt](docs/dinov3-seed17-results.md#cost-and-cleanup).
 
 See [runpod/README.md](runpod/README.md) for the extended US$30 /1,100-minute total experiment authorization, per-GPU price caps, pinned published image, data verification and cleanup design. `RUNPOD_API_KEY` stays in the Actions controller; neither the training code nor the worker receives it. Host filtering uses `minCudaVersion=12.8`, never an exact 12.8 requirement. The Broker remains GET-only; the separate waferVLM controller implements the paid lifecycle. Merging code does not launch compute: the GPU workflow requires a manual dispatch, exact main SHA and an unused authorization marker. The lower-LR continuation completed step 200 and its temporary Pod deletion was independently verified. Results and full recovery files are preserved in the [checkpoint-200 Release](https://github.com/jasonjiang8866/waferVLM/releases/tag/checkpoint-200-v1). After both diagnostics and the completed 200→300 continuation, conservative cumulative usage is **US$5.903039 / 491.911 minutes** within **US$30 / 1,100 minutes**. The continuation Pod is verified absent by primary and independent cleanup. See the [continuation cost and cleanup evidence](docs/continuation-300-results.md#cleanup-and-cost-ledger). The consumed authorization marker remains guarded; publishing results does not launch compute.
 
