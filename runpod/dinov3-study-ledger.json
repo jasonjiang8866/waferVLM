@@ -34,6 +34,32 @@
           "checked_epoch": 1795092500.9015908
         }
       }
+    },
+    {
+      "run_id": "44528940006",
+      "controller_sha": "e61de66d4d5ea4c6e8ac462f6dccb95d8914c59d",
+      "conclusion": "failure",
+      "artifact_id": 14532797606,
+      "zip_sha256": "ec31014a2006d9b6c1a366b07eb0365f0585a4f46252f6bf837ecc0f626cd558",
+      "cleanup": {
+        "status": "verified_absent",
+        "run_id": "44528940006",
+        "checks": 12,
+        "persistent_volumes_created": false,
+        "checked_epoch": 1795093291.4170318
+      },
+      "independent": {
+        "run_id": "44529384082",
+        "artifact_id": 14532987899,
+        "zip_sha256": "795010de29e239dd5c7a424aaa0fac0bdc04455f009be4eb25cf604709eaefa9",
+        "cleanup": {
+          "status": "verified_absent",
+          "run_id": "44528940006",
+          "checks": 12,
+          "persistent_volumes_created": false,
+          "checked_epoch": 1795093420.755791
+        }
+      }
     }
   ]
 }
