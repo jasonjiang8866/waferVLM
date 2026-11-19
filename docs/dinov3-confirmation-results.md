@@ -47,7 +47,7 @@ The primary holdout contrast is LoRA minus linear **within each seed**. The pair
 
 ## Cost, cleanup and reproducibility
 
-This successful RTX 4090 run (EUR-IS-1, US$0.89/hour) used a conservative **843.887009-second / US$0.2107206** intent-to-verified-absence bound. Including the original DINO experiments and all five unsuccessful confirmation attempts, cumulative usage is **US$1.0627674 / 57.1092 minutes** under the existing **US$10 / 500-minute DINO-only** allowance. Remaining allowance is about **US$8.9372 / 442.8908 minutes**; estimates are not invoices.
+This successful RTX 4090 run (EUR-IS-1, US$0.89/hour) used a conservative **843.887009-second / US$0.2107206** intent-to-verified-absence bound. At validation completion, including the original DINO experiments and all five unsuccessful confirmation attempts, cumulative usage was **US$1.0627674 / 57.1092 minutes** under the existing **US$10 / 500-minute DINO-only** allowance. After four subsequent holdout attempts, cumulative usage is **US$1.5032933 / 84.4246 minutes**, leaving about **US$8.4967 / 415.5754 minutes**. Estimates are not invoices; see the [recovery record](dinov3-study-recovery.md) and cumulative ledger for each attempt.
 
 The originating workflow recorded three consecutive absences for Pod `kvgd8runvm4b7l`; independent cleanup recorded twelve. No persistent volume was created. [Exact receipt, artifact hashes and cleanup evidence](evidence/dinov3-validation-complete.json) · [Cumulative ledger](../runpod/dinov3-study-ledger.json) · [Earlier attempt diagnosis](dinov3-study-recovery.md)
 
