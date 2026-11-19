@@ -16,7 +16,7 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
-from runpod.provider import REPOSITORY, Runpod, NoRedirect, request, finite, budget
+from runpod.provider import REPOSITORY, Runpod, NoRedirect, RemoteHTTPError, request, finite, budget
 from runpod.dinov3_controller import image_provenance
 from runpod.dinov3_study import PLAN, FROZEN, plan, input_pin, verify_results
 from runpod.dinov3_study_ledger import reconcile
@@ -40,6 +40,22 @@ def save(name, data):
     OUT.mkdir(exist_ok=True)
     p = OUT / name; tmp = p.with_suffix('.tmp')
     tmp.write_text(json.dumps(data, indent=2, allow_nan=False) + '\n'); tmp.replace(p)
+
+
+def stage(name):
+    save('progress.json', dict(stage=name, checked_epoch=time.time()))
+    print('DINO controller stage: '+name, flush=True)
+
+
+def error_record(exc):
+    result = dict(error_type=type(exc).__name__)
+    if isinstance(exc, RemoteHTTPError):
+        result.update(http_status=exc.status, categories=exc.categories)
+    # Never emit remote response bodies, URLs or exception strings.
+    path = OUT / 'progress.json'
+    if path.exists():
+        result['stage'] = json.loads(path.read_text())['stage']
+    return result
 
 
 def identity():
@@ -93,19 +109,24 @@ def overlay(phase):
 
 
 def preflight(api):
+    stage('identity')
     run, sha = manual_guard()
     phase, p = os.environ['DINO_PHASE'], plan()
+    stage('ledger')
     ledger = reconcile(run)
     save('ledger.json', ledger)
     for name in RUNTIME_FILES:
         old = subprocess.check_output(['git','show',p['image_source_sha']+':'+name], cwd=ROOT)
         if old != (ROOT/name).read_bytes():
             raise ValueError('Runtime differs from pinned DINO image: '+name)
+    stage('image')
     image_provenance(p['image'], p['image_source_sha'])
+    stage('input_artifact')
     pin = input_pin(phase)
     meta = request(BASE + '/actions/artifacts/' + str(pin['artifact_id']), token=os.environ['GH_TOKEN'])
     if meta.get('expired') is not False or meta.get('digest') != 'sha256:' + pin['zip_sha256']:
         raise ValueError('Frozen model input artifact changed/expired')
+    stage('inventory')
     pods = api.listing('/pods','pods')
     if any(x.get('env', {}).get('WAFER_MANAGED_BY') == REPOSITORY or x.get('name','').startswith(('wafervlm-','wafer-20261107')) for x in pods):
         raise ValueError('Existing waferVLM Pod must be reconciled')
@@ -115,6 +136,7 @@ def preflight(api):
     candidates = list(GPU_CAPS) if choice == 'auto' else [choice]
     observed = []
     selected = None
+    stage('catalog')
     for gpu in candidates:
         query = urllib.parse.urlencode(dict(include='AVAILABILITY',product='POD',cloud='SECURE',count=1,minCudaVersion='12.8'))
         catalog = api.call('/catalog/gpus/'+urllib.parse.quote(gpu,safe='')+'?'+query)
@@ -127,6 +149,7 @@ def preflight(api):
     if selected is None:
         raise ValueError('No approved GPU capacity at the CUDA minimum and price cap')
     gpu, regions, cost = selected
+    stage('account_budget')
     account = budget(api,reserve=cost['maximum_estimated_usd']+1)
     _, overlay_sha = overlay(phase)
     spec = dict(run_id=run,controller_sha=sha,image_source_sha=p['image_source_sha'],image=p['image'],
@@ -216,10 +239,12 @@ def launch(api):
     run=spec['run_id'];phase=spec['phase'];p=plan()
     marker=os.environ.get('AUTHORIZATION_ARTIFACT_ID','')
     if not marker.isdigit(): raise ValueError('Durable create intent receipt required')
+    stage('intent_receipt')
     meta=request(BASE+'/actions/artifacts/'+marker,token=os.environ['GH_TOKEN'])
     if (meta.get('name')!=AUTH+'-'+run or str(meta.get('workflow_run',{}).get('id'))!=run
             or meta.get('workflow_run',{}).get('head_sha')!=spec['controller_sha'] or meta.get('expired') is not False):
         raise ValueError('Create intent identity mismatch')
+    save('intent-receipt.json',dict(artifact_id=int(marker),sha256=meta.get('digest'),run_id=run,controller_sha=spec['controller_sha']))
     code,digest=overlay(phase)
     token=secrets.token_urlsafe(32);print('::add-mask::'+token,flush=True)
     started=time.time();deadline=started+WORK_SECONDS
@@ -240,15 +265,18 @@ def launch(api):
     handlers={s:signal.signal(s,interrupt) for s in (signal.SIGALRM,signal.SIGTERM,signal.SIGINT)}
     signal.alarm(WORK_SECONDS)
     try:
+        stage('create_pod')
         pod=api.call('/pods','POST',payload)  # One create only. Ambiguous failures go directly to reconciliation.
         pid=pod.get('id','')
         if not re.fullmatch('[A-Za-z0-9_-]{1,128}',pid): raise ValueError('Create outcome unknown')
         state['pod_id']=pid;save('provision.json',state)
+        stage('verify_allocation')
         detail=api.call('/pods/'+pid)
         if (not owned(detail,run) or detail.get('gpu',{}).get('id')!=spec['gpu'] or detail.get('dataCenterId') not in spec['regions']
                 or not finite(detail.get('cost'),.001) or detail['cost']>state['rate']+DISK_RATE):
             raise ValueError('Allocated Pod/GPU/region/rate mismatch')
         save('allocation.json',dict(pod_id=pid,gpu=spec['gpu'],data_center=detail['dataCenterId'],hourly_usd=detail['cost']))
+        stage('worker_startup')
         url='https://'+pid+'-8888.proxy.runpod.net';seen=False;last=None;next_inventory=0;delivered=set()
         while time.time()<deadline-60:
             if time.time()>=next_inventory:
@@ -267,6 +295,7 @@ def launch(api):
                 save('worker-status.json',{k:result[k] for k in ('status','phase','error_type','failed_phase') if k in result})
             desired=result.get('input_request')
             if desired and desired.get('nonce') not in delivered:
+                stage('deliver_scoped_input_url')
                 deliver(url,token,desired,phase);delivered.add(desired['nonce'])
             if result.get('status') in ('completed','rejected'):
                 save('result.json',result)
@@ -292,6 +321,9 @@ def launch(api):
                 return
             time.sleep(5)
         raise TimeoutError('No complete study before deadline')
+    except Exception as exc:
+        save('error.json',error_record(exc))
+        raise
     finally:
         signal.alarm(0)
         for s,h in handlers.items(): signal.signal(s,h)
@@ -303,6 +335,7 @@ if __name__=='__main__':
     try:
         {'preflight':preflight,'run':launch,'cleanup':cleanup}[sys.argv[1]](Runpod())
     except Exception as exc:
-        save('error.json',dict(error_type=type(exc).__name__))
-        print('DINO study failed: '+type(exc).__name__,flush=True)
+        detail=error_record(exc)
+        save('error.json',detail)
+        print('DINO study failed: '+json.dumps(detail),flush=True)
         raise SystemExit(1) from None

@@ -76,6 +76,15 @@ class StudyTests(unittest.TestCase):
                     'https://example.blob.core.windows.net.evil.test/a'):
             with self.assertRaises(ValueError): validated_url(url)
 
+    def test_diagnostics_keep_http_categories_without_remote_payloads(self):
+        from runpod.provider import RemoteHTTPError
+        with tempfile.TemporaryDirectory() as tmp, patch.object(controller,'OUT',Path(tmp)):
+            controller.stage('create_pod')
+            result=controller.error_record(RemoteHTTPError(400,['capacity']))
+            self.assertEqual(result,dict(error_type='RemoteHTTPError',http_status=400,categories=['capacity'],stage='create_pod'))
+            sensitive='https://example.test?token=do-not-publish'
+            self.assertNotIn(sensitive,json.dumps(controller.error_record(RuntimeError(sensitive))))
+
     def test_cleanup_requires_consecutive_inventory_absence(self):
         api=Mock();api.listing.return_value=[]
         with tempfile.TemporaryDirectory() as tmp, patch.object(controller,'OUT',Path(tmp)), \

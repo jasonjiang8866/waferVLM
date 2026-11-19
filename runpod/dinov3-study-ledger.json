@@ -3,5 +3,37 @@
   "approved_usd": 10,
   "approved_seconds": 30000,
   "seed17_run_id": "43716864164",
-  "attempts": []
+  "attempts": [
+    {
+      "run_id": "44526240351",
+      "controller_sha": "9b63d4e5d5122930ce8ce790868b936c5fb2e3df",
+      "conclusion": "failure",
+      "artifact_id": 14531766356,
+      "zip_sha256": "032bfb08df762f4b1185cd790984ad5591f5ae68f72b0f8cbaba7b3a94cda674",
+      "cleanup": {
+        "status": "verified_absent",
+        "run_id": "44526240351",
+        "checks": 12,
+        "persistent_volumes_created": false,
+        "checked_epoch": 1795092358.60253,
+        "elapsed_billing_bound_s": 224.65433716773987,
+        "estimated_usd": 0.05609672288206361,
+        "cumulative_estimated_usd": 0.7042184397035647,
+        "cumulative_runtime_bound_s": 1990.6479306221008,
+        "within_cap": true
+      },
+      "independent": {
+        "run_id": "44526952153",
+        "artifact_id": 14533090639,
+        "zip_sha256": "b394aaf72941c7c05d2f99354455ff1a1059b6a4f235bcd9d66db9f157da129b",
+        "cleanup": {
+          "status": "verified_absent",
+          "run_id": "44526240351",
+          "checks": 12,
+          "persistent_volumes_created": false,
+          "checked_epoch": 1795092500.9015908
+        }
+      }
+    }
+  ]
 }
