@@ -2,7 +2,7 @@
 
 On the complete 160-map development validation set, the published seed-17 DINOv3 linear probe correctly classified 134 maps and vision LoRA 139, versus 125 for the published Qwen seed-17 step-250 checkpoint. Among the 16 maps missed by all six Qwen confirmation checkpoints, **linear rescues 7 and LoRA 6**. Both rescue the same **3 of 7 loc maps**. LoRA’s overall gain does not imply dominance on this Qwen-selected subset.
 
-These are CPU analyses of existing predictions, not new inference. At this CPU report's initial publication, training seeds 42/123 and the new validation/holdout runs had not run. The subsequent [cross-seed report](../../dinov3-confirmation-results.md) now verifies 18/18 validation passes; holdout inference is in progress. This report retains the historical selected outputs and makes no holdout claim.
+These are CPU analyses of existing predictions, not new inference. At this CPU report's initial publication, training seeds 42/123 and the new validation/holdout runs had not run. The subsequent [cross-seed report](../../dinov3-confirmation-results.md) now verifies 18/18 validation passes; holdout inference remains incomplete. This report retains the historical selected outputs and makes no holdout claim.
 
 ## Fixed evidence and alignment
 
@@ -145,7 +145,7 @@ The edge-ring rescue above is sensitive to reload: linear changes it from edge-r
 
 The original DINO protocol trains each trial for **10 epochs**, then selects highest validation macro-F1, ties to the earliest epoch. Seed 17 selected linear LR **0.003** (epoch 10) and LoRA LR **0.0001**, head LR **0.001** (epoch 5). Seeds 42/123 must use these LRs and the same 10-epoch budget/selection rule, not an epoch chosen on the holdout. Preserve 256×256 images, ImageNet normalization, no resizing/cropping/augmentation, CLS + mean-patch pooling excluding registers, backbone eval mode, BF16 autocast, and eight-class argmax.
 
-Next, each of the six fixed exports receives three fresh-process validation inferences with one identical configuration; pass 1 is primary. The original seed-17 showcase above remains a historical result. Freeze all six weight hashes and the evaluation plan in Git before any DINO holdout prediction. Then evaluate each exactly once on PR #53’s 148 images / 143 lot groups. Report all 888 outputs and paired lot-group bootstrap intervals (10,000 draws, seed 20261110, fixed eight classes, undefined F1 = 0). This is a newly prespecified model comparison on an already-public Qwen holdout, not a wholly unseen study design.
+The follow-up protocol requires each of the six fixed exports to receive three fresh-process validation inferences with one identical configuration; pass 1 is primary. Those 18 passes are now complete; the holdout stage is not accepted. The original seed-17 showcase above remains a historical result. Freeze all six weight hashes and the evaluation plan in Git before any DINO holdout prediction. Then evaluate each exactly once on PR #53’s 148 images / 143 lot groups. Report all 888 outputs and paired lot-group bootstrap intervals (10,000 draws, seed 20261110, fixed eight classes, undefined F1 = 0). This is a newly prespecified model comparison on an already-public Qwen holdout, not a wholly unseen study design.
 
 ## Reproduce on CPU
 
