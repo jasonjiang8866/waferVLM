@@ -30,6 +30,8 @@ DISK_GB = 60
 DISK_RATE = DISK_GB * .10 / (28 * 24)
 WORK_SECONDS = 2700
 CLEANUP_SECONDS = 600
+CATALOG_OBSERVATIONS = 20
+CATALOG_PAUSE_SECONDS = 15
 RUNTIME_FILES = ['src/wafervlm/' + n + '.py' for n in
                  ('dinov3','core','experiment','data','acquisition','vision_comparison','confirmation')]
 RUNTIME_FILES += ['scripts/run_dinov3.py','scripts/prepare_public_data.py','configs/dinov3.json','uv.lock',
@@ -51,11 +53,36 @@ def error_record(exc):
     result = dict(error_type=type(exc).__name__)
     if isinstance(exc, RemoteHTTPError):
         result.update(http_status=exc.status, categories=exc.categories)
+    elif isinstance(exc, urllib.error.HTTPError):
+        result['http_status'] = exc.code
     # Never emit remote response bodies, URLs or exception strings.
     path = OUT / 'progress.json'
     if path.exists():
         result['stage'] = json.loads(path.read_text())['stage']
     return result
+
+
+def weight_fingerprint():
+    from runpod.dinov3_image_weights import report
+    fingerprint = report()
+    receipt = json.loads((ROOT/'docs/evidence/dinov3-seed17-43716864164.json').read_text())['weights']
+    if any(receipt[k] != fingerprint[k] for k in ('model_id','model_revision','files_sha256')):
+        raise ValueError('Published embedded-weight identity differs from CPU fingerprint')
+    # verify_files expects report(), not its own returned verification receipt.
+    return fingerprint
+
+
+def download_archive(url, token, meta):
+    size, digest = meta.get('size'), meta.get('sha256')
+    if type(size) is not int or not 0 < size <= 24*1024**2 or not re.fullmatch('[a-f0-9]{64}',digest or ''):
+        raise ValueError('Invalid result archive metadata')
+    req = urllib.request.Request(url+'/archive',headers={
+        'Authorization':'Bearer '+token, 'User-Agent':'waferVLM-actions/0.1'})
+    with urllib.request.build_opener(NoRedirect).open(req,timeout=60) as response:
+        data = response.read(size+1)
+    if len(data)!=size or hashlib.sha256(data).hexdigest()!=digest:
+        raise ValueError('Result archive checksum mismatch')
+    return data
 
 
 def identity():
@@ -108,6 +135,24 @@ def overlay(phase):
     return code, digest
 
 
+def select_capacity(api, candidates, ledger):
+    """Reobserve transient catalog shortages; never retry a create request."""
+    observations = []
+    for attempt in range(CATALOG_OBSERVATIONS):
+        for gpu in candidates:
+            query = urllib.parse.urlencode(dict(include='AVAILABILITY',product='POD',cloud='SECURE',count=1,minCudaVersion='12.8'))
+            catalog = api.call('/catalog/gpus/'+urllib.parse.quote(gpu,safe='')+'?'+query)
+            rate = catalog.get('price',{}).get('secure')
+            regions = sorted(d['id'] for d in catalog.get('dataCenters',[]) if d.get('availability') in ('LOW','MEDIUM','HIGH') and re.fullmatch('[A-Za-z0-9-]+',d.get('id','')))
+            observations.append(dict(attempt=attempt+1,gpu=gpu,hourly_usd=rate,regions=regions,min_cuda='12.8',checked_epoch=time.time()))
+            save('catalog.json', observations)
+            if regions and finite(rate,.001) and rate <= GPU_CAPS[gpu]:
+                return gpu,regions,quote(rate,gpu,ledger)
+        if attempt + 1 < CATALOG_OBSERVATIONS:
+            time.sleep(CATALOG_PAUSE_SECONDS)
+    raise ValueError('No approved GPU capacity at the CUDA minimum and price cap')
+
+
 def preflight(api):
     stage('identity')
     run, sha = manual_guard()
@@ -122,6 +167,7 @@ def preflight(api):
     stage('image')
     image_provenance(p['image'], p['image_source_sha'])
     stage('input_artifact')
+    weight_fingerprint()
     pin = input_pin(phase)
     meta = request(BASE + '/actions/artifacts/' + str(pin['artifact_id']), token=os.environ['GH_TOKEN'])
     if meta.get('expired') is not False or meta.get('digest') != 'sha256:' + pin['zip_sha256']:
@@ -134,21 +180,8 @@ def preflight(api):
     if choice != 'auto' and choice not in GPU_CAPS:
         raise ValueError('Unapproved GPU choice')
     candidates = list(GPU_CAPS) if choice == 'auto' else [choice]
-    observed = []
-    selected = None
     stage('catalog')
-    for gpu in candidates:
-        query = urllib.parse.urlencode(dict(include='AVAILABILITY',product='POD',cloud='SECURE',count=1,minCudaVersion='12.8'))
-        catalog = api.call('/catalog/gpus/'+urllib.parse.quote(gpu,safe='')+'?'+query)
-        rate = catalog.get('price',{}).get('secure')
-        regions = sorted(d['id'] for d in catalog.get('dataCenters',[]) if d.get('availability') in ('LOW','MEDIUM','HIGH') and re.fullmatch('[A-Za-z0-9-]+',d.get('id','')))
-        observed.append(dict(gpu=gpu,hourly_usd=rate,regions=regions,min_cuda='12.8'))
-        if regions and finite(rate,.001) and rate <= GPU_CAPS[gpu]:
-            selected = (gpu,regions,quote(rate,gpu,ledger)); break
-    save('catalog.json', observed)
-    if selected is None:
-        raise ValueError('No approved GPU capacity at the CUDA minimum and price cap')
-    gpu, regions, cost = selected
+    gpu, regions, cost = select_capacity(api,candidates,ledger)
     stage('account_budget')
     account = budget(api,reserve=cost['maximum_estimated_usd']+1)
     _, overlay_sha = overlay(phase)
@@ -251,7 +284,7 @@ def launch(api):
     state=dict(pod_id=None,started_epoch=started,rate=spec['cost']['gpu_hourly_usd'],
                prior_usd=spec['ledger']['usd'],prior_seconds=spec['ledger']['seconds'])
     save('provision.json',state)
-    weights=json.loads((ROOT/'docs/evidence/dinov3-seed17-43716864164.json').read_text())['weights']
+    weights=weight_fingerprint()
     env=dict(WAFER_MANAGED_BY=REPOSITORY,DINO_RUN_ID=run,DINO_AUTH=AUTH,DINO_RESULT_TOKEN=token,
              DINO_DEADLINE=str(deadline-60),DINO_GPU=spec['gpu'],DINO_WEIGHTS=json.dumps(weights),
              DINO_IMAGE=p['image'],DINO_PHASE=phase,DINO_CONTROLLER_SHA=spec['controller_sha'],
@@ -301,13 +334,8 @@ def launch(api):
                 save('result.json',result)
                 archive=result.get('archive')
                 if not archive: raise ValueError('Worker returned no result archive')
-                size=archive.get('size');sha=archive.get('sha256')
-                if type(size) is not int or not 0<size<=24*1024**2 or not re.fullmatch('[a-f0-9]{64}',sha or ''):
-                    raise ValueError('Invalid result archive metadata')
-                req=urllib.request.Request(url+'/archive',headers={'Authorization':'Bearer '+token})
-                with urllib.request.build_opener(NoRedirect).open(req,timeout=60) as response:
-                    data=response.read(size+1)
-                if len(data)!=size or hashlib.sha256(data).hexdigest()!=sha: raise ValueError('Result archive checksum mismatch')
+                stage('retrieve_archive')
+                data=download_archive(url,token,archive);sha=archive['sha256']
                 (OUT/'experiment.tar.gz').write_bytes(data)
                 if result['status']!='completed': raise ValueError('DINO study incomplete; partial archive retained')
                 from runpod.confirmation_verify import unpack

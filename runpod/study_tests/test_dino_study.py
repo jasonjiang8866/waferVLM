@@ -4,6 +4,8 @@ import hashlib
 import json
 import tempfile
 import unittest
+import threading
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from unittest.mock import patch, Mock
 
@@ -15,6 +17,53 @@ from wafervlm.core import read_jsonl
 
 
 class StudyTests(unittest.TestCase):
+    def test_weight_input_is_original_fingerprint_not_verification_receipt(self):
+        from runpod import dinov3_image_weights as weights
+        published=json.loads((controller.ROOT/'docs/evidence/dinov3-seed17-43716864164.json').read_text())['weights']
+        # The previous wiring is rejected before touching the actual files.
+        with patch.object(weights,'snapshot',side_effect=RuntimeError('reached file verification')) as snapshot:
+            with self.assertRaisesRegex(ValueError,'CPU fingerprint'):
+                weights.verify_files(published)
+            snapshot.assert_not_called()
+            with self.assertRaisesRegex(RuntimeError,'reached file verification'):
+                weights.verify_files(controller.weight_fingerprint())
+            snapshot.assert_called_once()
+
+    def test_archive_download_keeps_working_proxy_headers_and_checks_hash(self):
+        payload=b'controlled archive bytes'
+        class Handler(BaseHTTPRequestHandler):
+            def log_message(self,*args):pass
+            def do_GET(self):
+                allowed=(self.path=='/archive' and self.headers.get('User-Agent')=='waferVLM-actions/0.1'
+                         and self.headers.get('Authorization')=='Bearer test-only')
+                self.send_response(200 if allowed else 403);self.end_headers()
+                if allowed:self.wfile.write(payload)
+        server=ThreadingHTTPServer(('127.0.0.1',0),Handler)
+        thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
+        try:
+            url='http://127.0.0.1:'+str(server.server_port)
+            meta=dict(size=len(payload),sha256=hashlib.sha256(payload).hexdigest())
+            self.assertEqual(controller.download_archive(url,'test-only',meta),payload)
+            with self.assertRaises(ValueError):controller.download_archive(url,'test-only',dict(meta,sha256='0'*64))
+            with self.assertRaises(ValueError):controller.download_archive(url,'test-only',dict(meta,size=len(payload)-1))
+        finally:
+            server.shutdown();server.server_close();thread.join()
+
+    def test_worker_failure_retains_safe_frame_location(self):
+        import os
+        from runpod import dinov3_study_worker as worker
+        env=dict(DINO_PHASE='validation',DINO_CONTROLLER_SHA='c'*40,WAFERVLM_SOURCE_SHA='d'*40,
+                 DINO_IMAGE='test-image',DINO_OVERLAY_SHA256='e'*64)
+        with tempfile.TemporaryDirectory() as tmp, patch.dict(os.environ,env), \
+             patch.object(worker.w,'OUT',Path(tmp)/'results'),patch.object(worker.w,'ARCHIVE',Path(tmp)/'result.tar.gz'), \
+             patch.object(worker.w,'STATE',{}),patch.object(worker,'plan',side_effect=ValueError('private-url-do-not-publish')):
+            worker.work()
+            result=json.loads((Path(tmp)/'results/worker.json').read_text())
+            self.assertEqual(result['status'],'rejected')
+            self.assertEqual(result['failed_phase'],'protocol')
+            self.assertTrue(result['error_frames'])
+            self.assertNotIn('private-url-do-not-publish',json.dumps(result))
+
     def test_frozen_grid_and_probability_identity(self):
         self.assertEqual(len(study.names()), 6)
         reference = study.reference_for('validation')
@@ -84,6 +133,26 @@ class StudyTests(unittest.TestCase):
             self.assertEqual(result,dict(error_type='RemoteHTTPError',http_status=400,categories=['capacity'],stage='create_pod'))
             sensitive='https://example.test?token=do-not-publish'
             self.assertNotIn(sensitive,json.dumps(controller.error_record(RuntimeError(sensitive))))
+
+    def test_catalog_reobserves_shortage_without_creating(self):
+        api=Mock(); gpu='NVIDIA GeForce RTX 5090'
+        api.call.side_effect=[dict(price=dict(secure=1.39),dataCenters=[]),
+                              dict(price=dict(secure=1.39),dataCenters=[dict(id='EUR-IS-1',availability='LOW')])]
+        with tempfile.TemporaryDirectory() as tmp, patch.object(controller,'OUT',Path(tmp)), patch.object(controller.time,'sleep') as sleep:
+            selected=controller.select_capacity(api,[gpu],dict(usd=.71,seconds=2000))
+            self.assertEqual(selected[:2],(gpu,['EUR-IS-1']))
+            self.assertEqual(sleep.call_args_list,[((15,),)])
+            self.assertEqual(len(json.loads((Path(tmp)/'catalog.json').read_text())),2)
+            self.assertTrue(all(len(c.args)==1 and c.args[0].startswith('/catalog/gpus/') for c in api.call.call_args_list))
+
+    def test_catalog_wait_is_bounded_and_keeps_price_cap(self):
+        api=Mock();gpu='NVIDIA GeForce RTX 5090'
+        api.call.return_value=dict(price=dict(secure=1.40),dataCenters=[dict(id='EUR-IS-1',availability='HIGH')])
+        with tempfile.TemporaryDirectory() as tmp, patch.object(controller,'OUT',Path(tmp)), patch.object(controller.time,'sleep') as sleep:
+            with self.assertRaises(ValueError):controller.select_capacity(api,[gpu],dict(usd=.71,seconds=2000))
+            self.assertEqual(api.call.call_count,20)
+            self.assertEqual(sleep.call_count,19)
+            self.assertEqual(sum(c.args[0] for c in sleep.call_args_list),285)
 
     def test_cleanup_requires_consecutive_inventory_absence(self):
         api=Mock();api.listing.return_value=[]

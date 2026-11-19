@@ -2,7 +2,7 @@
 
 On the complete 160-map development validation set, the published seed-17 DINOv3 linear probe correctly classified 134 maps and vision LoRA 139, versus 125 for the published Qwen seed-17 step-250 checkpoint. Among the 16 maps missed by all six Qwen confirmation checkpoints, **linear rescues 7 and LoRA 6**. Both rescue the same **3 of 7 loc maps**. LoRA’s overall gain does not imply dominance on this Qwen-selected subset.
 
-These are CPU analyses of existing predictions, not new inference. Training seeds 42/123, the requested 18 fresh-process DINO validation passes, and the 888 DINO unseen-lot predictions have not run. No holdout claim follows from this report.
+These are CPU analyses of existing predictions, not new inference. At this CPU report's initial publication, training seeds 42/123 and the new validation/holdout runs had not run. The subsequent [cross-seed report](../../dinov3-confirmation-results.md) now verifies 18/18 validation passes; holdout inference is in progress. This report retains the historical selected outputs and makes no holdout claim.
 
 ## Fixed evidence and alignment
 

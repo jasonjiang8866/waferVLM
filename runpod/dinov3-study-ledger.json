@@ -34,6 +34,151 @@
           "checked_epoch": 1795092500.9015908
         }
       }
+    },
+    {
+      "run_id": "44528940006",
+      "controller_sha": "e61de66d4d5ea4c6e8ac462f6dccb95d8914c59d",
+      "conclusion": "failure",
+      "artifact_id": 14532797606,
+      "zip_sha256": "ec31014a2006d9b6c1a366b07eb0365f0585a4f46252f6bf837ecc0f626cd558",
+      "cleanup": {
+        "status": "verified_absent",
+        "run_id": "44528940006",
+        "checks": 12,
+        "persistent_volumes_created": false,
+        "checked_epoch": 1795093291.4170318
+      },
+      "independent": {
+        "run_id": "44529384082",
+        "artifact_id": 14532987899,
+        "zip_sha256": "795010de29e239dd5c7a424aaa0fac0bdc04455f009be4eb25cf604709eaefa9",
+        "cleanup": {
+          "status": "verified_absent",
+          "run_id": "44528940006",
+          "checks": 12,
+          "persistent_volumes_created": false,
+          "checked_epoch": 1795093420.755791
+        }
+      }
+    },
+    {
+      "run_id": "44530840974",
+      "controller_sha": "920a2850219ec4a8733c78f9394ff6d8db0d3596",
+      "conclusion": "failure",
+      "artifact_id": 14534646254,
+      "zip_sha256": "31aee0772291613ccd26d64fdc984f9a0dfa9cc349900d09996a26b485923dc1",
+      "cleanup": {
+        "status": "verified_absent",
+        "run_id": "44530840974",
+        "checks": 3,
+        "persistent_volumes_created": false,
+        "checked_epoch": 1795094247.8334584,
+        "elapsed_billing_bound_s": 364.5501456260681,
+        "estimated_usd": 0.09102903933936642,
+        "cumulative_estimated_usd": 0.7952474790429311,
+        "cumulative_runtime_bound_s": 2355.198076248169,
+        "within_cap": true
+      },
+      "independent": {
+        "run_id": "44532010441",
+        "artifact_id": 14534506868,
+        "zip_sha256": "2598972fb695c0c149d7bf381b9494778901d7fd429b67adb308817d73ec9490",
+        "cleanup": {
+          "status": "verified_absent",
+          "run_id": "44530840974",
+          "checks": 12,
+          "persistent_volumes_created": false,
+          "checked_epoch": 1795094377.4486966
+        }
+      }
+    },
+    {
+      "run_id": "44533432837",
+      "controller_sha": "5c75effc853ce3a0afde67a8cca394dfcf44466e",
+      "conclusion": "failure",
+      "artifact_id": 14533444967,
+      "zip_sha256": "0fe9b26e99e5531cbabc4f96a55bbf91fb64f9c2f39b775be5ad230432f87262",
+      "cleanup": {
+        "status": "verified_absent",
+        "run_id": "44533432837",
+        "checks": 12,
+        "persistent_volumes_created": false,
+        "checked_epoch": 1795095108.716401,
+        "elapsed_billing_bound_s": 227.46809482574463,
+        "estimated_usd": 0.0567993248686904,
+        "cumulative_estimated_usd": 0.8520468039116216,
+        "cumulative_runtime_bound_s": 2582.6661710739136,
+        "within_cap": true
+      },
+      "independent": {
+        "run_id": "44534367450",
+        "artifact_id": 14535277316,
+        "zip_sha256": "2211d83dd505b777cea4484f9710beb16ab79d5ed6b4784c8cec3fd27f80104d",
+        "cleanup": {
+          "status": "verified_absent",
+          "run_id": "44533432837",
+          "checks": 12,
+          "persistent_volumes_created": false,
+          "checked_epoch": 1795095245.5462697
+        }
+      }
+    },
+    {
+      "run_id": "44535674111",
+      "controller_sha": "59f9ca1a5d6a7d5cc6b183820bbeec4173b9eff1",
+      "conclusion": "failure",
+      "artifact_id": 14535313815,
+      "zip_sha256": "a5b17408c65fbf956f62b8a2fbed7e19f55781d0149760c1826efb17b6b2bcf1",
+      "cleanup": {
+        "status": "verified_absent",
+        "run_id": "44535674111",
+        "checks": 12,
+        "persistent_volumes_created": false,
+        "checked_epoch": 1795095809.5799246
+      },
+      "independent": {
+        "run_id": "44536316756",
+        "artifact_id": 14536501623,
+        "zip_sha256": "ef9907942092fd9c3230e81a2491967d71dbeff3967d1a53e1bc7e786dc6243a",
+        "cleanup": {
+          "status": "verified_absent",
+          "run_id": "44535674111",
+          "checks": 12,
+          "persistent_volumes_created": false,
+          "checked_epoch": 1795095941.9240708
+        }
+      }
+    },
+    {
+      "run_id": "44537796019",
+      "controller_sha": "cf55c9277c3c5da3278d5a46733ae648d03bbdac",
+      "conclusion": "success",
+      "artifact_id": 14538331200,
+      "zip_sha256": "5435fbbf51a77e0e667966539d77316174a020cafc54e607800b42f582b4eef2",
+      "cleanup": {
+        "status": "verified_absent",
+        "run_id": "44537796019",
+        "checks": 3,
+        "persistent_volumes_created": false,
+        "checked_epoch": 1795097240.0236752,
+        "elapsed_billing_bound_s": 843.8870091438293,
+        "estimated_usd": 0.21072059543799787,
+        "cumulative_estimated_usd": 1.0627673993496194,
+        "cumulative_runtime_bound_s": 3426.553180217743,
+        "within_cap": true
+      },
+      "independent": {
+        "run_id": "44540357834",
+        "artifact_id": 14539155310,
+        "zip_sha256": "a2456875aa6956c6b76a0de3913072907ef4ea7a6219e9a0daceb2831177608c",
+        "cleanup": {
+          "status": "verified_absent",
+          "run_id": "44537796019",
+          "checks": 12,
+          "persistent_volumes_created": false,
+          "checked_epoch": 1795097370.629211
+        }
+      }
     }
   ]
 }

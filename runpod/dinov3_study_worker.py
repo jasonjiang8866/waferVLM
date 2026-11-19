@@ -12,6 +12,7 @@ import sys
 import tarfile
 import threading
 import time
+import traceback
 import urllib.parse
 import urllib.request
 from http.server import ThreadingHTTPServer
@@ -101,6 +102,7 @@ def work():
                   image_source_sha=os.environ['WAFERVLM_SOURCE_SHA'], image=os.environ['DINO_IMAGE'],
                   plan_sha256=w.digest(PLAN), overlay_sha256=os.environ['DINO_OVERLAY_SHA256'])
     try:
+        w.STATE['phase'] = 'protocol'
         w.OUT.mkdir(parents=True, exist_ok=False)
         p = plan()
         if (result['image_source_sha'] != p['image_source_sha'] or result['image'] != p['image']
@@ -108,7 +110,9 @@ def work():
             raise ValueError('Image/plan identity mismatch')
         if phase == 'holdout' and w.digest(FROZEN) != os.environ['DINO_FROZEN_SHA256']:
             raise ValueError('Holdout freeze differs from reviewed commit')
+        w.STATE['phase'] = 'verifying_embedded_weights'
         w.write('weight-delivery.json', w.embedded_weights())
+        w.STATE['phase'] = 'hardware_smoke'
         w.write('hardware.json', w.hardware_smoke())
         environment = {k: v for k, v in os.environ.items() if k not in
                        {'RUNPOD_API_KEY', 'HF_TOKEN', 'HUGGING_FACE_HUB_TOKEN', 'GH_TOKEN', 'GITHUB_TOKEN', 'DINO_RESULT_TOKEN'}}
@@ -169,7 +173,9 @@ def work():
         result.update(status='completed', validation_passes=18 if phase == 'validation' else 0,
                       holdout_predictions=888 if phase == 'holdout' else 0)
     except Exception as exc:
-        result.update(error_type=type(exc).__name__, failed_phase=w.STATE.get('phase'))
+        result.update(error_type=type(exc).__name__, failed_phase=w.STATE.get('phase'),
+                      error_frames=[dict(module=Path(f.filename).name,function=f.name,line=f.lineno)
+                                    for f in traceback.extract_tb(exc.__traceback__)])
     finally:
         if child is not None and child.poll() is None:
             os.killpg(child.pid, signal.SIGKILL); child.wait()
