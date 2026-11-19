@@ -38,7 +38,7 @@ Each row totals 160 before the net-change column. Both confirmation seeds gained
 | `3d0f3c97b77fd687704cb68a` | center | donut |
 | `ddc10f023d1480284b53af51` | donut | loc |
 
-A focused next diagnostic is to inspect the seven shared `loc` misses alongside the three unanimously correct `loc` maps using the development images and source annotations. Record spatial extent, position and any competing visible pattern before inspecting predictions. This can separate candidate failure modes for a future experiment. Agreement alone does not establish a labeling error.
+The [loc morphology review](qwen-loc-morphology.md) pairs the seven shared misses with the three unanimous hits, records visual observations before revealing per-map predictions, and measures yellow area across all 20 validation `loc` maps.
 
 ## Reproduce
 
