@@ -48,7 +48,7 @@ jobs:
       - run: python -m pip install uv==0.13.5
       - run: uv sync --frozen
       - name: Offline study contract tests
-        run: uv run --frozen python -m unittest discover -s runpod/tests -p test_dino_study.py -v
+        run: uv run --frozen python -m unittest discover -s runpod/study_tests -p test_dino_study.py -v
       - name: Reconcile DINO-only ledger, frozen inputs, image, inventory and current quote
         env:
           GH_TOKEN: ${{ github.token }}
