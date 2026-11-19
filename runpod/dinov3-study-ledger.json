@@ -148,6 +148,37 @@
           "checked_epoch": 1795095941.9240708
         }
       }
+    },
+    {
+      "run_id": "44537796019",
+      "controller_sha": "cf55c9277c3c5da3278d5a46733ae648d03bbdac",
+      "conclusion": "success",
+      "artifact_id": 14538331200,
+      "zip_sha256": "5435fbbf51a77e0e667966539d77316174a020cafc54e607800b42f582b4eef2",
+      "cleanup": {
+        "status": "verified_absent",
+        "run_id": "44537796019",
+        "checks": 3,
+        "persistent_volumes_created": false,
+        "checked_epoch": 1795097240.0236752,
+        "elapsed_billing_bound_s": 843.8870091438293,
+        "estimated_usd": 0.21072059543799787,
+        "cumulative_estimated_usd": 1.0627673993496194,
+        "cumulative_runtime_bound_s": 3426.553180217743,
+        "within_cap": true
+      },
+      "independent": {
+        "run_id": "44540357834",
+        "artifact_id": 14539155310,
+        "zip_sha256": "a2456875aa6956c6b76a0de3913072907ef4ea7a6219e9a0daceb2831177608c",
+        "cleanup": {
+          "status": "verified_absent",
+          "run_id": "44537796019",
+          "checks": 12,
+          "persistent_volumes_created": false,
+          "checked_epoch": 1795097370.629211
+        }
+      }
     }
   ]
 }

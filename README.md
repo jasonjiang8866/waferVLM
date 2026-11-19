@@ -57,11 +57,25 @@ The [2026-11-15 RTX 5090 run](https://github.com/jasonjiang8866/waferVLM/actions
 | DINOv3 · frozen backbone + linear head | 134/160 | 83.750% | 0.836449 |
 | **DINOv3 · Q/V LoRA + linear head** | **139/160** | **86.875%** | **0.867173** |
 
-LoRA adds **3.125 percentage points of accuracy / 0.030724 macro-F1** over the DINOv3 linear baseline. Against the recorded Qwen predictions it adds **8.750 points / 0.093180 macro-F1**. These are **single-seed, validation-selected development results**, not final test results or a compute-matched architecture comparison. DINOv3 confirmation seeds and its own holdout evaluation remain pending.
+LoRA adds **3.125 percentage points of accuracy / 0.030724 macro-F1** over the DINOv3 linear baseline. Against the recorded Qwen predictions it adds **8.750 points / 0.093180 macro-F1**. These are **single-seed, validation-selected development results**, not final test results or a compute-matched architecture comparison. The original primary table is preserved. [Three-seed development confirmation](docs/dinov3-confirmation-results.md) is now complete; DINO holdout evaluation remains pending.
 
 Selected learning rates: linear **0.003** (epoch 10); LoRA **0.0001**, head **0.001** (epoch 5). The table and images use the original selected predictions at batch size 8. Fresh-process evaluation at batch size 1 changes 2 linear predictions and 1 LoRA prediction: accuracy is unchanged, while macro-F1 becomes **0.835856 / 0.867110**. Reloading therefore does not establish exact prediction parity.
 
 [Full six-trial results, reload differences and cost evidence](docs/dinov3-seed17-results.md) · [Complete predictions and class probabilities in Git](docs/showcase/dinov3-seed17/README.md#complete-predictions-and-probabilities) · [Download selected heads/adapters and complete run evidence](https://github.com/jasonjiang8866/waferVLM/actions/runs/43716864164/artifacts/14163676440) (Actions retention: 2027-02-13).
+
+## DINOv3 across training seeds
+
+The 2026-11-19 confirmation completed **18/18 fresh-process validation passes** on an RTX 4090. LoRA improves accuracy and macro-F1 in all three seeds; seeds 42/123 use the frozen seed-17 learning rates and training budget. Repeated processes have zero label changes for each fixed model.
+
+| Seed | Linear accuracy | LoRA accuracy | LoRA − linear | Macro-F1 gain |
+|---|---:|---:|---:|---:|
+| 17 | 83.750% | 87.500% | +3.750 pp | +0.036676 |
+| 42 | 81.875% | 86.875% | +5.000 pp | +0.057316 |
+| 123 | 81.250% | 86.250% | +5.000 pp | +0.052623 |
+
+All three LoRA models rescue the same **6/16 Qwen common errors**, including **3/7 loc maps**. Four loc maps remain wrong for all six DINO models. The historical seed-17 primary score above remains unchanged; the new seed-17 LoRA process changes two labels, gaining one correct map. These results support development-set consistency; **DINO unseen-lot completion is still 0/888**.
+
+[Full paired results and limitations](docs/dinov3-confirmation-results.md) · [Six confusion matrices, all predictions and class probabilities](docs/showcase/dinov3-confirmation-validation/README.md) · [Six weight hashes frozen before holdout](docs/evidence/dinov3-six-endpoints.json)
 
 ## Where does DINOv3 get confused?
 
@@ -213,7 +227,7 @@ Individual stages are available through `wafervlm evaluate`, `train` and `compar
 
 ## RunPod
 
-**DINOv3 has a separate US$10 / 500-minute authorization.** Its completed seed-17 sweep used an estimated **US$0.418122 / 17.933 minutes** from create intent through verified absence, including temporary disk. With the three earlier failed attempts, cumulative DINO usage is **US$0.648122 / 29.433 minutes**. These are conservative lifecycle estimates, not provider invoices. The Pod is verified absent and no persistent volume was created; see [DINO cost and cleanup evidence](docs/dinov3-seed17-results.md#cost-and-cleanup).
+**DINOv3 has a separate US$10 / 500-minute authorization.** Through the completed three-seed validation and all prior DINO attempts, conservative cumulative usage is **US$1.0627674 / 57.1092 minutes**. The latest Pod is independently verified absent; no persistent volume was created. These are lifecycle estimates, not invoices. See [DINO cost and cleanup evidence](docs/dinov3-confirmation-results.md#cost-cleanup-and-reproducibility) and the [original seed-17 receipt](docs/dinov3-seed17-results.md#cost-and-cleanup).
 
 See [runpod/README.md](runpod/README.md) for the extended US$30 /1,100-minute total experiment authorization, per-GPU price caps, pinned published image, data verification and cleanup design. `RUNPOD_API_KEY` stays in the Actions controller; neither the training code nor the worker receives it. Host filtering uses `minCudaVersion=12.8`, never an exact 12.8 requirement. The Broker remains GET-only; the separate waferVLM controller implements the paid lifecycle. Merging code does not launch compute: the GPU workflow requires a manual dispatch, exact main SHA and an unused authorization marker. The lower-LR continuation completed step 200 and its temporary Pod deletion was independently verified. Results and full recovery files are preserved in the [checkpoint-200 Release](https://github.com/jasonjiang8866/waferVLM/releases/tag/checkpoint-200-v1). After both diagnostics and the completed 200→300 continuation, conservative cumulative usage is **US$5.903039 / 491.911 minutes** within **US$30 / 1,100 minutes**. The continuation Pod is verified absent by primary and independent cleanup. See the [continuation cost and cleanup evidence](docs/continuation-300-results.md#cleanup-and-cost-ledger). The consumed authorization marker remains guarded; publishing results does not launch compute.
 
