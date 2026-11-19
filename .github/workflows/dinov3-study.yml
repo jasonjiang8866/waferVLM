@@ -1,0 +1,86 @@
+name: DINOv3 cross-seed and holdout study
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_paid:
+        description: 'Use remaining DINO US$10 / 500m total; this attempt <=45m work +10m cleanup'
+        type: boolean
+        default: false
+        required: true
+      expected_sha:
+        description: 'Exact reviewed main commit'
+        type: string
+        required: true
+      phase:
+        description: 'Holdout requires six weight hashes already committed'
+        type: choice
+        options: [validation, holdout]
+        default: validation
+      gpu:
+        description: 'auto checks 4090 first, then approved 5090; CUDA >=12.8'
+        type: choice
+        options: [auto, 'NVIDIA GeForce RTX 4090', 'NVIDIA GeForce RTX 5090']
+        default: auto
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: wafervlm-paid-usd20
+  cancel-in-progress: false
+jobs:
+  experiment:
+    if: github.ref == 'refs/heads/main' && inputs.confirm_paid
+    runs-on: ubuntu-24.04
+    timeout-minutes: 80
+    env:
+      CONFIRM_PAID: ${{ inputs.confirm_paid }}
+      EXPECTED_SHA: ${{ inputs.expected_sha }}
+      DINO_PHASE: ${{ inputs.phase }}
+      DINO_GPU_CHOICE: ${{ inputs.gpu }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install uv==0.13.5
+      - run: uv sync --frozen
+      - name: Offline study contract tests
+        run: uv run --frozen python -m unittest discover -s runpod/study_tests -p test_dino_study.py -v
+      - name: Reconcile DINO-only ledger, frozen inputs, image, inventory and current quote
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY }}
+        run: uv run --frozen python -m runpod.dinov3_study_controller preflight
+      - name: Persist one-create intent
+        run: |
+          mkdir -p dino-study-intent
+          cp dinov3-study-results/launch-spec.json dino-study-intent/intent.json
+          printf '%s\n' "$GITHUB_RUN_ID" > dino-study-intent/run-id.txt
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        id: intent
+        with:
+          name: wafervlm-dinov3-study-v1-${{ github.run_id }}
+          path: dino-study-intent/
+          retention-days: 90
+          if-no-files-found: error
+      - name: Execute bounded study, retrieve all results and delete owned Pod
+        env:
+          AUTHORIZATION_ARTIFACT_ID: ${{ steps.intent.outputs.artifact-id }}
+          GH_TOKEN: ${{ github.token }}
+          RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY }}
+        run: uv run --frozen python -m runpod.dinov3_study_controller run
+      - name: Verify owned Pod absence even after failure
+        if: always()
+        env:
+          RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY }}
+        run: uv run --frozen python -m runpod.dinov3_study_controller cleanup
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: dinov3-study-${{ inputs.phase }}-${{ github.run_id }}
+          path: dinov3-study-results/
+          retention-days: 90
+          if-no-files-found: warn

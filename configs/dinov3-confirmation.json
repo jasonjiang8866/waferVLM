@@ -1,0 +1,53 @@
+{
+  "schema": 1,
+  "seeds": [
+    17,
+    42,
+    123
+  ],
+  "modes": [
+    "linear",
+    "lora"
+  ],
+  "learning_rates": {
+    "linear": 0.003,
+    "lora": 0.0001
+  },
+  "epochs": 10,
+  "selection": "highest_validation_macro_f1_then_earliest_epoch",
+  "validation_repeats": 3,
+  "evaluation_batch_size": 8,
+  "headline_repeat": 1,
+  "label_order": [
+    "center",
+    "donut",
+    "edge-loc",
+    "edge-ring",
+    "loc",
+    "near-full",
+    "random",
+    "scratch"
+  ],
+  "bootstrap_resamples": 10000,
+  "bootstrap_seed": 20261110,
+  "bootstrap_unit": "lot_group",
+  "undefined_f1": 0,
+  "image": "ghcr.io/jasonjiang8866/wafervlm@sha256:d64ef98a018ce25d41add6a8c3a65225ab83f22addb16ab47959e0c5b01ab329",
+  "image_source_sha": "c255bec677ba4b525e4997af60d9020592e15a46",
+  "base_weights_sha256": "4610ad75edef83e75afdebf162d148dc628045ea6cbb83d67d4708c709c4f91d",
+  "recipe_sha256": "0689acb9709bdec8de75df7f276c46554aee3a206f306ad1d3fc7a27baffe435",
+  "seed17": {
+    "artifact_id": 14163676440,
+    "zip_sha256": "6dadcd924ed96b88b8158c7dc5a09ff101c8e52db3b38cc8c7f5ebb090f24421",
+    "inner_sha256": "9667744e5e93c9af486b3d5e0251a026824d0609bbe208e78571fa142b16ff09",
+    "weights": {
+      "linear": "ffd76f22ac6838095cd6673a1c018369976d4c58d54ad66a1058e3928a8359f2",
+      "lora": "4cc6b86b051a079602d3791311aeb5b3b2ca51109f4404a7cc7afa9744059c6d"
+    }
+  },
+  "holdout_manifest_sha256": "f08050ef4fcaca3b9c35ad29905a63957a375af7a024b69e0281968d06f4564f",
+  "holdout_maps": 148,
+  "holdout_lot_groups": 143,
+  "disclosure": "Additional prespecified DINO comparison on the already-public Qwen holdout; no holdout-based selection.",
+  "qwen_holdout_predictions_sha256": "0678856688f78f33331544a39ea443ed4fdb0d58252396068ba107eccb0cb67d"
+}
