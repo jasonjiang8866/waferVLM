@@ -17,6 +17,37 @@ from wafervlm.core import read_jsonl
 
 
 class StudyTests(unittest.TestCase):
+    def test_startup_evidence_is_owned_bounded_and_has_no_raw_error(self):
+        pod=dict(name=controller.AUTH+'-123',env=dict(WAFER_MANAGED_BY=controller.REPOSITORY,DINO_RUN_ID='123',DINO_AUTH=controller.AUTH))
+        with tempfile.TemporaryDirectory() as tmp, patch.object(controller,'OUT',Path(tmp)), \
+             patch.object(controller,'capture',return_value={'runtime':{'status':'RUNNING'},'root_cause_verified':False}) as capture:
+            err=controller.error_record(RuntimeError('private token and signed URL'))
+            for i in range(6):controller.startup_evidence('owned',pod,'123',err,i)
+            records=json.loads((Path(tmp)/'startup-diagnostics.json').read_text())
+            self.assertEqual(len(records),4)
+            self.assertEqual(capture.call_count,4)
+            self.assertNotIn('private',json.dumps(records))
+            before=capture.call_count
+            with self.assertRaisesRegex(ValueError,'ownership'):
+                controller.startup_evidence('other',pod,'456',err,10)
+            self.assertEqual(capture.call_count,before)
+
+    def test_real_holdout_bootstrap_executes_and_installs_exact_frozen_files(self):
+        import os, subprocess, sys
+        code,digest=controller.overlay('holdout')
+        with tempfile.TemporaryDirectory() as tmp:
+            # Only intercept final GPU-worker entry; execute actual imports,
+            # LZMA/base64 decode, SHA check and all installed file writes.
+            code=code.replace("os.chdir('/app')",'os.chdir('+repr(tmp)+')')
+            stub="import runpy;runpy.run_module=lambda name,**kw: print(name);"
+            result=subprocess.run([sys.executable,'-c',stub+code],capture_output=True,
+                                  text=True,timeout=15,env=dict(os.environ,DINO_OVERLAY_SHA256=digest))
+            self.assertEqual(result.returncode,0,result.stderr)
+            self.assertEqual(result.stdout.strip(),'runpod.dinov3_study_worker')
+            for file in Path(tmp).rglob('*'):
+                if file.is_file():
+                    self.assertEqual(file.read_bytes(),(controller.ROOT/file.relative_to(tmp)).read_bytes())
+
     def test_weight_input_is_original_fingerprint_not_verification_receipt(self):
         from runpod import dinov3_image_weights as weights
         published=json.loads((controller.ROOT/'docs/evidence/dinov3-seed17-43716864164.json').read_text())['weights']
