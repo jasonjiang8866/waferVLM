@@ -85,6 +85,25 @@ class StudyTests(unittest.TestCase):
             sensitive='https://example.test?token=do-not-publish'
             self.assertNotIn(sensitive,json.dumps(controller.error_record(RuntimeError(sensitive))))
 
+    def test_catalog_reobserves_shortage_without_creating(self):
+        api=Mock(); gpu='NVIDIA GeForce RTX 5090'
+        api.call.side_effect=[dict(price=dict(secure=1.39),dataCenters=[]),
+                              dict(price=dict(secure=1.39),dataCenters=[dict(id='EUR-IS-1',availability='LOW')])]
+        with tempfile.TemporaryDirectory() as tmp, patch.object(controller,'OUT',Path(tmp)), patch.object(controller.time,'sleep') as sleep:
+            selected=controller.select_capacity(api,[gpu],dict(usd=.71,seconds=2000))
+            self.assertEqual(selected[:2],(gpu,['EUR-IS-1']))
+            self.assertEqual(sleep.call_args_list,[((15,),)])
+            self.assertEqual(len(json.loads((Path(tmp)/'catalog.json').read_text())),2)
+            self.assertTrue(all(len(c.args)==1 and c.args[0].startswith('/catalog/gpus/') for c in api.call.call_args_list))
+
+    def test_catalog_wait_is_bounded_and_keeps_price_cap(self):
+        api=Mock();gpu='NVIDIA GeForce RTX 5090'
+        api.call.return_value=dict(price=dict(secure=1.40),dataCenters=[dict(id='EUR-IS-1',availability='HIGH')])
+        with tempfile.TemporaryDirectory() as tmp, patch.object(controller,'OUT',Path(tmp)), patch.object(controller.time,'sleep') as sleep:
+            with self.assertRaises(ValueError):controller.select_capacity(api,[gpu],dict(usd=.71,seconds=2000))
+            self.assertEqual(api.call.call_count,4)
+            self.assertEqual(sleep.call_count,3)
+
     def test_cleanup_requires_consecutive_inventory_absence(self):
         api=Mock();api.listing.return_value=[]
         with tempfile.TemporaryDirectory() as tmp, patch.object(controller,'OUT',Path(tmp)), \

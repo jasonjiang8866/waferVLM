@@ -108,6 +108,24 @@ def overlay(phase):
     return code, digest
 
 
+def select_capacity(api, candidates, ledger):
+    """Reobserve transient catalog shortages; never retry a create request."""
+    observations = []
+    for attempt in range(4):
+        for gpu in candidates:
+            query = urllib.parse.urlencode(dict(include='AVAILABILITY',product='POD',cloud='SECURE',count=1,minCudaVersion='12.8'))
+            catalog = api.call('/catalog/gpus/'+urllib.parse.quote(gpu,safe='')+'?'+query)
+            rate = catalog.get('price',{}).get('secure')
+            regions = sorted(d['id'] for d in catalog.get('dataCenters',[]) if d.get('availability') in ('LOW','MEDIUM','HIGH') and re.fullmatch('[A-Za-z0-9-]+',d.get('id','')))
+            observations.append(dict(attempt=attempt+1,gpu=gpu,hourly_usd=rate,regions=regions,min_cuda='12.8',checked_epoch=time.time()))
+            save('catalog.json', observations)
+            if regions and finite(rate,.001) and rate <= GPU_CAPS[gpu]:
+                return gpu,regions,quote(rate,gpu,ledger)
+        if attempt < 3:
+            time.sleep(15)
+    raise ValueError('No approved GPU capacity at the CUDA minimum and price cap')
+
+
 def preflight(api):
     stage('identity')
     run, sha = manual_guard()
@@ -134,21 +152,8 @@ def preflight(api):
     if choice != 'auto' and choice not in GPU_CAPS:
         raise ValueError('Unapproved GPU choice')
     candidates = list(GPU_CAPS) if choice == 'auto' else [choice]
-    observed = []
-    selected = None
     stage('catalog')
-    for gpu in candidates:
-        query = urllib.parse.urlencode(dict(include='AVAILABILITY',product='POD',cloud='SECURE',count=1,minCudaVersion='12.8'))
-        catalog = api.call('/catalog/gpus/'+urllib.parse.quote(gpu,safe='')+'?'+query)
-        rate = catalog.get('price',{}).get('secure')
-        regions = sorted(d['id'] for d in catalog.get('dataCenters',[]) if d.get('availability') in ('LOW','MEDIUM','HIGH') and re.fullmatch('[A-Za-z0-9-]+',d.get('id','')))
-        observed.append(dict(gpu=gpu,hourly_usd=rate,regions=regions,min_cuda='12.8'))
-        if regions and finite(rate,.001) and rate <= GPU_CAPS[gpu]:
-            selected = (gpu,regions,quote(rate,gpu,ledger)); break
-    save('catalog.json', observed)
-    if selected is None:
-        raise ValueError('No approved GPU capacity at the CUDA minimum and price cap')
-    gpu, regions, cost = selected
+    gpu, regions, cost = select_capacity(api,candidates,ledger)
     stage('account_budget')
     account = budget(api,reserve=cost['maximum_estimated_usd']+1)
     _, overlay_sha = overlay(phase)
