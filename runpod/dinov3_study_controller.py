@@ -1,6 +1,6 @@
 """Bounded DINO-only controller; reuse the verified image and freeze before holdout."""
 import base64
-import gzip
+import lzma
 import hashlib
 import json
 import os
@@ -20,6 +20,7 @@ from runpod.provider import REPOSITORY, Runpod, NoRedirect, RemoteHTTPError, req
 from runpod.dinov3_controller import image_provenance
 from runpod.dinov3_study import PLAN, FROZEN, plan, input_pin, verify_results
 from runpod.dinov3_study_ledger import reconcile
+from runpod.startup_diagnostics import capture, runtime_summary
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / 'dinov3-study-results'
@@ -32,6 +33,7 @@ WORK_SECONDS = 2700
 CLEANUP_SECONDS = 600
 CATALOG_OBSERVATIONS = 20
 CATALOG_PAUSE_SECONDS = 15
+CREATE_PAYLOAD_MAX_BYTES = 60 * 1024
 RUNTIME_FILES = ['src/wafervlm/' + n + '.py' for n in
                  ('dinov3','core','experiment','data','acquisition','vision_comparison','confirmation')]
 RUNTIME_FILES += ['scripts/run_dinov3.py','scripts/prepare_public_data.py','configs/dinov3.json','uv.lock',
@@ -60,6 +62,21 @@ def error_record(exc):
     if path.exists():
         result['stage'] = json.loads(path.read_text())['stage']
     return result
+
+
+def startup_evidence(pid, detail, run, proxy_error, elapsed):
+    """Capture only owned-Pod, bounded, allowlisted diagnostics before deletion."""
+    if not owned(detail, run):
+        raise ValueError('Startup diagnostic ownership mismatch')
+    path = OUT / 'startup-diagnostics.json'
+    records = json.loads(path.read_text()) if path.exists() else []
+    if len(records) >= 4:
+        return
+    record = capture(pid, detail, proxy_error)
+    record['elapsed_seconds'] = elapsed
+    records.append(record)
+    save('startup-diagnostics.json', records)
+    print('DINO startup observation: ' + json.dumps(record), flush=True)
 
 
 def weight_fingerprint():
@@ -125,14 +142,24 @@ def overlay(phase):
         raise ValueError('Unknown phase')
     payload = json.dumps({n:(ROOT/n).read_text() for n in files}, sort_keys=True).encode()
     digest = hashlib.sha256(payload).hexdigest()
-    packed = base64.b64encode(gzip.compress(payload, mtime=0)).decode()
-    code = ("import base64,gzip,json,pathlib,runpy,os,hashlib;os.chdir('/app');"
-            "raw=gzip.decompress(base64.b64decode(" + repr(packed) + "));"
+    packed = base64.b64encode(lzma.compress(payload)).decode()
+    code = ("import base64,lzma,json,pathlib,runpy,os,hashlib;os.chdir('/app');"
+            "raw=lzma.decompress(base64.b64decode(" + repr(packed) + "));"
             "assert hashlib.sha256(raw).hexdigest()==os.environ['DINO_OVERLAY_SHA256'];"
             "payload=json.loads(raw);"
             "[(pathlib.Path(n).parent.mkdir(parents=True,exist_ok=True),pathlib.Path(n).write_text(v)) for n,v in payload.items()];"
             "runpy.run_module('runpod.dinov3_study_worker',run_name='__main__')")
     return code, digest
+
+
+def check_create_payload(payload):
+    # Local conservative transport bound, not a documented provider API limit.
+    size = len(json.dumps(payload).encode())
+    command_size = sum(len(c.encode()) for c in payload.get('cmd', []))
+    if size > CREATE_PAYLOAD_MAX_BYTES:
+        raise ValueError('Create payload exceeds the local 60 KiB transport bound')
+    return dict(json_bytes=size, command_bytes=command_size,
+                maximum_json_bytes=CREATE_PAYLOAD_MAX_BYTES)
 
 
 def select_capacity(api, candidates, ledger):
@@ -298,6 +325,8 @@ def launch(api):
     handlers={s:signal.signal(s,interrupt) for s in (signal.SIGALRM,signal.SIGTERM,signal.SIGINT)}
     signal.alarm(WORK_SECONDS)
     try:
+        stage('create_payload')
+        save('create-payload-size.json',check_create_payload(payload))
         stage('create_pod')
         pod=api.call('/pods','POST',payload)  # One create only. Ambiguous failures go directly to reconciliation.
         pid=pod.get('id','')
@@ -311,15 +340,25 @@ def launch(api):
         save('allocation.json',dict(pod_id=pid,gpu=spec['gpu'],data_center=detail['dataCenterId'],hourly_usd=detail['cost']))
         stage('worker_startup')
         url='https://'+pid+'-8888.proxy.runpod.net';seen=False;last=None;next_inventory=0;delivered=set()
+        diagnostic_due=60;last_proxy_error=None
         while time.time()<deadline-60:
             if time.time()>=next_inventory:
                 detail=api.call('/pods/'+pid)
                 if not owned(detail,run) or detail.get('status') in ('ERROR','EXITED','TERMINATED'):
+                    if owned(detail,run):
+                        startup_evidence(pid,detail,run,last_proxy_error,time.time()-started)
                     raise ValueError('Worker stopped or ownership changed')
+                save('runtime-status.json',dict(runtime_summary(detail),checked_epoch=time.time()))
                 next_inventory=time.time()+60
             try: result=request(url+'/result',token=token)
-            except RuntimeError:
-                if not seen and time.time()-started>900: raise TimeoutError('Worker startup exceeded 15 minutes')
+            except RuntimeError as exc:
+                last_proxy_error=error_record(exc)
+                save('proxy-error.json',last_proxy_error)
+                elapsed=time.time()-started
+                if not seen and elapsed>=diagnostic_due:
+                    startup_evidence(pid,detail,run,last_proxy_error,elapsed)
+                    diagnostic_due=300 if diagnostic_due==60 else 900 if diagnostic_due==300 else float('inf')
+                if not seen and elapsed>900: raise TimeoutError('Worker startup exceeded 15 minutes')
                 time.sleep(10);continue
             seen=True
             current=result.get('phase')
