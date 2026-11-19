@@ -1,0 +1,48 @@
+name: DINOv3 study independent cleanup
+on:
+  workflow_run:
+    workflows: ['DINOv3 cross-seed and holdout study']
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      origin_run_id:
+        description: 'Originating DINO study run ID'
+        type: string
+        required: true
+permissions:
+  contents: read
+concurrency:
+  group: dino-study-cleanup-${{ inputs.origin_run_id || github.event.workflow_run.id }}
+  cancel-in-progress: false
+jobs:
+  cleanup:
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      (github.event_name == 'workflow_dispatch' ||
+       (github.event.workflow_run.event == 'workflow_dispatch' &&
+        github.event.workflow_run.head_branch == 'main' &&
+        github.event.workflow_run.repository.full_name == github.repository))
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install uv==0.13.5
+      - run: uv sync --frozen
+      - name: Independently reconcile only the originating run's owned temporary Pod
+        env:
+          RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY }}
+          ORIGIN_RUN_ID: ${{ inputs.origin_run_id || github.event.workflow_run.id }}
+        run: GITHUB_RUN_ID="$ORIGIN_RUN_ID" uv run --frozen python -m runpod.dinov3_study_controller cleanup
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: dinov3-study-cleanup-${{ inputs.origin_run_id || github.event.workflow_run.id }}
+          path: dinov3-study-results/
+          retention-days: 90
+          if-no-files-found: error
