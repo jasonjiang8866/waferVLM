@@ -1,6 +1,6 @@
 # waferVLM TODO — after validation-selected checkpoint 250
 
-Updated 2026-11-18 (Singapore time). This is the next-stage plan; unchecked items
+Updated 2026-11-19 (Singapore time). This is the next-stage plan; unchecked items
 are not completed experiments or new paid-launch authorization.
 
 ## Completed baseline
@@ -17,7 +17,7 @@ are not completed experiments or new paid-launch authorization.
 - [x] Update README/results/recovery instructions and verify temporary Pod
   deletion. See [the completed-run report](docs/checkpoint-200-release.md).
 
-**Current status:** the [200→300 continuation](docs/continuation-300-results.md) completed and validation selected checkpoint 250 (78.125% accuracy / 0.773992 macro-F1 / 0 invalid outputs). Full checkpoints, raw predictions and evidence are preserved in [continuation-300-v1](https://github.com/jasonjiang8866/waferVLM/releases/tag/continuation-300-v1). Both cleanup paths verified Pod absence. No new test or holdout inference ran. The earlier diagnostic parity failures remain rejected; the unchanged unprofiled implementation was retained. Fresh seeds [42](docs/vlm-seed42-results.md) and [123](docs/vlm-seed123-results.md) have completed 250 steps and passed independent full-state verification. Six endpoints are frozen. [All 18 validation repeats are complete and independently verified](docs/vlm-repeat-results.md), with both cleanup paths verified. The first-pass step-250 gain failed to replicate in both confirmation seeds; the 148-image holdout remains untouched and all seven predeclared models remain in the final study.
+**Current status:** the [200→300 continuation](docs/continuation-300-results.md) completed and validation selected checkpoint 250 (78.125% accuracy / 0.773992 macro-F1 / 0 invalid outputs). Full checkpoints, raw predictions and evidence are preserved in [continuation-300-v1](https://github.com/jasonjiang8866/waferVLM/releases/tag/continuation-300-v1). Both cleanup paths verified Pod absence. That continuation used validation for selection. The earlier diagnostic parity failures remain rejected; the unchanged unprofiled implementation was retained. Fresh seeds [42](docs/vlm-seed42-results.md) and [123](docs/vlm-seed123-results.md) have completed 250 steps and passed independent full-state verification. Six endpoints are frozen. [All 18 validation repeats are complete and independently verified](docs/vlm-repeat-results.md), with both cleanup paths verified. The first-pass step-250 gain failed to replicate in both confirmation seeds; all seven predeclared models subsequently completed the [148-map unseen-lot study](docs/qwen-holdout-results.md).
 
 ## P1 — diagnose performance before more training
 
@@ -79,6 +79,8 @@ retains the current path. Export evidence and verify owned-Pod cleanup.
 the major confusions are documented, and any proposed intervention has a stated
 hypothesis and a separate experiment specification.
 
+The [cross-checkpoint validation analysis](docs/qwen-validation-errors.md) identifies 16 maps all six checkpoints missed, including seven labeled `loc`. Next, inspect those seven cases alongside the three `loc` maps all six classified correctly and record morphology before inspecting predictions.
+
 ## P2 — controlled continuation from 200 to 300
 
 Completed in [run 42682266526](https://github.com/jasonjiang8866/waferVLM/actions/runs/42682266526), retaining the 0.8B generative VLM, frozen vision and language-only LoRA.
@@ -112,14 +114,14 @@ Completed in [run 42682266526](https://github.com/jasonjiang8866/waferVLM/action
   duplicate-connected lot groups; audit raw-map and rendered-image collisions
   against all development data. Declare the selection rule and actual class
   counts without selecting lots based on model scores.
-- [ ] Keep the new holdout out of profiling, error-driven tuning and checkpoint
+- [x] Keep the new holdout out of profiling, error-driven tuning and checkpoint
   selection. Do not treat a new split seed over previously seen images as an
   untouched test set. Record any limits in available lot/metadata coverage.
 - [x] Prepare a [paired independent-seed plan](docs/seed-confirmation-plan.md), fixed steps 200/250, repeated fixed-weight evaluation and a separate compute estimate.
 - [x] Implement and run seeds 42/123, preserving the data protocol, full resume states, original artifacts and verified cleanup.
 - [x] Reconstruct and freeze all six step-200/250 checkpoints from the four original ZIPs.
 - [x] Run and independently analyze all 18 fresh-process validation passes; report the first pass and every repeat. See [complete results](docs/vlm-repeat-results.md); mixed-hardware repeat differences are preserved.
-- [ ] Freeze the final models/comparisons, then evaluate the new holdout once
+- [x] Freeze the final models/comparisons, then evaluate the new holdout once
   per predeclared model/seed. Report accuracy, macro-F1, per-class recall,
   invalid rate, uncertainty across lots/seeds, inference time and peak memory.
 
@@ -139,7 +141,7 @@ outside this eight-label experiment.
 
 ### Existing Qwen authorization record
 
-**Latest reconciled total (2026-11-18): US$10.610880 / 771.549163 minutes**, including all previous failed attempts and the successful final-two continuation. The last run added US$0.139056 / 9.281467 minutes; both cleanup paths verified absence. The existing US$30 / 1,100-minute authorization is unchanged. Reconcile run `44124342191` before any new paid admission; do not rerun the completed repeats. The earlier planning figures below are historical.
+**Latest reconciled total (2026-11-18): US$11.423145 / 791.22 minutes.** The successful [holdout run](docs/qwen-holdout-results.md) added approximately US$0.7760 / 17.25 minutes after the rejected placement. Both cleanup paths verified absence. The cumulative limits are US$30 and 1,100 minutes. Reconcile run `44307271887` before any new paid admission. The earlier planning figures below are historical.
 
 User extension on 2026-11-09 (SGT): **+US$10 / +600 minutes**.
 After the completed continuation, conservative cumulative usage is **US$5.903039 / 491.911 minutes**, including prior upward-rounded reserves. The continuation added **US$0.523039 / 34.911 lifecycle minutes**. Total authorization remains **US$30 / 1,100 minutes**; estimates include ephemeral disk and are not provider invoices or a hard cap. Both cleanup paths verified the owned Pod absent.
@@ -157,8 +159,4 @@ The original [seed confirmation plan](docs/seed-confirmation-plan.md) allocated 
   worker image and model revision, and preserve independent cleanup.
 - A TODO, documentation merge or successful CI run does not launch compute.
 
-Recommended order: **preserved continuation results → independent-seed and repeatability confirmation → one predeclared untouched-lot evaluation**.
-Reserve the new holdout before further tuning, even though its evaluation comes
-last. Larger models, vision adaptation and changed data/prompt recipes remain
-separate later experiments rather than additions to the immediate continuation.
-
+The continuation, repeatability study and final unseen-lot evaluation are complete. Further VLM development uses the training and development-validation splits. A new generalization claim will need fresh, independently reserved evidence.
