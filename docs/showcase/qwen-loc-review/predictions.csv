@@ -1,0 +1,11 @@
+case,id,label,seed17-step200,seed17-step250,seed42-step200,seed42-step250,seed123-step200,seed123-step250
+A,38dd30111d9a15f20ad272cc,loc,edge-loc,edge-loc,random,random,edge-loc,edge-loc
+B,aac6e9a0b3b5aa660ce62121,loc,random,donut,random,random,random,donut
+C,be8bdd8417b86a07da6a61f2,loc,edge-loc,scratch,scratch,scratch,edge-loc,scratch
+D,c882bea412b6513af0935266,loc,edge-loc,edge-loc,edge-loc,scratch,edge-loc,edge-loc
+E,50773a965c423a8290e617f2,loc,near-full,near-full,near-full,center,near-full,near-full
+F,439662b4cf1c523674b765e1,loc,loc,loc,loc,loc,loc,loc
+G,133ed6fd171c0141464c2f2e,loc,loc,loc,loc,loc,loc,loc
+H,0dba1dc3f2c5cf63eda306ba,loc,center,center,center,center,center,center
+I,dd855c3b619057c30af18ade,loc,random,donut,random,random,edge-loc,edge-loc
+J,7ea7a57ace4f459d5885ad76,loc,loc,loc,loc,loc,loc,loc
