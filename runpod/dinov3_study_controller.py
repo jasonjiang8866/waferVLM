@@ -51,11 +51,36 @@ def error_record(exc):
     result = dict(error_type=type(exc).__name__)
     if isinstance(exc, RemoteHTTPError):
         result.update(http_status=exc.status, categories=exc.categories)
+    elif isinstance(exc, urllib.error.HTTPError):
+        result['http_status'] = exc.code
     # Never emit remote response bodies, URLs or exception strings.
     path = OUT / 'progress.json'
     if path.exists():
         result['stage'] = json.loads(path.read_text())['stage']
     return result
+
+
+def weight_fingerprint():
+    from runpod.dinov3_image_weights import report
+    fingerprint = report()
+    receipt = json.loads((ROOT/'docs/evidence/dinov3-seed17-43716864164.json').read_text())['weights']
+    if any(receipt[k] != fingerprint[k] for k in ('model_id','model_revision','files_sha256')):
+        raise ValueError('Published embedded-weight identity differs from CPU fingerprint')
+    # verify_files expects report(), not its own returned verification receipt.
+    return fingerprint
+
+
+def download_archive(url, token, meta):
+    size, digest = meta.get('size'), meta.get('sha256')
+    if type(size) is not int or not 0 < size <= 24*1024**2 or not re.fullmatch('[a-f0-9]{64}',digest or ''):
+        raise ValueError('Invalid result archive metadata')
+    req = urllib.request.Request(url+'/archive',headers={
+        'Authorization':'Bearer '+token, 'User-Agent':'waferVLM-actions/0.1'})
+    with urllib.request.build_opener(NoRedirect).open(req,timeout=60) as response:
+        data = response.read(size+1)
+    if len(data)!=size or hashlib.sha256(data).hexdigest()!=digest:
+        raise ValueError('Result archive checksum mismatch')
+    return data
 
 
 def identity():
@@ -140,6 +165,7 @@ def preflight(api):
     stage('image')
     image_provenance(p['image'], p['image_source_sha'])
     stage('input_artifact')
+    weight_fingerprint()
     pin = input_pin(phase)
     meta = request(BASE + '/actions/artifacts/' + str(pin['artifact_id']), token=os.environ['GH_TOKEN'])
     if meta.get('expired') is not False or meta.get('digest') != 'sha256:' + pin['zip_sha256']:
@@ -256,7 +282,7 @@ def launch(api):
     state=dict(pod_id=None,started_epoch=started,rate=spec['cost']['gpu_hourly_usd'],
                prior_usd=spec['ledger']['usd'],prior_seconds=spec['ledger']['seconds'])
     save('provision.json',state)
-    weights=json.loads((ROOT/'docs/evidence/dinov3-seed17-43716864164.json').read_text())['weights']
+    weights=weight_fingerprint()
     env=dict(WAFER_MANAGED_BY=REPOSITORY,DINO_RUN_ID=run,DINO_AUTH=AUTH,DINO_RESULT_TOKEN=token,
              DINO_DEADLINE=str(deadline-60),DINO_GPU=spec['gpu'],DINO_WEIGHTS=json.dumps(weights),
              DINO_IMAGE=p['image'],DINO_PHASE=phase,DINO_CONTROLLER_SHA=spec['controller_sha'],
@@ -306,13 +332,8 @@ def launch(api):
                 save('result.json',result)
                 archive=result.get('archive')
                 if not archive: raise ValueError('Worker returned no result archive')
-                size=archive.get('size');sha=archive.get('sha256')
-                if type(size) is not int or not 0<size<=24*1024**2 or not re.fullmatch('[a-f0-9]{64}',sha or ''):
-                    raise ValueError('Invalid result archive metadata')
-                req=urllib.request.Request(url+'/archive',headers={'Authorization':'Bearer '+token})
-                with urllib.request.build_opener(NoRedirect).open(req,timeout=60) as response:
-                    data=response.read(size+1)
-                if len(data)!=size or hashlib.sha256(data).hexdigest()!=sha: raise ValueError('Result archive checksum mismatch')
+                stage('retrieve_archive')
+                data=download_archive(url,token,archive);sha=archive['sha256']
                 (OUT/'experiment.tar.gz').write_bytes(data)
                 if result['status']!='completed': raise ValueError('DINO study incomplete; partial archive retained')
                 from runpod.confirmation_verify import unpack
