@@ -7,7 +7,7 @@ from pathlib import Path
 
 from wafervlm.core import sha256_file
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 spec = importlib.util.spec_from_file_location("dino_paired", ROOT / "analysis/dinov3_qwen_validation.py")
 analysis = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(analysis)
