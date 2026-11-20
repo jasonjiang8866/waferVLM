@@ -1,16 +1,20 @@
-# Wafer image explorer
+# Wafer Daily
 
-Browse 12 Carinthia-S SEM images with their paired masks and one silicon-wafer SEM cross-section. Selecting Overlay displays the mask luminance in orange with adjustable opacity. Class numbers follow the source annotation. Original and Mask show the unmodified source files. Each specimen links to its source record and license.
+[Open the daily atlas](https://jasonjiang8866.github.io/waferVLM/). Every Singapore calendar day, each dataset contributes one image from its attributed preview pool. Everyone sees the same edition. The next image appears at midnight or when a sleeping tab returns. The date indexes each dataset independently, so all its previews appear before one repeats. Opening a card shows its source, a reading question and a full-size image link. Progress lives in the visitor's browser.
 
-From the repository root, build with Python 3 and serve the output directory:
+The microscope at `explorer.html` offers 12 Carinthia-S specimens with paired masks and the original silicon SEM cross-section. It supports class filters and adjustable mask overlays.
+
+## Build
+
+From the repo root:
 
 ```sh
 python3 viewer/build.py dist/viewer
 python3 -m http.server 8000 --directory dist/viewer
 ```
 
-Open http://localhost:8000. The builder verifies each file against the public preview manifest. For a portable single-file version, build to a fresh directory with `--standalone` and open its `index.html`.
+Open http://localhost:8000. To export the microscope as a self-contained HTML file, run `python3 viewer/build.py dist/offline --standalone`.
 
-**GitHub Pages.** After merge, select GitHub Actions in Settings → Pages and run the Wafer image explorer workflow on main. It publishes only the built viewer. The app uses relative asset URLs for project subpaths.
+The daily builder checks the dataset IDs against `data_sources/cards/`. To add a collection, add its display metadata in `collections.json` and its attributed image pool in `daily-data/`. Local assets go in `daily-assets/`. The Carinthia-S pool reuses the checksum-verified original preview manifest. Some collections embed the authors’ own image URLs and need network access. Displaying a preview does not change the bulk dataset’s storage or license status.
 
-**Cloudflare Pages.** From the repository root use `python3 viewer/build.py dist/viewer` as the build command and `dist/viewer` as the output directory. Each host serves static assets without RunPod access.
+GitHub Actions builds and checks the gallery and microscope on pull requests. Changes to viewer sources, sample files, data cards or the workflow on main trigger publication to GitHub Pages. Day changes run in the browser and need no scheduled deployment or GPU.

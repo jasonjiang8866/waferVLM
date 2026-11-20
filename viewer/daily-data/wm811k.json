@@ -1,0 +1,58 @@
+[
+  {
+    "src": "daily-assets/wm811k-center.png",
+    "title": "Center",
+    "credit": "WM-811K · waferVLM validation atlas",
+    "source": "https://github.com/jasonjiang8866/waferVLM/tree/d2f639cfc3106c71215bab3746973852a7c6fb94/docs/showcase/checkpoint-250",
+    "note": "Validation sample 4c0cb116592b2babf3807229. Yellow = failed die, blue = passed die, black = outside wafer."
+  },
+  {
+    "src": "daily-assets/wm811k-donut.png",
+    "title": "Donut",
+    "credit": "WM-811K · waferVLM validation atlas",
+    "source": "https://github.com/jasonjiang8866/waferVLM/tree/d2f639cfc3106c71215bab3746973852a7c6fb94/docs/showcase/checkpoint-250",
+    "note": "Validation sample 32f11e5f884139a8eb1a749a. Yellow = failed die, blue = passed die, black = outside wafer."
+  },
+  {
+    "src": "daily-assets/wm811k-edge-loc.png",
+    "title": "Edge-loc",
+    "credit": "WM-811K · waferVLM validation atlas",
+    "source": "https://github.com/jasonjiang8866/waferVLM/tree/d2f639cfc3106c71215bab3746973852a7c6fb94/docs/showcase/checkpoint-250",
+    "note": "Validation sample 5e90d1e702ea245b652ba450. Yellow = failed die, blue = passed die, black = outside wafer."
+  },
+  {
+    "src": "daily-assets/wm811k-edge-ring.png",
+    "title": "Edge-ring",
+    "credit": "WM-811K · waferVLM validation atlas",
+    "source": "https://github.com/jasonjiang8866/waferVLM/tree/d2f639cfc3106c71215bab3746973852a7c6fb94/docs/showcase/checkpoint-250",
+    "note": "Validation sample 0ad3c35371e7fe06efb357a2. Yellow = failed die, blue = passed die, black = outside wafer."
+  },
+  {
+    "src": "daily-assets/wm811k-loc.png",
+    "title": "Loc",
+    "credit": "WM-811K · waferVLM validation atlas",
+    "source": "https://github.com/jasonjiang8866/waferVLM/tree/d2f639cfc3106c71215bab3746973852a7c6fb94/docs/showcase/checkpoint-250",
+    "note": "Validation sample dd855c3b619057c30af18ade. Yellow = failed die, blue = passed die, black = outside wafer."
+  },
+  {
+    "src": "daily-assets/wm811k-near-full.png",
+    "title": "Near-full",
+    "credit": "WM-811K · waferVLM validation atlas",
+    "source": "https://github.com/jasonjiang8866/waferVLM/tree/d2f639cfc3106c71215bab3746973852a7c6fb94/docs/showcase/checkpoint-250",
+    "note": "Validation sample 8e56c17bd8a8ad08868d3973. Yellow = failed die, blue = passed die, black = outside wafer."
+  },
+  {
+    "src": "daily-assets/wm811k-random.png",
+    "title": "Random",
+    "credit": "WM-811K · waferVLM validation atlas",
+    "source": "https://github.com/jasonjiang8866/waferVLM/tree/d2f639cfc3106c71215bab3746973852a7c6fb94/docs/showcase/checkpoint-250",
+    "note": "Validation sample 8507bcec612300fe21c3be98. Yellow = failed die, blue = passed die, black = outside wafer."
+  },
+  {
+    "src": "daily-assets/wm811k-scratch.png",
+    "title": "Scratch",
+    "credit": "WM-811K · waferVLM validation atlas",
+    "source": "https://github.com/jasonjiang8866/waferVLM/tree/d2f639cfc3106c71215bab3746973852a7c6fb94/docs/showcase/checkpoint-250",
+    "note": "Validation sample 5f0dc094af5b30aae2baddf1. Yellow = failed die, blue = passed die, black = outside wafer."
+  }
+]

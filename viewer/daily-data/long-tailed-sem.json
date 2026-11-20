@@ -1,0 +1,86 @@
+[
+  {
+    "src": "https://raw.githubusercontent.com/YMLIU-BOOP/Anomaly-Dataset/5b1f61c5166e0ec244b4fe4247c7857c9b33fc33/SEMdata/block_etch/008.png",
+    "source": "https://github.com/YMLIU-BOOP/Anomaly-Dataset/blob/5b1f61c5166e0ec244b4fe4247c7857c9b33fc33/SEMdata/block_etch/008.png",
+    "title": "Block etch · 008",
+    "credit": "Liu et al. · Long-Tailed SEM",
+    "note": "Author-hosted SEM image. Label follows the source collection."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/YMLIU-BOOP/Anomaly-Dataset/5b1f61c5166e0ec244b4fe4247c7857c9b33fc33/SEMdata/bridge/001.png",
+    "source": "https://github.com/YMLIU-BOOP/Anomaly-Dataset/blob/5b1f61c5166e0ec244b4fe4247c7857c9b33fc33/SEMdata/bridge/001.png",
+    "title": "Bridge · 001",
+    "credit": "Liu et al. · Long-Tailed SEM",
+    "note": "Author-hosted SEM image. Label follows the source collection."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/YMLIU-BOOP/Anomaly-Dataset/5b1f61c5166e0ec244b4fe4247c7857c9b33fc33/SEMdata/copper_residue/008.png",
+    "source": "https://github.com/YMLIU-BOOP/Anomaly-Dataset/blob/5b1f61c5166e0ec244b4fe4247c7857c9b33fc33/SEMdata/copper_residue/008.png",
+    "title": "Copper residue · 008",
+    "credit": "Liu et al. · Long-Tailed SEM",
+    "note": "Author-hosted SEM image. Label follows the source collection."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/YMLIU-BOOP/Anomaly-Dataset/5b1f61c5166e0ec244b4fe4247c7857c9b33fc33/SEMdata/damage/008.png",
+    "source": "https://github.com/YMLIU-BOOP/Anomaly-Dataset/blob/5b1f61c5166e0ec244b4fe4247c7857c9b33fc33/SEMdata/damage/008.png",
+    "title": "Damage · 008",
+    "credit": "Liu et al. · Long-Tailed SEM",
+    "note": "Author-hosted SEM image. Label follows the source collection."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/YMLIU-BOOP/Anomaly-Dataset/5b1f61c5166e0ec244b4fe4247c7857c9b33fc33/SEMdata/embedded/004.png",
+    "source": "https://github.com/YMLIU-BOOP/Anomaly-Dataset/blob/5b1f61c5166e0ec244b4fe4247c7857c9b33fc33/SEMdata/embedded/004.png",
+    "title": "Embedded · 004",
+    "credit": "Liu et al. · Long-Tailed SEM",
+    "note": "Author-hosted SEM image. Label follows the source collection."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/YMLIU-BOOP/Anomaly-Dataset/5b1f61c5166e0ec244b4fe4247c7857c9b33fc33/SEMdata/hole/002.png",
+    "source": "https://github.com/YMLIU-BOOP/Anomaly-Dataset/blob/5b1f61c5166e0ec244b4fe4247c7857c9b33fc33/SEMdata/hole/002.png",
+    "title": "Hole · 002",
+    "credit": "Liu et al. · Long-Tailed SEM",
+    "note": "Author-hosted SEM image. Label follows the source collection."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/YMLIU-BOOP/Anomaly-Dataset/5b1f61c5166e0ec244b4fe4247c7857c9b33fc33/SEMdata/infilm/017.png",
+    "source": "https://github.com/YMLIU-BOOP/Anomaly-Dataset/blob/5b1f61c5166e0ec244b4fe4247c7857c9b33fc33/SEMdata/infilm/017.png",
+    "title": "Infilm · 017",
+    "credit": "Liu et al. · Long-Tailed SEM",
+    "note": "Author-hosted SEM image. Label follows the source collection."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/YMLIU-BOOP/Anomaly-Dataset/5b1f61c5166e0ec244b4fe4247c7857c9b33fc33/SEMdata/normal/1165.png",
+    "source": "https://github.com/YMLIU-BOOP/Anomaly-Dataset/blob/5b1f61c5166e0ec244b4fe4247c7857c9b33fc33/SEMdata/normal/1165.png",
+    "title": "Normal · 1165",
+    "credit": "Liu et al. · Long-Tailed SEM",
+    "note": "Author-hosted SEM image. Label follows the source collection."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/YMLIU-BOOP/Anomaly-Dataset/5b1f61c5166e0ec244b4fe4247c7857c9b33fc33/SEMdata/particle/011.png",
+    "source": "https://github.com/YMLIU-BOOP/Anomaly-Dataset/blob/5b1f61c5166e0ec244b4fe4247c7857c9b33fc33/SEMdata/particle/011.png",
+    "title": "Particle · 011",
+    "credit": "Liu et al. · Long-Tailed SEM",
+    "note": "Author-hosted SEM image. Label follows the source collection."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/YMLIU-BOOP/Anomaly-Dataset/5b1f61c5166e0ec244b4fe4247c7857c9b33fc33/SEMdata/pattern_deform/009.png",
+    "source": "https://github.com/YMLIU-BOOP/Anomaly-Dataset/blob/5b1f61c5166e0ec244b4fe4247c7857c9b33fc33/SEMdata/pattern_deform/009.png",
+    "title": "Pattern deformation · 009",
+    "credit": "Liu et al. · Long-Tailed SEM",
+    "note": "Author-hosted SEM image. Label follows the source collection."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/YMLIU-BOOP/Anomaly-Dataset/5b1f61c5166e0ec244b4fe4247c7857c9b33fc33/SEMdata/puddle/008.png",
+    "source": "https://github.com/YMLIU-BOOP/Anomaly-Dataset/blob/5b1f61c5166e0ec244b4fe4247c7857c9b33fc33/SEMdata/puddle/008.png",
+    "title": "Puddle · 008",
+    "credit": "Liu et al. · Long-Tailed SEM",
+    "note": "Author-hosted SEM image. Label follows the source collection."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/YMLIU-BOOP/Anomaly-Dataset/5b1f61c5166e0ec244b4fe4247c7857c9b33fc33/SEMdata/scratch/003.png",
+    "source": "https://github.com/YMLIU-BOOP/Anomaly-Dataset/blob/5b1f61c5166e0ec244b4fe4247c7857c9b33fc33/SEMdata/scratch/003.png",
+    "title": "Scratch · 003",
+    "credit": "Liu et al. · Long-Tailed SEM",
+    "note": "Author-hosted SEM image. Label follows the source collection."
+  }
+]

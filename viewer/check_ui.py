@@ -19,6 +19,27 @@ with webdriver.Chrome(options=options) as browser:
         return browser.find_element(By.CSS_SELECTOR, selector)
 
     browser.get(f"http://127.0.0.1:{server.server_port}/{site.name}/")
+    cards = browser.find_elements(By.CSS_SELECTOR, ".card")
+    assert len(cards) == 7
+    for card in cards:
+        card.click()
+        assert find("dialog").is_displayed() and find("#source").get_attribute("href")
+        find("#close").click()
+    assert find("#score").text == "7 / 7"
+    originals = [card.find_element(By.TAG_NAME, "img").get_attribute("src") for card in cards]
+    browser.refresh()
+    assert find("#score").text == "7 / 7"
+    assert originals == [img.get_attribute("src") for img in browser.find_elements(By.CSS_SELECTOR, ".card img")]
+    assert browser.execute_script("""
+        const midnight = Date.UTC(2026, 10, 20, 16);
+        return dayNumber(midnight) === dayNumber(midnight-1) + 1 &&
+            collections.every(c => c.images.length === 1 ||
+                selection(c, edition) !== selection(c, edition + 1));
+    """)
+    browser.set_window_size(390, 844)
+    assert browser.execute_script("return document.documentElement.scrollWidth <= innerWidth")
+    browser.set_window_size(1280, 900)
+    find('nav a[href="explorer.html"]').click()
     assert len(browser.find_elements(By.CSS_SELECTOR, "#thumbs button")) == 13
     Select(find("#classes")).select_by_value("3")
     assert len(browser.find_elements(By.CSS_SELECTOR, "#thumbs button")) == 2
