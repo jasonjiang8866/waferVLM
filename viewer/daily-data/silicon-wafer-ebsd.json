@@ -1,0 +1,86 @@
+[
+  {
+    "src": "daily-assets/ebsd-0-0.webp",
+    "title": "Diffraction pattern · (0, 0)",
+    "credit": "Håkon Wiik Ånes et al. · CC BY 4.0",
+    "source": "https://zenodo.org/records/7491388",
+    "note": "Single-crystal Si. Zero-based scan position (column, row). Each preview maps the 1st–99th percentile of detector intensity to grayscale.",
+    "license": "https://creativecommons.org/licenses/by/4.0/",
+    "sourceFile": "Pattern.dat",
+    "sha256": "f266c74fa71ece4ab1eb0efc4c0e5d50aea74f90b2bbe06598098a18678c0ce3",
+    "scanPosition": {
+      "column": 0,
+      "row": 0
+    }
+  },
+  {
+    "src": "daily-assets/ebsd-5-40.webp",
+    "title": "Diffraction pattern · (40, 5)",
+    "credit": "Håkon Wiik Ånes et al. · CC BY 4.0",
+    "source": "https://zenodo.org/records/7491388",
+    "note": "Single-crystal Si. Zero-based scan position (column, row). Each preview maps the 1st–99th percentile of detector intensity to grayscale.",
+    "license": "https://creativecommons.org/licenses/by/4.0/",
+    "sourceFile": "Pattern.dat",
+    "sha256": "f466383497dd0dcec77b34233b18ac06df6fbebc41b8cabe55b9ab6e7f50f131",
+    "scanPosition": {
+      "column": 40,
+      "row": 5
+    }
+  },
+  {
+    "src": "daily-assets/ebsd-12-10.webp",
+    "title": "Diffraction pattern · (10, 12)",
+    "credit": "Håkon Wiik Ånes et al. · CC BY 4.0",
+    "source": "https://zenodo.org/records/7491388",
+    "note": "Single-crystal Si. Zero-based scan position (column, row). Each preview maps the 1st–99th percentile of detector intensity to grayscale.",
+    "license": "https://creativecommons.org/licenses/by/4.0/",
+    "sourceFile": "Pattern.dat",
+    "sha256": "aba208461a500f54075841d794cfd15dd60256b661bae871bcbd8bb2a5cce9a2",
+    "scanPosition": {
+      "column": 10,
+      "row": 12
+    }
+  },
+  {
+    "src": "daily-assets/ebsd-25-25.webp",
+    "title": "Diffraction pattern · (25, 25)",
+    "credit": "Håkon Wiik Ånes et al. · CC BY 4.0",
+    "source": "https://zenodo.org/records/7491388",
+    "note": "Single-crystal Si. Zero-based scan position (column, row). Each preview maps the 1st–99th percentile of detector intensity to grayscale.",
+    "license": "https://creativecommons.org/licenses/by/4.0/",
+    "sourceFile": "Pattern.dat",
+    "sha256": "29e3bb13dd9d8314cadfe2b4639fbe80bb2c2524c5f1fd416a72d6c9e5c0f8d0",
+    "scanPosition": {
+      "column": 25,
+      "row": 25
+    }
+  },
+  {
+    "src": "daily-assets/ebsd-38-5.webp",
+    "title": "Diffraction pattern · (5, 38)",
+    "credit": "Håkon Wiik Ånes et al. · CC BY 4.0",
+    "source": "https://zenodo.org/records/7491388",
+    "note": "Single-crystal Si. Zero-based scan position (column, row). Each preview maps the 1st–99th percentile of detector intensity to grayscale.",
+    "license": "https://creativecommons.org/licenses/by/4.0/",
+    "sourceFile": "Pattern.dat",
+    "sha256": "f5cd858d404cdb44a6de8ad77b77b38aaf4cfc60e8a81578752c5da4b1857225",
+    "scanPosition": {
+      "column": 5,
+      "row": 38
+    }
+  },
+  {
+    "src": "daily-assets/ebsd-49-49.webp",
+    "title": "Diffraction pattern · (49, 49)",
+    "credit": "Håkon Wiik Ånes et al. · CC BY 4.0",
+    "source": "https://zenodo.org/records/7491388",
+    "note": "Single-crystal Si. Zero-based scan position (column, row). Each preview maps the 1st–99th percentile of detector intensity to grayscale.",
+    "license": "https://creativecommons.org/licenses/by/4.0/",
+    "sourceFile": "Pattern.dat",
+    "sha256": "071a5538bb98c7991d854af18a4a2b35877d329068f03e62ce544515cf5c3a48",
+    "scanPosition": {
+      "column": 49,
+      "row": 49
+    }
+  }
+]

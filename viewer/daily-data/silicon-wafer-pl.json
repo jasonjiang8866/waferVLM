@@ -1,0 +1,137 @@
+[
+  {
+    "src": "daily-assets/pl-4a-pli.webp",
+    "title": "Laser grooves · rear, as received",
+    "credit": "Kaisla Sutinen et al. · CC BY 4.0",
+    "source": "https://zenodo.org/records/19603335",
+    "note": "Photoluminescence. Each preview maps its own 1st–99th percentile to grayscale. Compare patterns across images; intensity scales vary.",
+    "license": "https://creativecommons.org/licenses/by/4.0/",
+    "sourceFile": "Figure_4a_PLI_raw_image.raw",
+    "sha256": "830d0b2823a7b78580e3ad351cb813ca40ce4de30e7df755a646174a0d36b403",
+    "paper": "https://doi.org/10.1088/1361-6641/aea702",
+    "displayRangeCounts": [
+      2769.0,
+      39106.25
+    ]
+  },
+  {
+    "src": "daily-assets/pl-6a-0min.webp",
+    "title": "Laser grooves · rear, 0 min",
+    "credit": "Kaisla Sutinen et al. · CC BY 4.0",
+    "source": "https://zenodo.org/records/19603335",
+    "note": "Photoluminescence. Each preview maps its own 1st–99th percentile to grayscale. Compare patterns across images; intensity scales vary.",
+    "license": "https://creativecommons.org/licenses/by/4.0/",
+    "sourceFile": "Figure_6a_0min_raw_image.raw",
+    "sha256": "6f3539b7dad351106d672a75558a67abcab5b4f458eca02254efa248a568d7b5",
+    "paper": "https://doi.org/10.1088/1361-6641/aea702",
+    "displayRangeCounts": [
+      13761.75,
+      31118.0
+    ]
+  },
+  {
+    "src": "daily-assets/pl-6a-1week.webp",
+    "title": "Laser grooves · rear, 1 week",
+    "credit": "Kaisla Sutinen et al. · CC BY 4.0",
+    "source": "https://zenodo.org/records/19603335",
+    "note": "Photoluminescence. Each preview maps its own 1st–99th percentile to grayscale. Compare patterns across images; intensity scales vary.",
+    "license": "https://creativecommons.org/licenses/by/4.0/",
+    "sourceFile": "Figure_6a_1week_raw_image.raw",
+    "sha256": "249b0a47866d3559aaf2c0895f0378f9102cc0ec4cab08a60629e2fab4731141",
+    "paper": "https://doi.org/10.1088/1361-6641/aea702",
+    "displayRangeCounts": [
+      7253.45,
+      9572.3
+    ]
+  },
+  {
+    "src": "daily-assets/pl-6b-90min.webp",
+    "title": "Laser grooves · front, 90 min",
+    "credit": "Kaisla Sutinen et al. · CC BY 4.0",
+    "source": "https://zenodo.org/records/19603335",
+    "note": "Photoluminescence. Each preview maps its own 1st–99th percentile to grayscale. Compare patterns across images; intensity scales vary.",
+    "license": "https://creativecommons.org/licenses/by/4.0/",
+    "sourceFile": "Figure_6b_90min_raw_image.raw",
+    "sha256": "82dcced23c70097663e84d3615d0727351038a597d677daf4c61ddfd1b7a9ff2",
+    "paper": "https://doi.org/10.1088/1361-6641/aea702",
+    "displayRangeCounts": [
+      853.0,
+      1162.0
+    ]
+  },
+  {
+    "src": "daily-assets/pl-6b-1week.webp",
+    "title": "Laser grooves · front, 1 week",
+    "credit": "Kaisla Sutinen et al. · CC BY 4.0",
+    "source": "https://zenodo.org/records/19603335",
+    "note": "Photoluminescence. Each preview maps its own 1st–99th percentile to grayscale. Compare patterns across images; intensity scales vary.",
+    "license": "https://creativecommons.org/licenses/by/4.0/",
+    "sourceFile": "Figure_6b_1week_raw_image.raw",
+    "sha256": "af8a39804ea5da05ba7a99e245e8f9df93d2730d985713e65f03909f5b497844",
+    "paper": "https://doi.org/10.1088/1361-6641/aea702",
+    "displayRangeCounts": [
+      6219.8,
+      7888.9
+    ]
+  },
+  {
+    "src": "daily-assets/pl-7a.webp",
+    "title": "Stacking-fault wafer · Fig. 7a",
+    "credit": "Kaisla Sutinen et al. · CC BY 4.0",
+    "source": "https://zenodo.org/records/19603335",
+    "note": "Photoluminescence. Each preview maps its own 1st–99th percentile to grayscale. Compare patterns across images; intensity scales vary.",
+    "license": "https://creativecommons.org/licenses/by/4.0/",
+    "sourceFile": "Figure_7a_raw_image.raw",
+    "sha256": "c759b05a9b0ee9e5b00e92b533ad5a2aed6f4f1c0e13e605f18d0eafd9165e6e",
+    "paper": "https://doi.org/10.1088/1361-6641/aea702",
+    "displayRangeCounts": [
+      2756.0,
+      64044.0
+    ]
+  },
+  {
+    "src": "daily-assets/pl-7b.webp",
+    "title": "Stacking-fault wafer · Fig. 7b",
+    "credit": "Kaisla Sutinen et al. · CC BY 4.0",
+    "source": "https://zenodo.org/records/19603335",
+    "note": "Photoluminescence. Each preview maps its own 1st–99th percentile to grayscale. Compare patterns across images; intensity scales vary.",
+    "license": "https://creativecommons.org/licenses/by/4.0/",
+    "sourceFile": "Figure_7b_raw_image.raw",
+    "sha256": "818ea60e7720aad2ed8895e63eae66605a8052c20939db344760e2776144e21e",
+    "paper": "https://doi.org/10.1088/1361-6641/aea702",
+    "displayRangeCounts": [
+      1948.07,
+      45848.37
+    ]
+  },
+  {
+    "src": "daily-assets/pl-s1c-1.5min-without-dumping.webp",
+    "title": "Rinse · 1.5 minutes",
+    "credit": "Kaisla Sutinen et al. · CC BY 4.0",
+    "source": "https://zenodo.org/records/19603335",
+    "note": "Photoluminescence. Each preview maps its own 1st–99th percentile to grayscale. Compare patterns across images; intensity scales vary.",
+    "license": "https://creativecommons.org/licenses/by/4.0/",
+    "sourceFile": "Figure_S1c_1.5min_without_dumping_raw_image.raw",
+    "sha256": "c7d8d524b0e75f00026e984b302dd300f459ace8222ec5431a45a26bc1f80f96",
+    "paper": "https://doi.org/10.1088/1361-6641/aea702",
+    "displayRangeCounts": [
+      378.8,
+      19813.4
+    ]
+  },
+  {
+    "src": "daily-assets/pl-s1c-3-dumping-cycles.webp",
+    "title": "Rinse · three dumping cycles",
+    "credit": "Kaisla Sutinen et al. · CC BY 4.0",
+    "source": "https://zenodo.org/records/19603335",
+    "note": "Photoluminescence. Each preview maps its own 1st–99th percentile to grayscale. Compare patterns across images; intensity scales vary.",
+    "license": "https://creativecommons.org/licenses/by/4.0/",
+    "sourceFile": "Figure_S1c_3_dumping_cycles_raw_image.raw",
+    "sha256": "c26ce49a35854bb93dd7f9132dc12ea0e5ef8a26f3d41ea31b2f9111e3a6020e",
+    "paper": "https://doi.org/10.1088/1361-6641/aea702",
+    "displayRangeCounts": [
+      479.7,
+      23458.8
+    ]
+  }
+]

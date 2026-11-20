@@ -1,0 +1,572 @@
+[
+  {
+    "src": "https://raw.githubusercontent.com/Junliangwangdhu/WaferMap/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Single-Type.png",
+    "source": "https://github.com/Junliangwangdhu/WaferMap/blob/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Single-Type.png",
+    "title": "Normal",
+    "credit": "Uzma Batool · Wang et al., MixedWM38",
+    "note": "C1 in the author-hosted reference plate. The full figure shows the pattern labels.",
+    "crop": [
+      563,
+      64,
+      146,
+      146,
+      906,
+      1497
+    ]
+  },
+  {
+    "src": "https://raw.githubusercontent.com/Junliangwangdhu/WaferMap/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Single-Type.png",
+    "source": "https://github.com/Junliangwangdhu/WaferMap/blob/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Single-Type.png",
+    "title": "Center",
+    "credit": "Uzma Batool · Wang et al., MixedWM38",
+    "note": "C2 in the author-hosted reference plate. The full figure shows the pattern labels.",
+    "crop": [
+      563,
+      223,
+      146,
+      146,
+      906,
+      1497
+    ]
+  },
+  {
+    "src": "https://raw.githubusercontent.com/Junliangwangdhu/WaferMap/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Single-Type.png",
+    "source": "https://github.com/Junliangwangdhu/WaferMap/blob/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Single-Type.png",
+    "title": "Donut",
+    "credit": "Uzma Batool · Wang et al., MixedWM38",
+    "note": "C3 in the author-hosted reference plate. The full figure shows the pattern labels.",
+    "crop": [
+      563,
+      382,
+      146,
+      146,
+      906,
+      1497
+    ]
+  },
+  {
+    "src": "https://raw.githubusercontent.com/Junliangwangdhu/WaferMap/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Single-Type.png",
+    "source": "https://github.com/Junliangwangdhu/WaferMap/blob/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Single-Type.png",
+    "title": "Edge-local",
+    "credit": "Uzma Batool · Wang et al., MixedWM38",
+    "note": "C4 in the author-hosted reference plate. The full figure shows the pattern labels.",
+    "crop": [
+      563,
+      541,
+      146,
+      146,
+      906,
+      1497
+    ]
+  },
+  {
+    "src": "https://raw.githubusercontent.com/Junliangwangdhu/WaferMap/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Single-Type.png",
+    "source": "https://github.com/Junliangwangdhu/WaferMap/blob/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Single-Type.png",
+    "title": "Edge-ring",
+    "credit": "Uzma Batool · Wang et al., MixedWM38",
+    "note": "C5 in the author-hosted reference plate. The full figure shows the pattern labels.",
+    "crop": [
+      562,
+      698,
+      146,
+      146,
+      906,
+      1497
+    ]
+  },
+  {
+    "src": "https://raw.githubusercontent.com/Junliangwangdhu/WaferMap/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Single-Type.png",
+    "source": "https://github.com/Junliangwangdhu/WaferMap/blob/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Single-Type.png",
+    "title": "Local",
+    "credit": "Uzma Batool · Wang et al., MixedWM38",
+    "note": "C6 in the author-hosted reference plate. The full figure shows the pattern labels.",
+    "crop": [
+      563,
+      858,
+      146,
+      146,
+      906,
+      1497
+    ]
+  },
+  {
+    "src": "https://raw.githubusercontent.com/Junliangwangdhu/WaferMap/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Single-Type.png",
+    "source": "https://github.com/Junliangwangdhu/WaferMap/blob/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Single-Type.png",
+    "title": "Near-full",
+    "credit": "Uzma Batool · Wang et al., MixedWM38",
+    "note": "C7 in the author-hosted reference plate. The full figure shows the pattern labels.",
+    "crop": [
+      562,
+      1015,
+      146,
+      146,
+      906,
+      1497
+    ]
+  },
+  {
+    "src": "https://raw.githubusercontent.com/Junliangwangdhu/WaferMap/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Single-Type.png",
+    "source": "https://github.com/Junliangwangdhu/WaferMap/blob/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Single-Type.png",
+    "title": "Scratch",
+    "credit": "Uzma Batool · Wang et al., MixedWM38",
+    "note": "C8 in the author-hosted reference plate. The full figure shows the pattern labels.",
+    "crop": [
+      563,
+      1174,
+      146,
+      146,
+      906,
+      1497
+    ]
+  },
+  {
+    "src": "https://raw.githubusercontent.com/Junliangwangdhu/WaferMap/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Single-Type.png",
+    "source": "https://github.com/Junliangwangdhu/WaferMap/blob/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Single-Type.png",
+    "title": "Random",
+    "credit": "Uzma Batool · Wang et al., MixedWM38",
+    "note": "C9 in the author-hosted reference plate. The full figure shows the pattern labels.",
+    "crop": [
+      562,
+      1332,
+      146,
+      146,
+      906,
+      1497
+    ]
+  },
+  {
+    "src": "https://raw.githubusercontent.com/Junliangwangdhu/WaferMap/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Mixed-Type-2.png",
+    "source": "https://github.com/Junliangwangdhu/WaferMap/blob/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Mixed-Type-2.png",
+    "title": "Center + Edge-local",
+    "credit": "Uzma Batool · Wang et al., MixedWM38",
+    "note": "C10 in the author-hosted reference plate. The full figure shows the pattern labels.",
+    "crop": [
+      561,
+      68,
+      146,
+      146,
+      908,
+      2130
+    ]
+  },
+  {
+    "src": "https://raw.githubusercontent.com/Junliangwangdhu/WaferMap/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Mixed-Type-2.png",
+    "source": "https://github.com/Junliangwangdhu/WaferMap/blob/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Mixed-Type-2.png",
+    "title": "Center + Edge-ring",
+    "credit": "Uzma Batool · Wang et al., MixedWM38",
+    "note": "C11 in the author-hosted reference plate. The full figure shows the pattern labels.",
+    "crop": [
+      561,
+      225,
+      146,
+      146,
+      908,
+      2130
+    ]
+  },
+  {
+    "src": "https://raw.githubusercontent.com/Junliangwangdhu/WaferMap/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Mixed-Type-2.png",
+    "source": "https://github.com/Junliangwangdhu/WaferMap/blob/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Mixed-Type-2.png",
+    "title": "Center + Local",
+    "credit": "Uzma Batool · Wang et al., MixedWM38",
+    "note": "C12 in the author-hosted reference plate. The full figure shows the pattern labels.",
+    "crop": [
+      561,
+      383,
+      146,
+      146,
+      908,
+      2130
+    ]
+  },
+  {
+    "src": "https://raw.githubusercontent.com/Junliangwangdhu/WaferMap/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Mixed-Type-2.png",
+    "source": "https://github.com/Junliangwangdhu/WaferMap/blob/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Mixed-Type-2.png",
+    "title": "Center + Scratch",
+    "credit": "Uzma Batool · Wang et al., MixedWM38",
+    "note": "C13 in the author-hosted reference plate. The full figure shows the pattern labels.",
+    "crop": [
+      561,
+      540,
+      146,
+      146,
+      908,
+      2130
+    ]
+  },
+  {
+    "src": "https://raw.githubusercontent.com/Junliangwangdhu/WaferMap/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Mixed-Type-2.png",
+    "source": "https://github.com/Junliangwangdhu/WaferMap/blob/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Mixed-Type-2.png",
+    "title": "Donut + Edge-local",
+    "credit": "Uzma Batool · Wang et al., MixedWM38",
+    "note": "C14 in the author-hosted reference plate. The full figure shows the pattern labels.",
+    "crop": [
+      561,
+      699,
+      146,
+      146,
+      908,
+      2130
+    ]
+  },
+  {
+    "src": "https://raw.githubusercontent.com/Junliangwangdhu/WaferMap/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Mixed-Type-2.png",
+    "source": "https://github.com/Junliangwangdhu/WaferMap/blob/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Mixed-Type-2.png",
+    "title": "Donut + Edge-ring",
+    "credit": "Uzma Batool · Wang et al., MixedWM38",
+    "note": "C15 in the author-hosted reference plate. The full figure shows the pattern labels.",
+    "crop": [
+      561,
+      857,
+      146,
+      146,
+      908,
+      2130
+    ]
+  },
+  {
+    "src": "https://raw.githubusercontent.com/Junliangwangdhu/WaferMap/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Mixed-Type-2.png",
+    "source": "https://github.com/Junliangwangdhu/WaferMap/blob/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Mixed-Type-2.png",
+    "title": "Donut + Local",
+    "credit": "Uzma Batool · Wang et al., MixedWM38",
+    "note": "C16 in the author-hosted reference plate. The full figure shows the pattern labels.",
+    "crop": [
+      561,
+      1016,
+      146,
+      146,
+      908,
+      2130
+    ]
+  },
+  {
+    "src": "https://raw.githubusercontent.com/Junliangwangdhu/WaferMap/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Mixed-Type-2.png",
+    "source": "https://github.com/Junliangwangdhu/WaferMap/blob/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Mixed-Type-2.png",
+    "title": "Donut + Scratch",
+    "credit": "Uzma Batool · Wang et al., MixedWM38",
+    "note": "C17 in the author-hosted reference plate. The full figure shows the pattern labels.",
+    "crop": [
+      561,
+      1174,
+      146,
+      146,
+      908,
+      2130
+    ]
+  },
+  {
+    "src": "https://raw.githubusercontent.com/Junliangwangdhu/WaferMap/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Mixed-Type-2.png",
+    "source": "https://github.com/Junliangwangdhu/WaferMap/blob/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Mixed-Type-2.png",
+    "title": "Edge-local + Local",
+    "credit": "Uzma Batool · Wang et al., MixedWM38",
+    "note": "C18 in the author-hosted reference plate. The full figure shows the pattern labels.",
+    "crop": [
+      561,
+      1332,
+      146,
+      146,
+      908,
+      2130
+    ]
+  },
+  {
+    "src": "https://raw.githubusercontent.com/Junliangwangdhu/WaferMap/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Mixed-Type-2.png",
+    "source": "https://github.com/Junliangwangdhu/WaferMap/blob/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Mixed-Type-2.png",
+    "title": "Edge-local + Scratch",
+    "credit": "Uzma Batool · Wang et al., MixedWM38",
+    "note": "C19 in the author-hosted reference plate. The full figure shows the pattern labels.",
+    "crop": [
+      561,
+      1491,
+      146,
+      146,
+      908,
+      2130
+    ]
+  },
+  {
+    "src": "https://raw.githubusercontent.com/Junliangwangdhu/WaferMap/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Mixed-Type-2.png",
+    "source": "https://github.com/Junliangwangdhu/WaferMap/blob/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Mixed-Type-2.png",
+    "title": "Edge-ring + Local",
+    "credit": "Uzma Batool · Wang et al., MixedWM38",
+    "note": "C20 in the author-hosted reference plate. The full figure shows the pattern labels.",
+    "crop": [
+      561,
+      1650,
+      146,
+      146,
+      908,
+      2130
+    ]
+  },
+  {
+    "src": "https://raw.githubusercontent.com/Junliangwangdhu/WaferMap/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Mixed-Type-2.png",
+    "source": "https://github.com/Junliangwangdhu/WaferMap/blob/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Mixed-Type-2.png",
+    "title": "Edge-ring + Scratch",
+    "credit": "Uzma Batool · Wang et al., MixedWM38",
+    "note": "C21 in the author-hosted reference plate. The full figure shows the pattern labels.",
+    "crop": [
+      561,
+      1809,
+      146,
+      146,
+      908,
+      2130
+    ]
+  },
+  {
+    "src": "https://raw.githubusercontent.com/Junliangwangdhu/WaferMap/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Mixed-Type-2.png",
+    "source": "https://github.com/Junliangwangdhu/WaferMap/blob/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Mixed-Type-2.png",
+    "title": "Local + Scratch",
+    "credit": "Uzma Batool · Wang et al., MixedWM38",
+    "note": "C22 in the author-hosted reference plate. The full figure shows the pattern labels.",
+    "crop": [
+      561,
+      1967,
+      146,
+      146,
+      908,
+      2130
+    ]
+  },
+  {
+    "src": "https://raw.githubusercontent.com/Junliangwangdhu/WaferMap/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Mixed-Type-3.png",
+    "source": "https://github.com/Junliangwangdhu/WaferMap/blob/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Mixed-Type-3.png",
+    "title": "Center + Edge-local + Local",
+    "credit": "Uzma Batool · Wang et al., MixedWM38",
+    "note": "C23 in the author-hosted reference plate. The full figure shows the pattern labels.",
+    "crop": [
+      559,
+      65,
+      146,
+      146,
+      906,
+      1978
+    ]
+  },
+  {
+    "src": "https://raw.githubusercontent.com/Junliangwangdhu/WaferMap/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Mixed-Type-3.png",
+    "source": "https://github.com/Junliangwangdhu/WaferMap/blob/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Mixed-Type-3.png",
+    "title": "Center + Edge-local + Scratch",
+    "credit": "Uzma Batool · Wang et al., MixedWM38",
+    "note": "C24 in the author-hosted reference plate. The full figure shows the pattern labels.",
+    "crop": [
+      559,
+      223,
+      146,
+      146,
+      906,
+      1978
+    ]
+  },
+  {
+    "src": "https://raw.githubusercontent.com/Junliangwangdhu/WaferMap/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Mixed-Type-3.png",
+    "source": "https://github.com/Junliangwangdhu/WaferMap/blob/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Mixed-Type-3.png",
+    "title": "Center + Edge-ring + Local",
+    "credit": "Uzma Batool · Wang et al., MixedWM38",
+    "note": "C25 in the author-hosted reference plate. The full figure shows the pattern labels.",
+    "crop": [
+      559,
+      382,
+      146,
+      146,
+      906,
+      1978
+    ]
+  },
+  {
+    "src": "https://raw.githubusercontent.com/Junliangwangdhu/WaferMap/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Mixed-Type-3.png",
+    "source": "https://github.com/Junliangwangdhu/WaferMap/blob/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Mixed-Type-3.png",
+    "title": "Center + Edge-ring + Scratch",
+    "credit": "Uzma Batool · Wang et al., MixedWM38",
+    "note": "C26 in the author-hosted reference plate. The full figure shows the pattern labels.",
+    "crop": [
+      559,
+      540,
+      146,
+      146,
+      906,
+      1978
+    ]
+  },
+  {
+    "src": "https://raw.githubusercontent.com/Junliangwangdhu/WaferMap/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Mixed-Type-3.png",
+    "source": "https://github.com/Junliangwangdhu/WaferMap/blob/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Mixed-Type-3.png",
+    "title": "Center + Local + Scratch",
+    "credit": "Uzma Batool · Wang et al., MixedWM38",
+    "note": "C27 in the author-hosted reference plate. The full figure shows the pattern labels.",
+    "crop": [
+      559,
+      700,
+      146,
+      146,
+      906,
+      1978
+    ]
+  },
+  {
+    "src": "https://raw.githubusercontent.com/Junliangwangdhu/WaferMap/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Mixed-Type-3.png",
+    "source": "https://github.com/Junliangwangdhu/WaferMap/blob/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Mixed-Type-3.png",
+    "title": "Donut + Edge-local + Local",
+    "credit": "Uzma Batool · Wang et al., MixedWM38",
+    "note": "C28 in the author-hosted reference plate. The full figure shows the pattern labels.",
+    "crop": [
+      559,
+      858,
+      146,
+      146,
+      906,
+      1978
+    ]
+  },
+  {
+    "src": "https://raw.githubusercontent.com/Junliangwangdhu/WaferMap/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Mixed-Type-3.png",
+    "source": "https://github.com/Junliangwangdhu/WaferMap/blob/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Mixed-Type-3.png",
+    "title": "Donut + Edge-local + Scratch",
+    "credit": "Uzma Batool · Wang et al., MixedWM38",
+    "note": "C29 in the author-hosted reference plate. The full figure shows the pattern labels.",
+    "crop": [
+      559,
+      1016,
+      146,
+      146,
+      906,
+      1978
+    ]
+  },
+  {
+    "src": "https://raw.githubusercontent.com/Junliangwangdhu/WaferMap/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Mixed-Type-3.png",
+    "source": "https://github.com/Junliangwangdhu/WaferMap/blob/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Mixed-Type-3.png",
+    "title": "Donut + Edge-ring + Local",
+    "credit": "Uzma Batool · Wang et al., MixedWM38",
+    "note": "C30 in the author-hosted reference plate. The full figure shows the pattern labels.",
+    "crop": [
+      559,
+      1176,
+      146,
+      146,
+      906,
+      1978
+    ]
+  },
+  {
+    "src": "https://raw.githubusercontent.com/Junliangwangdhu/WaferMap/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Mixed-Type-3.png",
+    "source": "https://github.com/Junliangwangdhu/WaferMap/blob/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Mixed-Type-3.png",
+    "title": "Donut + Edge-ring + Scratch",
+    "credit": "Uzma Batool · Wang et al., MixedWM38",
+    "note": "C31 in the author-hosted reference plate. The full figure shows the pattern labels.",
+    "crop": [
+      559,
+      1333,
+      146,
+      146,
+      906,
+      1978
+    ]
+  },
+  {
+    "src": "https://raw.githubusercontent.com/Junliangwangdhu/WaferMap/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Mixed-Type-3.png",
+    "source": "https://github.com/Junliangwangdhu/WaferMap/blob/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Mixed-Type-3.png",
+    "title": "Donut + Local + Scratch",
+    "credit": "Uzma Batool · Wang et al., MixedWM38",
+    "note": "C32 in the author-hosted reference plate. The full figure shows the pattern labels.",
+    "crop": [
+      559,
+      1492,
+      146,
+      146,
+      906,
+      1978
+    ]
+  },
+  {
+    "src": "https://raw.githubusercontent.com/Junliangwangdhu/WaferMap/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Mixed-Type-3.png",
+    "source": "https://github.com/Junliangwangdhu/WaferMap/blob/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Mixed-Type-3.png",
+    "title": "Edge-local + Local + Scratch",
+    "credit": "Uzma Batool · Wang et al., MixedWM38",
+    "note": "C33 in the author-hosted reference plate. The full figure shows the pattern labels.",
+    "crop": [
+      559,
+      1651,
+      146,
+      146,
+      906,
+      1978
+    ]
+  },
+  {
+    "src": "https://raw.githubusercontent.com/Junliangwangdhu/WaferMap/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Mixed-Type-3.png",
+    "source": "https://github.com/Junliangwangdhu/WaferMap/blob/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Mixed-Type-3.png",
+    "title": "Edge-ring + Local + Scratch",
+    "credit": "Uzma Batool · Wang et al., MixedWM38",
+    "note": "C34 in the author-hosted reference plate. The full figure shows the pattern labels.",
+    "crop": [
+      559,
+      1810,
+      146,
+      146,
+      906,
+      1978
+    ]
+  },
+  {
+    "src": "https://raw.githubusercontent.com/Junliangwangdhu/WaferMap/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Mixed-Type-4.png",
+    "source": "https://github.com/Junliangwangdhu/WaferMap/blob/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Mixed-Type-4.png",
+    "title": "Center + Local + Edge-local + Scratch",
+    "credit": "Uzma Batool · Wang et al., MixedWM38",
+    "note": "C35 in the author-hosted reference plate. The full figure shows the pattern labels.",
+    "crop": [
+      562,
+      65,
+      146,
+      146,
+      908,
+      704
+    ]
+  },
+  {
+    "src": "https://raw.githubusercontent.com/Junliangwangdhu/WaferMap/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Mixed-Type-4.png",
+    "source": "https://github.com/Junliangwangdhu/WaferMap/blob/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Mixed-Type-4.png",
+    "title": "Center + Local + Edge-ring + Scratch",
+    "credit": "Uzma Batool · Wang et al., MixedWM38",
+    "note": "C36 in the author-hosted reference plate. The full figure shows the pattern labels.",
+    "crop": [
+      562,
+      224,
+      146,
+      146,
+      908,
+      704
+    ]
+  },
+  {
+    "src": "https://raw.githubusercontent.com/Junliangwangdhu/WaferMap/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Mixed-Type-4.png",
+    "source": "https://github.com/Junliangwangdhu/WaferMap/blob/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Mixed-Type-4.png",
+    "title": "Donut + Local + Edge-local + Scratch",
+    "credit": "Uzma Batool · Wang et al., MixedWM38",
+    "note": "C37 in the author-hosted reference plate. The full figure shows the pattern labels.",
+    "crop": [
+      562,
+      382,
+      146,
+      146,
+      908,
+      704
+    ]
+  },
+  {
+    "src": "https://raw.githubusercontent.com/Junliangwangdhu/WaferMap/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Mixed-Type-4.png",
+    "source": "https://github.com/Junliangwangdhu/WaferMap/blob/10e65ca04cf105908cb87abec53c3083333b1bc9/Dataset%20Figure/Mixed-Type-4.png",
+    "title": "Donut + Local + Edge-ring + Scratch",
+    "credit": "Uzma Batool · Wang et al., MixedWM38",
+    "note": "C38 in the author-hosted reference plate. The full figure shows the pattern labels.",
+    "crop": [
+      562,
+      540,
+      146,
+      146,
+      908,
+      704
+    ]
+  }
+]
