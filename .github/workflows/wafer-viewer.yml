@@ -1,0 +1,42 @@
+name: Wafer image explorer
+on:
+  pull_request:
+    paths:
+      - 'viewer/**'
+      - 'data_sources/samples/**'
+      - '.github/workflows/wafer-viewer.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 viewer/build.py "$RUNNER_TEMP/wafer-viewer"
+      - name: Exercise filters, overlay and mobile layout in Chrome
+        run: |
+          python3 -m venv "$RUNNER_TEMP/viewer-test"
+          "$RUNNER_TEMP/viewer-test/bin/pip" install selenium==4.29.0
+          "$RUNNER_TEMP/viewer-test/bin/python" viewer/check_ui.py "$RUNNER_TEMP/wafer-viewer"
+      - if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ${{ runner.temp }}/wafer-viewer
+
+  publish:
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - name: Publish viewer
+        id: deploy
+        uses: actions/deploy-pages@v4

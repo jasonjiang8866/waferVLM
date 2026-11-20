@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>WaferVLM · Image explorer</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f3f2ec;color:#192927;font:16px/1.45 system-ui,sans-serif}header{background:#142e2b;color:white;padding:16px max(5vw,20px);display:flex;justify-content:space-between;align-items:center}header b{font-size:19px}header a{color:#a9d6c5}main{max-width:1220px;margin:auto;padding:30px 4vw}h1{font:clamp(36px,5vw,60px)/1.1 Georgia,serif;margin:0 0 20px}h2{font-size:20px;margin:0}a{color:#146451}button,select,input{font:inherit}select,button{border:1px solid #a4ada4;border-radius:5px;background:#fffdf6;padding:7px 11px;color:inherit;cursor:pointer}button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid #dc783c;outline-offset:2px}button[aria-pressed=true]{background:#175849;color:white;border-color:#175849}.filters,.tools,.rail{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.filters{border-bottom:1px solid #acb3a8;padding-bottom:16px}.filters label{display:flex;gap:6px;align-items:center;font-size:14px}.workspace{display:grid;grid-template-columns:215px minmax(0,1fr);gap:24px;margin:22px 0}aside h2{margin-bottom:10px}.thumbs{max-height:560px;overflow:auto;display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:4px}.thumbs button{padding:4px;text-align:left;font-size:12px}.thumbs img{display:block;width:100%;aspect-ratio:1;object-fit:cover;border-radius:2px;margin-bottom:3px}.tools{padding:10px 0}.tools button{font-size:14px}.tools label{display:inline-flex;align-items:center;gap:5px;font-size:13px}input[type=range]{width:90px;accent-color:#175849}.stage{border-radius:7px;background:#12201f;padding:16px;display:grid;place-items:center}.frame{position:relative;max-width:100%;line-height:0}.frame img{max-width:100%;max-height:54vh;width:auto;height:auto}.tint{position:absolute;inset:0;background:#ff874b;mask-size:100% 100%;mask-repeat:no-repeat;mask-mode:luminance;pointer-events:none}.meta{font:13px/1.6 ui-monospace,monospace;overflow-wrap:anywhere}.credit{font-size:14px;color:#46534c}.count{margin-left:auto}.rail{justify-content:space-between}[hidden]{display:none!important}@media(max-width:720px){main{padding:20px 14px}.workspace{display:flex;flex-direction:column-reverse;gap:14px}.thumbs{display:flex;overflow:auto}.thumbs button{min-width:82px;width:82px}.count{margin-left:0}.stage{padding:8px}.frame img{max-height:46vh}}
+</style>
+<header><b>WaferVLM</b><a href="https://github.com/jasonjiang8866/waferVLM">Repository ↗</a></header>
+<main><h1>Wafer image explorer</h1>
+<div class="filters"><label>Collection <select id="dataset"><option value="all">All samples</option><option value="carinthia-s">Carinthia-S</option><option value="silicon-wafer-pl">Silicon wafer PL / SEM</option></select></label>
+<label>Class <select id="classes"><option value="">All classes</option></select></label><span class="count" id="count" aria-live="polite"></span></div>
+<div class="workspace"><aside><h2>Specimens</h2><div id="thumbs" class="thumbs"></div></aside>
+<section><div class="rail"><h2 id="name"></h2><span id="dim" class="meta"></span></div>
+<div class="tools" aria-label="Image display"><button data-mode="original">Original</button><button data-mode="mask">Mask</button><button data-mode="overlay">Overlay</button><label id="opacityLabel">Opacity <input id="opacity" type="range" min="0" max="100" value="65"></label></div>
+<div class="stage"><div class="frame"><img id="photo" alt=""><div id="tint" class="tint" hidden></div></div></div>
+<p id="identifier" class="meta"></p><p class="credit"><span id="credit"></span> · <a id="source">Source record</a> · <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a></p></section></div>
+</main><script id="data" type="application/json">__SAMPLE_DATA__</script>
+<script>
+const samples=JSON.parse(document.querySelector('#data').textContent);
+const el=id=>document.getElementById(id);
+const modes=[...document.querySelectorAll('[data-mode]')];
+let selected, mode='original';
+for(const n of [...new Set(samples.map(x=>x.label).filter(Boolean))].sort((a,b)=>a-b)) el('classes').add(new Option('Class '+n,n));
+function inspect(row){
+ selected=row;
+ if(!row.mask) mode='original';
+ const paired=Boolean(row.mask);
+ el('name').textContent=paired?'Carinthia-S · Class '+row.label:'Silicon wafer · SEM cross-section';
+ el('identifier').textContent='Source ID  '+row.id;
+ el('source').href=paired?'https://doi.org/10.5281/zenodo.16895427':'https://doi.org/10.5281/zenodo.19603335';
+ el('credit').textContent=paired?'Corinna Kofler and Vahidin Hasić, Carinthia-S (2025)':'Sutinen, Golovleva, Liu, Patana, Timperi, Mustonen, Vähänissi and Savin (2026)';
+ el('tint').hidden=true;
+ el('photo').alt=el('name').textContent+' — '+mode;
+ el('dim').textContent='';
+ function ready(){el('dim').textContent=el('photo').naturalWidth+' × '+el('photo').naturalHeight;el('tint').hidden=mode!=='overlay'}
+ el('photo').onload=ready;
+ el('photo').src=mode==='mask'?row.mask:row.image;
+ if(el('photo').complete && el('photo').naturalWidth)ready();
+ el('tint').style.maskImage=paired?'url("'+row.mask+'")':'none';
+ el('tint').style.opacity=el('opacity').value/100;
+ el('opacityLabel').hidden=mode!=='overlay';
+ for(const b of modes){b.disabled=!paired&&b.dataset.mode!=='original';b.setAttribute('aria-pressed',b.dataset.mode===mode)}
+ for(const b of el('thumbs').children)b.setAttribute('aria-pressed',b.dataset.id===row.id);
+}
+function browse(){
+ const dataset=el('dataset').value;
+ const single=dataset==='silicon-wafer-pl';
+ el('classes').disabled=single;
+ if(single)el('classes').value='';
+ const rows=samples.filter(s=>(dataset==='all'||s.dataset===dataset)&&(!el('classes').value||String(s.label)===el('classes').value));
+ el('count').textContent=rows.length+' of '+samples.length+' preview specimens';
+ el('thumbs').replaceChildren();
+ for(const row of rows){const b=document.createElement('button'),img=document.createElement('img');
+ b.dataset.id=row.id;b.title=row.id;b.setAttribute('aria-label',(row.label?'Class '+row.label:'SEM cross-section')+' specimen '+row.id);
+ img.src=row.image;img.alt='';img.loading='lazy';b.append(img,row.label?'C'+row.label+' · '+row.id.slice(0,4):'SEM section');
+ b.onclick=()=>inspect(row);el('thumbs').append(b)}
+ inspect(rows.includes(selected)?selected:rows[0]);
+}
+el('dataset').onchange=browse;el('classes').onchange=browse;el('opacity').oninput=()=>el('tint').style.opacity=el('opacity').value/100;
+for(const b of modes)b.onclick=()=>{mode=b.dataset.mode;inspect(selected)};
+browse();
+</script></html>
