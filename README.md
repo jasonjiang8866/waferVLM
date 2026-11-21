@@ -2,7 +2,7 @@
 
 **Turn wafer test maps into defect-pattern labels with compact vision and vision-language models.**
 
-[Open Wafer Daily](https://jasonjiang8866.github.io/waferVLM/) for one image from every collection each day.
+[Wafer Daily](https://jasonjiang8866.github.io/waferVLM/) shows one image from each dataset every day. [Microscope](https://jasonjiang8866.github.io/waferVLM/explorer.html) lets you inspect SEM samples and overlay their segmentation masks where available.
 
 **Data collection / 数据收集:** [Wafer and semiconductor image sources](data_sources/README.md)
 collects licensed SEM images/masks, photoluminescence and EBSD data alongside
