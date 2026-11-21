@@ -246,11 +246,11 @@ def work():
         RESULT = result
 
 
-def main():
+def main(workload=None):
     global TOKEN
     TOKEN = os.environ.pop('WAFER_RESULT_TOKEN')
     server = ThreadingHTTPServer(('0.0.0.0', 8888), Handler)
-    threading.Thread(target=work, daemon=True).start()
+    threading.Thread(target=workload or work, daemon=True).start()
     server.serve_forever()  # controller and independent cleanup remove billable compute
 
 

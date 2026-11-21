@@ -77,6 +77,7 @@ jobs:
       - run: uv sync --frozen
       - name: Verify first-pass Qwen validation predictions and compute paired errors
         run: python analysis/qwen_validation_errors.py
+      - run: uv run --frozen python -m unittest discover -s analysis -p test_qwen_q2.py -v
       - run: uv run --frozen python -m unittest discover -s tests -p test_final_holdout.py -v
       - run: uv run --frozen python -m unittest discover -s tests -p test_protocol.py -v
       - run: uv run --frozen python -m unittest discover -s tests -p test_showcase.py -v
