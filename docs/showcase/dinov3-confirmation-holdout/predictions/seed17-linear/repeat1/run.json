@@ -1,0 +1,22 @@
+{
+  "base_weights_sha256": "4610ad75edef83e75afdebf162d148dc628045ea6cbb83d67d4708c709c4f91d",
+  "batch_size": 8,
+  "controller_sha": "303dcc779e5b3f7947148251d5b0815d006624e7",
+  "cuda": "12.8",
+  "elapsed_seconds": 2.1195830539800227,
+  "endpoint": "seed17-linear",
+  "gpu": "NVIDIA GeForce RTX 4090",
+  "image": "ghcr.io/jasonjiang8866/wafervlm@sha256:d64ef98a018ce25d41add6a8c3a65225ab83f22addb16ab47959e0c5b01ab329",
+  "image_source_sha": "c255bec677ba4b525e4997af60d9020592e15a46",
+  "manifest_sha256": "f08050ef4fcaca3b9c35ad29905a63957a375af7a024b69e0281968d06f4564f",
+  "mean_forward_seconds": 0.004496461987130444,
+  "mean_seconds": 0.014309376047143864,
+  "peak_allocated_bytes": 128241152,
+  "phase": "holdout",
+  "pid": 200,
+  "plan_sha256": "dd063d8add284fb7890e983b5090b0f697042e92c8a8cc09e0ae26e75518de67",
+  "precision": "bf16_autocast_fp32_parameters",
+  "timing": "synchronized verification/decode/preprocess/transfer/forward; excludes model loading; no warmup",
+  "torch": "2.10.0+cu128",
+  "weight_sha256": "ffd76f22ac6838095cd6673a1c018369976d4c58d54ad66a1058e3928a8359f2"
+}
