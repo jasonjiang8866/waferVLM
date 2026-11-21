@@ -99,6 +99,10 @@ The prespecified **seed-17 LoRA versus published Qwen seed-17 step-250** compari
 
 [Holdout findings, limitations and cleanup](docs/dinov3-holdout-results.md) · [All metrics, intervals, time and memory](docs/showcase/dinov3-confirmation-holdout/README.md) · [148 paired rows](docs/showcase/dinov3-confirmation-holdout/paired-per-image.csv) · [888 predictions and eight-class probabilities](docs/showcase/dinov3-confirmation-holdout/predictions)
 
+### How many mistakes reach an engineer with a 10% review budget?
+
+On the 148 previously scored holdout maps, sending the 14 lowest-confidence predictions for review surfaced **12/34, 7/30 and 10/35** LoRA errors for seeds 17, 42 and 123. Randomly reviewing 14 maps would capture 9.46% of errors in expectation. The confidence queues captured 23–35%, but only **2/10, 0/9 and 2/11** true `loc` misses. Human review outcomes have yet to be measured. [Retrospective results, all six models and actual wafer examples](docs/showcase/dino-review-queue/README.md)
+
 ## Where does DINOv3 get confused on the development set?
 
 Read **columns as true labels** and **rows as predicted labels**. Each column contains 20 maps; each non-empty cell shows a real input, the complete count and the percentage of its true class. The selected LoRA model gets **139/160** correct. Its weakest class is `loc` (**13/20 correct**), followed by `edge-loc` (**15/20**).
