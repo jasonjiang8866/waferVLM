@@ -60,7 +60,14 @@ def main():
         with patch("wafervlm.experiment.load_model", side_effect=tiny_loader):
             train(root / "data", root / "resumed", steps=4, accumulation=2, rank=2,
                   device="cpu", resume_from=root / "run/checkpoints/checkpoint-2")
-            train(root / "data", root / "full", steps=4, accumulation=2, rank=2, device="cpu")
+            train(root / "data", root / "full", steps=4, accumulation=2, rank=2, device="cpu", record_epoch=True)
+            order = json.loads((root / "full/epoch-order.json").read_text())
+            alternate = order[1:] + order[:1]
+            train(root / "data", root / "paired", steps=4, accumulation=2, rank=2, device="cpu",
+                  epoch_order=(order, alternate))
+            assert json.loads((root / "paired/epoch-order.json").read_text()) == alternate
+            initial = lambda arm: json.loads((root / arm / "training.json").read_text())["initial_trainable_sha256"]
+            assert initial("full") == initial("paired")
         resumed = json.loads((root / "resumed/training.json").read_text())
         assert (resumed["start_step"], resumed["end_step"], resumed["executed_steps"]) == (2, 4, 2)
         from safetensors.torch import load_file
