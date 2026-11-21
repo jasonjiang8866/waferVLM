@@ -67,6 +67,42 @@ class PairedReportTests(unittest.TestCase):
                     self.assertEqual(changed,report['passes'][ep['name']][repeat-1]['label_changes'])
         self.assertEqual(len(pids),18)
 
+    def test_published_holdout_has_six_frozen_models_and_888_paired_rows(self):
+        import json
+        from runpod.dinov3_study import names, verify_predictions, plan
+        from runpod.vlm_holdout import bootstrap
+        from wafervlm.confirmation import verify_tree
+        from wafervlm.core import sha256_file
+        root=ROOT/'docs/showcase/dinov3-confirmation-holdout'
+        report=json.loads((root/'analysis.json').read_text())
+        frozen=json.loads((ROOT/'docs/evidence/dinov3-six-endpoints.json').read_text())
+        self.assertEqual(json.loads((root/'checksums.json').read_text()),
+            {str(p.relative_to(root)):sha256_file(p) for p in root.rglob('*') if p.is_file() and p!=root/'checksums.json'})
+        self.assertEqual(report['validation_passes'],0)
+        self.assertEqual(report['holdout_predictions'],888)
+        self.assertEqual(report['endpoints'],frozen['endpoints'])
+        reference=reference_for('holdout')
+        self.assertEqual((len(reference),len({r['lot_group'] for r in reference})),(148,143))
+        expected={root/'predictions'/n/'repeat1'/'predictions.jsonl' for n in names()}
+        self.assertEqual(set((root/'predictions').rglob('predictions.jsonl')),expected)
+        predictions={};pids=set();count=0
+        qwen=read_jsonl(ROOT/'docs/evidence/qwen-holdout/seed17-step250/predictions.jsonl')
+        for ep in frozen['endpoints']:
+            n=ep['name'];folder=root/'predictions'/n/'repeat1'
+            verify_tree(folder)
+            rows=read_jsonl(folder/'predictions.jsonl');predictions[n]=rows;count+=len(rows)
+            self.assertEqual(verify_predictions(rows,reference),report['models'][n])
+            run=json.loads((folder/'run.json').read_text())
+            self.assertEqual(run['weight_sha256'],ep['weight_sha256'])
+            self.assertEqual(run['manifest_sha256'],plan()['holdout_manifest_sha256'])
+            self.assertEqual(run['controller_sha'],report['execution']['controller_sha'])
+            self.assertNotIn(run['pid'],pids);pids.add(run['pid'])
+            self.assertEqual(paired(qwen[::-1],rows[::-1],reference),report['qwen_paired'][n])
+        self.assertEqual((len(pids),count),(6,888))
+        for seed in (17,42,123):
+            self.assertEqual(bootstrap(reference,predictions[f'seed{seed}-linear'],predictions[f'seed{seed}-lora']),report['lot_group_percentile_95'][str(seed)])
+        self.assertEqual(bootstrap(reference,qwen,predictions['seed17-lora']),report['seed17_lora_minus_qwen']['percentile_95'])
+
 
 if __name__=='__main__':
     unittest.main()

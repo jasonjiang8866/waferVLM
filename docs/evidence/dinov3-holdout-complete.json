@@ -1,0 +1,131 @@
+{
+  "run_id": "44843362544",
+  "controller_sha": "303dcc779e5b3f7947148251d5b0815d006624e7",
+  "conclusion": "success",
+  "artifact_id": 14682595469,
+  "zip_sha256": "c70e48ab4e558d038ab8b39c9bdf79c3291e9e3dedf47e15f289f634efaf5402",
+  "cleanup": {
+    "status": "verified_absent",
+    "run_id": "44843362544",
+    "checks": 3,
+    "persistent_volumes_created": false,
+    "checked_epoch": 1795220963.448825,
+    "elapsed_billing_bound_s": 315.89841198921204,
+    "estimated_usd": 0.0788805856127824,
+    "cumulative_estimated_usd": 1.6704165884465925,
+    "cumulative_runtime_bound_s": 5608.455981731415,
+    "within_cap": true
+  },
+  "independent": {
+    "run_id": "44844163133",
+    "artifact_id": 14682995203,
+    "zip_sha256": "07a9544a63737ee6d90186458d028c86468deea7dcc41506bca7a2f4bffe15bf",
+    "cleanup": {
+      "status": "verified_absent",
+      "run_id": "44843362544",
+      "checks": 12,
+      "persistent_volumes_created": false,
+      "checked_epoch": 1795221097.5379121
+    }
+  },
+  "inner_sha256": "9e9a0f3f3f0645d97235ab6c07d0b9f4e8fcc9e63d2df03c0ee9f4696d2ebc8a",
+  "allocation": {
+    "pod_id": "q3r326bhxixfmp",
+    "gpu": "NVIDIA GeForce RTX 4090",
+    "data_center": "US-NC-1",
+    "hourly_usd": 0.89
+  },
+  "validation_passes_this_run": 0,
+  "holdout_predictions_this_run": 888,
+  "cumulative_validation_passes": 18,
+  "cumulative_validation_predictions": 2880,
+  "cumulative_holdout_predictions": 888,
+  "freeze_commit_sha": "aa33e8b949e396892764a1a7503aaadc09a95fc4",
+  "freeze_sha256": "1b676ad216cc437f68718ca1e592628d2b4826e97f767c4daa8ff4ab11844202",
+  "launch_spec": {
+    "run_id": "44843362544",
+    "controller_sha": "303dcc779e5b3f7947148251d5b0815d006624e7",
+    "image_source_sha": "c255bec677ba4b525e4997af60d9020592e15a46",
+    "image": "ghcr.io/jasonjiang8866/wafervlm@sha256:d64ef98a018ce25d41add6a8c3a65225ab83f22addb16ab47959e0c5b01ab329",
+    "phase": "holdout",
+    "gpu": "NVIDIA GeForce RTX 4090",
+    "regions": [
+      "EU-RO-1",
+      "US-IL-1",
+      "US-NC-1"
+    ],
+    "cost": {
+      "gpu_hourly_usd": 0.89,
+      "disk_hourly_usd": 0.008928571428571428,
+      "work_seconds": 2700,
+      "cleanup_seconds": 600,
+      "maximum_estimated_usd": 0.8240178571428571,
+      "approved_total_usd": 10,
+      "approved_total_seconds": 30000
+    },
+    "ledger": {
+      "usd": 1.5915360028338101,
+      "seconds": 5292.557569742203,
+      "remaining_usd": 8.40846399716619,
+      "remaining_seconds": 24707.442430257797,
+      "basis": "intent-through-verified-absence estimate; not provider invoice",
+      "attempts": [
+        "44526240351",
+        "44528940006",
+        "44530840974",
+        "44533432837",
+        "44535674111",
+        "44537796019",
+        "44543065761",
+        "44545881009",
+        "44548327386",
+        "44553165505",
+        "44555689478"
+      ]
+    },
+    "plan_sha256": "dd063d8add284fb7890e983b5090b0f697042e92c8a8cc09e0ae26e75518de67",
+    "overlay_sha256": "a98ad8967348a074872a7b759b322d930e3b03604758517212678c996eae1cdc",
+    "input_artifact": {
+      "artifact_id": 14538331200,
+      "zip_sha256": "5435fbbf51a77e0e667966539d77316174a020cafc54e607800b42f582b4eef2",
+      "inner_sha256": "69151af34def08224af0d6d12b00105937440d94812a6e19ff39a05157e36b00"
+    },
+    "account_checks": {
+      "reserve_usd": 1.8240178571428571,
+      "monthly_budget_usd": 500,
+      "balance_sufficient": true,
+      "month_headroom_sufficient": true,
+      "month_basis": "UTC",
+      "checked_utc": "2026-11-21T00:24:06.927418+00:00",
+      "scope": "reported charges; billing may lag; storage/request fees additional"
+    },
+    "frozen_sha256": "1b676ad216cc437f68718ca1e592628d2b4826e97f767c4daa8ff4ab11844202",
+    "selection_reason": "4090 first; 5090 only if 4090 capacity/quote fails"
+  },
+  "startup_diagnostics": [
+    {
+      "runtime": {
+        "status": "RUNNING",
+        "runtime_reported": false
+      },
+      "root_cause_verified": false,
+      "last_proxy_error": {
+        "error_type": "RemoteHTTPError",
+        "http_status": 404,
+        "categories": [
+          "unclassified"
+        ],
+        "stage": "worker_startup"
+      },
+      "logs": {
+        "status": "time_limit",
+        "frames": 121,
+        "categories": {
+          "system:lines": 121,
+          "system:image_pull": 117
+        }
+      },
+      "elapsed_seconds": 64.01541686058044
+    }
+  ]
+}
