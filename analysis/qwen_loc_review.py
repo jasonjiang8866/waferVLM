@@ -52,21 +52,28 @@ def make_plate(cases, dataset, output):
     sheet.save(output)
 
 
+def area_counts(dataset, ref):
+    passing, failing, background = (0, 90, 180), (255, 220, 0), (0, 0, 0)
+    wafer = read_image(dataset, ref)
+    counts = {color: count for count, color in wafer.getcolors(256 * 256)}
+    if counts.keys() - {passing, failing, background}:
+        raise ValueError(f"Unexpected palette for {ref['id']}")
+    yellow = counts.get(failing, 0)
+    valid = yellow + counts.get(passing, 0)
+    if valid == 0:
+        raise ValueError(f"Empty wafer for {ref['id']}")
+    return yellow, valid
+
+
 def write_coverage(maps, endpoints, dataset, output):
     reference = reference_rows()
-    passing, failing, background = (0, 90, 180), (255, 220, 0), (0, 0, 0)
     with output.open("w", newline="", encoding="utf-8") as stream:
         writer = csv.writer(stream, lineterminator="\n")
         writer.writerow(["id", "correct_of_six", "yellow_pixels", "wafer_pixels", "yellow_fraction"])
         for row in maps:
             if row["label"] != "loc":
                 continue
-            wafer = read_image(dataset, reference[row["id"]])
-            counts = {color: count for count, color in wafer.getcolors(256 * 256)}
-            if counts.keys() - {passing, failing, background}:
-                raise ValueError(f"Unexpected palette for {row['id']}")
-            yellow = counts.get(failing, 0)
-            valid = yellow + counts.get(passing, 0)
+            yellow, valid = area_counts(dataset, reference[row["id"]])
             correct = sum(row[e] == "loc" for e in endpoints)
             writer.writerow([row["id"], correct, yellow, valid, f"{yellow / valid:.6f}"])
 

@@ -1,0 +1,66 @@
+{
+  "train_manifest_sha256": "6e0a80abff694c4f2581fa897edf3b3d778b292e4c45b7aea40200a01805149f",
+  "training_maps": 790,
+  "rule": "nearest-rank quartiles, upper endpoint inclusive",
+  "cut_fractions": [
+    "6319/51152",
+    "10583/51592",
+    "19831/51592"
+  ],
+  "train_bin_sizes": [
+    198,
+    197,
+    198,
+    197
+  ],
+  "training_maps_per_class_by_bin": {
+    "center": [
+      28,
+      16,
+      54,
+      2
+    ],
+    "donut": [
+      1,
+      24,
+      59,
+      16
+    ],
+    "edge-loc": [
+      35,
+      32,
+      29,
+      4
+    ],
+    "edge-ring": [
+      24,
+      63,
+      13,
+      0
+    ],
+    "loc": [
+      41,
+      37,
+      20,
+      2
+    ],
+    "near-full": [
+      0,
+      0,
+      0,
+      90
+    ],
+    "random": [
+      0,
+      0,
+      18,
+      82
+    ],
+    "scratch": [
+      69,
+      25,
+      5,
+      1
+    ]
+  }
+}

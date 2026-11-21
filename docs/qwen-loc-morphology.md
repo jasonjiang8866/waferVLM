@@ -35,9 +35,9 @@ After reviewing the ten images, we measured the fraction of yellow pixels among 
 
 The [per-map area counts](showcase/qwen-loc-review/coverage.csv) include the mixed cases. This association was identified on development data after inspecting errors. With three unanimous hits and overlap in the mixed group, these numbers support neither a production cutoff nor a causal claim about the model.
 
-## Next Qwen experiment
+## Follow-up on all validation classes
 
-Before changing the prompt or retraining, check whether yellow area predicts errors specifically for `loc` or reflects a broader class imbalance. Define area bins on the training split before computing the comparison. Score all 160 validation maps with the six existing prediction files. Report the number of examples in each bin, true `loc` recall, false `loc` predictions by source class, and where missed `loc` maps go. Keep per-checkpoint results and flag empty or small bins. This requires no new model inference. The 148-map unseen-lot evaluation stays outside this development comparison.
+The [training-area quartile analysis](qwen-validation-area.md) measures both directions of `loc` confusion across all 160 validation maps. It includes training support, per-checkpoint counts and a candidate sampling experiment.
 
 ## Reproduce
 
