@@ -2,6 +2,8 @@
 
 **Turn wafer test maps into defect-pattern labels with compact vision and vision-language models.**
 
+[Wafer Daily](https://jasonjiang8866.github.io/waferVLM/) shows one image from each dataset every day. [Microscope](https://jasonjiang8866.github.io/waferVLM/explorer.html) lets you inspect SEM samples and overlay their segmentation masks where available.
+
 **Data collection / 数据收集:** [Wafer and semiconductor image sources](data_sources/README.md)
 collects licensed SEM images/masks, photoluminescence and EBSD data alongside
 wafer-map sources, with small attributed samples, reproducible downloads and a
@@ -57,7 +59,7 @@ The [2026-11-15 RTX 5090 run](https://github.com/jasonjiang8866/waferVLM/actions
 | DINOv3 · frozen backbone + linear head | 134/160 | 83.750% | 0.836449 |
 | **DINOv3 · Q/V LoRA + linear head** | **139/160** | **86.875%** | **0.867173** |
 
-LoRA adds **3.125 percentage points of accuracy / 0.030724 macro-F1** over the DINOv3 linear baseline. Against the recorded Qwen predictions it adds **8.750 points / 0.093180 macro-F1**. These are **single-seed, validation-selected development results**, not final test results or a compute-matched architecture comparison. The original primary table is preserved. [Three-seed development confirmation](docs/dinov3-confirmation-results.md) is now complete; DINO holdout evaluation remains pending.
+LoRA adds **3.125 percentage points of accuracy / 0.030724 macro-F1** over the DINOv3 linear baseline. Against the recorded Qwen predictions it adds **8.750 points / 0.093180 macro-F1**. These are **single-seed, validation-selected development results**, not final test results or a compute-matched architecture comparison. The original primary table is preserved. [Three-seed development confirmation](docs/dinov3-confirmation-results.md) and [the frozen 148-map holdout evaluation](docs/dinov3-holdout-results.md) are complete; their results are reported separately.
 
 Selected learning rates: linear **0.003** (epoch 10); LoRA **0.0001**, head **0.001** (epoch 5). The table and images use the original selected predictions at batch size 8. Fresh-process evaluation at batch size 1 changes 2 linear predictions and 1 LoRA prediction: accuracy is unchanged, while macro-F1 becomes **0.835856 / 0.867110**. Reloading therefore does not establish exact prediction parity.
 
@@ -73,13 +75,37 @@ The 2026-11-19 confirmation completed **18/18 fresh-process validation passes** 
 | 42 | 81.875% | 86.875% | +5.000 pp | +0.057316 |
 | 123 | 81.250% | 86.250% | +5.000 pp | +0.052623 |
 
-All three LoRA models rescue the same **6/16 Qwen common errors**, including **3/7 loc maps**. Four loc maps remain wrong for all six DINO models. The historical seed-17 primary score above remains unchanged; the new seed-17 LoRA process changes two labels, gaining one correct map. These results support development-set consistency; **DINO unseen-lot completion is still 0/888**.
+All three LoRA models rescue the same **6/16 Qwen common errors**, including **3/7 loc maps**. Four loc maps remain wrong for all six DINO models. The historical seed-17 primary score above remains unchanged; the new seed-17 LoRA process changes two labels, gaining one correct map. These results support development-set consistency. The separate, frozen unseen-lot evaluation below now has **888/888 predictions accepted**.
 
 [Full paired results and limitations](docs/dinov3-confirmation-results.md) · [Six confusion matrices, all predictions and class probabilities](docs/showcase/dinov3-confirmation-validation/README.md) · [Six weight hashes frozen before holdout](docs/evidence/dinov3-six-endpoints.json)
 
-## Where does DINOv3 get confused?
+## DINOv3 on the same 148 unseen-lot maps
 
-On the **16 maps missed by all six Qwen checkpoints**, DINOv3 linear rescues **7** and vision LoRA **6**. Both rescue **3 of the 7 shared `loc` misses**; four remain difficult. This Qwen-selected diagnostic subset differs from the full 160-map comparison. [Exact paired counts, all IDs, real loc images and morphology review](docs/showcase/dinov3-qwen-paired/README.md). [The subsequent cross-seed confirmation](docs/dinov3-confirmation-results.md) reports 18/18 validation passes; unseen-lot inference remains incomplete.
+All six frozen models were evaluated **once each** on 148 maps / 143 lot groups: **888/888 predictions**, with image hashes, labels, eight-class probabilities and independent Pod cleanup verified. The earlier validation remains **18/18 passes / 2,880 rows**; no validation process or training job was repeated for this evaluation.
+
+| Seed | Linear accuracy | LoRA accuracy | LoRA − linear | Macro-F1 gain | Accuracy gain: paired 95% interval |
+|---|---:|---:|---:|---:|---:|
+| 17 | 75.68% | 77.03% | +1.35 pp | +0.01160 | [−4.03, +6.76] pp |
+| 42 | 71.62% | 79.73% | +8.11 pp | +0.07913 | [+2.01, +14.38] pp |
+| 123 | 72.97% | 76.35% | +3.38 pp | +0.01979 | [−2.70, +9.52] pp |
+
+LoRA's overall gain has the same direction in **3/3 seeds on both datasets**. Only seed 42's holdout intervals exclude zero for both accuracy and macro-F1. This supports a consistent direction, with substantial uncertainty about the gain in the other seeds; no winning seed or checkpoint is selected from this set.
+
+The prespecified **seed-17 LoRA versus published Qwen seed-17 step-250** comparison is **77.03% versus 70.27%** (macro-F1 **0.78065 versus 0.71185**). DINO alone gets 23 maps right, Qwen alone 13; both get 91 right and 21 wrong. The accuracy difference is **+6.76 pp**, with a lot-group paired 95% interval of **[−1.32, +14.69] pp**. Both metric intervals include zero, and the training budgets/output methods differ.
+
+`loc` remains difficult: LoRA recall is **50% / 55% / 45%**, versus linear **60% / 20% / 30%**. Seed-17 LoRA matches Qwen's 50% loc recall, rescuing three of Qwen's loc misses but losing three Qwen-correct loc maps. Five holdout loc maps are wrong for all six DINO models.
+
+![DINOv3 on 148 unseen-lot maps: six confusion matrices, true labels on X and predicted labels on Y.](docs/showcase/dinov3-confirmation-holdout/confusion-matrices.png)
+
+[Holdout findings, limitations and cleanup](docs/dinov3-holdout-results.md) · [All metrics, intervals, time and memory](docs/showcase/dinov3-confirmation-holdout/README.md) · [148 paired rows](docs/showcase/dinov3-confirmation-holdout/paired-per-image.csv) · [888 predictions and eight-class probabilities](docs/showcase/dinov3-confirmation-holdout/predictions)
+
+### How many mistakes reach an engineer with a 10% review budget?
+
+On the 148 previously scored holdout maps, sending the 14 lowest-confidence predictions for review surfaced **12/34, 7/30 and 10/35** LoRA errors for seeds 17, 42 and 123. Randomly reviewing 14 maps would capture 9.46% of errors in expectation. The confidence queues captured 23–35%, but only **2/10, 0/9 and 2/11** true `loc` misses. Human review outcomes have yet to be measured. [Retrospective results, all six models and actual wafer examples](docs/showcase/dino-review-queue/README.md)
+
+## Where does DINOv3 get confused on the development set?
+
+On the **16 maps missed by all six Qwen checkpoints**, DINOv3 linear rescues **7** and vision LoRA **6**. Both rescue **3 of the 7 shared `loc` misses**; four remain difficult. This Qwen-selected diagnostic subset differs from the full 160-map comparison. [Exact paired counts, all IDs, real loc images and morphology review](docs/showcase/dinov3-qwen-paired/README.md). [The subsequent cross-seed confirmation](docs/dinov3-confirmation-results.md) reports 18/18 validation passes. The [unseen-lot evaluation](docs/dinov3-holdout-results.md) records all 888 predictions.
 
 Read **columns as true labels** and **rows as predicted labels**. Each column contains 20 maps; each non-empty cell shows a real input, the complete count and the percentage of its true class. The selected LoRA model gets **139/160** correct. Its weakest class is `loc` (**13/20 correct**), followed by `edge-loc` (**15/20**).
 
@@ -229,7 +255,7 @@ Individual stages are available through `wafervlm evaluate`, `train` and `compar
 
 ## RunPod
 
-**DINOv3 has a separate US$10 / 500-minute authorization.** Through the completed three-seed validation and four holdout attempts, conservative cumulative usage is **US$1.5032933 / 84.4246 minutes**. The latest Pod is independently verified absent; no persistent volume was created. These are lifecycle estimates, not invoices. See [DINO cost and cleanup evidence](docs/dinov3-confirmation-results.md#cost-cleanup-and-reproducibility) and the [original seed-17 receipt](docs/dinov3-seed17-results.md#cost-and-cleanup).
+**DINOv3 has a separate US$10 / 500-minute authorization.** Through the completed three-seed validation and accepted holdout evaluation (including five earlier failed holdout attempts), conservative cumulative usage is **US$1.6704166 / 93.4743 minutes**. The accepted holdout run adds **US$0.0788806 / 5.2650 minutes**. The latest Pod is independently verified absent; no persistent volume was created. These are lifecycle estimates, not invoices. See [DINO cost and cleanup evidence](docs/dinov3-holdout-results.md#execution-cost-and-cleanup) and the [original seed-17 receipt](docs/dinov3-seed17-results.md#cost-and-cleanup).
 
 See [runpod/README.md](runpod/README.md) for the extended US$30 /1,100-minute total experiment authorization, per-GPU price caps, pinned published image, data verification and cleanup design. `RUNPOD_API_KEY` stays in the Actions controller; neither the training code nor the worker receives it. Host filtering uses `minCudaVersion=12.8`, never an exact 12.8 requirement. The Broker remains GET-only; the separate waferVLM controller implements the paid lifecycle. Merging code does not launch compute: the GPU workflow requires a manual dispatch, exact main SHA and an unused authorization marker. The lower-LR continuation completed step 200 and its temporary Pod deletion was independently verified. Results and full recovery files are preserved in the [checkpoint-200 Release](https://github.com/jasonjiang8866/waferVLM/releases/tag/checkpoint-200-v1). After both diagnostics and the completed 200→300 continuation, conservative cumulative usage is **US$5.903039 / 491.911 minutes** within **US$30 / 1,100 minutes**. The continuation Pod is verified absent by primary and independent cleanup. See the [continuation cost and cleanup evidence](docs/continuation-300-results.md#cleanup-and-cost-ledger). The consumed authorization marker remains guarded; publishing results does not launch compute.
 

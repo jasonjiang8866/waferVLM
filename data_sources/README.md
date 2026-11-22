@@ -8,6 +8,8 @@ stored on RunPod Global Volume, verified from a second Pod in another region.
 All temporary import/verification Pods were removed. See [locations, costs and
 receipts](RUNPOD.md#verified-import).
 
+Browse the attributed samples with the [Wafer image explorer](../viewer/README.md).
+
 ## Available sources
 
 | Dataset / data card | Modality and scale | Size | Collection status / useful next project |

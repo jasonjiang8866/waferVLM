@@ -1,0 +1,9 @@
+[
+  {"id":"wm811k","name":"WM-811K","type":"Electrical bin map","question":"Where do the failing dies cluster relative to the wafer edge?"},
+  {"id":"carinthia-s","name":"Carinthia-S","type":"SEM · Segmentation","question":"Which pixels would you outline as the defect? Compare your boundary with the annotation in the microscope."},
+  {"id":"silicon-wafer-pl","name":"Silicon wafer PL","type":"Process imaging","question":"Which intensity changes follow a regular structure, and which are local to a small area?"},
+  {"id":"mixedwm38","name":"MixedWM38","type":"Mixed-pattern wafer map","question":"Which spatial patterns would you describe separately before assigning labels?"},
+  {"id":"silicon-wafer-ebsd","name":"Silicon wafer EBSD","type":"Electron diffraction","question":"Which bands are easiest to trace across the diffraction pattern?"},
+  {"id":"long-tailed-sem","name":"Long-tailed SEM","type":"Fab microscopy","question":"What local feature would help you retrieve similar SEM specimens?"},
+  {"id":"carinthia","name":"Carinthia","type":"SEM · Classification","question":"What distinguishes the candidate defect from the regular background texture?"}
+]

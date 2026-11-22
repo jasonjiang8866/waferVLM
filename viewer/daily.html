@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#f8f7f2">
+<meta name="description" content="A daily field guide to wafer maps, microscopy and diffraction. Look closely at one specimen from each waferVLM dataset.">
+<title>Wafer Daily · waferVLM</title>
+<link rel="stylesheet" href="daily.css">
+</head>
+<body>
+<header><nav class="wrap" aria-label="Main navigation">
+<a class="brand" href="./"><i class="wafer" aria-hidden="true"></i>waferVLM</a>
+<div><a aria-current="page" href="./">Daily atlas</a><a href="explorer.html">Microscope</a></div>
+</nav></header>
+<main class="wrap">
+<section class="intro" aria-labelledby="title">
+<div><p class="edition"><span class="dot"></span><time id="date"></time> <span class="tz">/ SGT</span></p>
+<h1 id="title">Wafer <em>Daily.</em></h1>
+<p class="deck">One image from every dataset. Open a specimen and see what you can read from it.</p></div>
+<div class="progress"><div><strong>Today’s field notes</strong><span id="score"></span></div><progress id="bar" value="0" aria-label="Datasets explored"></progress><small id="status" role="status"></small></div>
+</section>
+<section aria-labelledby="gallery-title"><div class="section-head"><h2 id="gallery-title">Today’s specimens</h2><span id="total"></span></div>
+<noscript>Enable JavaScript to see today’s selections.</noscript><div id="gallery"></div></section>
+</main>
+<footer class="wrap"><span>New edition at 00:00 Singapore time</span><a href="https://github.com/jasonjiang8866/waferVLM/tree/main/data_sources">Dataset inventory ↗</a></footer>
+<dialog id="detail" aria-labelledby="modal-name"><div class="dialog-head"><span id="modal-type"></span><button id="close" aria-label="Close specimen">×</button></div>
+<div class="full-image"><span class="image-frame"><img id="full" alt=""></span><p class="fallback" hidden>Preview unavailable. Open the image source below.</p></div>
+<div class="notes"><h2 id="modal-name"></h2><p id="modal-title"></p><h3>Look closely</h3><p id="question"></p><p id="note"></p><div class="credit"><span id="credit"></span> · <a id="full-link">Full size ↗</a> · <a id="license" hidden>Image license ↗</a> <a id="source">Image source ↗</a></div></div>
+</dialog>
+<script type="application/json" id="catalog">__DAILY_DATA__</script>
+<script src="daily.js" defer></script>
+</body>
+</html>

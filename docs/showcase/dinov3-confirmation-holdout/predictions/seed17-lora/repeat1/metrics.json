@@ -1,0 +1,151 @@
+{
+  "accuracy": 0.7702702702702703,
+  "batch_size": 8,
+  "confusion_matrix": {
+    "center": {
+      "center": 18,
+      "donut": 1,
+      "edge-loc": 0,
+      "edge-ring": 0,
+      "invalid": 0,
+      "loc": 1,
+      "near-full": 0,
+      "random": 0,
+      "scratch": 0
+    },
+    "donut": {
+      "center": 0,
+      "donut": 20,
+      "edge-loc": 0,
+      "edge-ring": 0,
+      "invalid": 0,
+      "loc": 0,
+      "near-full": 0,
+      "random": 0,
+      "scratch": 0
+    },
+    "edge-loc": {
+      "center": 0,
+      "donut": 1,
+      "edge-loc": 10,
+      "edge-ring": 1,
+      "invalid": 0,
+      "loc": 6,
+      "near-full": 0,
+      "random": 0,
+      "scratch": 2
+    },
+    "edge-ring": {
+      "center": 1,
+      "donut": 0,
+      "edge-loc": 2,
+      "edge-ring": 16,
+      "invalid": 0,
+      "loc": 1,
+      "near-full": 0,
+      "random": 0,
+      "scratch": 0
+    },
+    "loc": {
+      "center": 7,
+      "donut": 1,
+      "edge-loc": 1,
+      "edge-ring": 0,
+      "invalid": 0,
+      "loc": 10,
+      "near-full": 0,
+      "random": 0,
+      "scratch": 1
+    },
+    "near-full": {
+      "center": 0,
+      "donut": 0,
+      "edge-loc": 0,
+      "edge-ring": 0,
+      "invalid": 0,
+      "loc": 0,
+      "near-full": 8,
+      "random": 0,
+      "scratch": 0
+    },
+    "random": {
+      "center": 0,
+      "donut": 1,
+      "edge-loc": 0,
+      "edge-ring": 0,
+      "invalid": 0,
+      "loc": 0,
+      "near-full": 1,
+      "random": 18,
+      "scratch": 0
+    },
+    "scratch": {
+      "center": 0,
+      "donut": 0,
+      "edge-loc": 3,
+      "edge-ring": 0,
+      "invalid": 0,
+      "loc": 3,
+      "near-full": 0,
+      "random": 0,
+      "scratch": 14
+    }
+  },
+  "cross_entropy": 0.5871465016861219,
+  "invalid_rate": 0.0,
+  "macro_f1": 0.7806533189512385,
+  "mean_end_to_end_seconds": 0.014152906188108908,
+  "mean_forward_seconds": 0.008781897730817011,
+  "n": 148,
+  "per_class": {
+    "center": {
+      "f1": 0.7826086956521738,
+      "precision": 0.6923076923076923,
+      "recall": 0.9,
+      "support": 20
+    },
+    "donut": {
+      "f1": 0.9090909090909091,
+      "precision": 0.8333333333333334,
+      "recall": 1.0,
+      "support": 20
+    },
+    "edge-loc": {
+      "f1": 0.5555555555555556,
+      "precision": 0.625,
+      "recall": 0.5,
+      "support": 20
+    },
+    "edge-ring": {
+      "f1": 0.8648648648648648,
+      "precision": 0.9411764705882353,
+      "recall": 0.8,
+      "support": 20
+    },
+    "loc": {
+      "f1": 0.4878048780487805,
+      "precision": 0.47619047619047616,
+      "recall": 0.5,
+      "support": 20
+    },
+    "near-full": {
+      "f1": 0.9411764705882353,
+      "precision": 0.8888888888888888,
+      "recall": 1.0,
+      "support": 8
+    },
+    "random": {
+      "f1": 0.9473684210526316,
+      "precision": 1.0,
+      "recall": 0.9,
+      "support": 20
+    },
+    "scratch": {
+      "f1": 0.7567567567567567,
+      "precision": 0.8235294117647058,
+      "recall": 0.7,
+      "support": 20
+    }
+  },
+  "timing": "Includes checksum/decode/preprocess/transfer; forward includes argmax probabilities transfer; no warmup"
+}

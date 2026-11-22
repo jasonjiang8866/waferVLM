@@ -1,0 +1,261 @@
+[
+  {
+    "anchor": "dc5cccf9d1c0f8221a5d26bc",
+    "anchor_area": "6351/49745",
+    "peer": "e30d8b3402f30afb55f26e73",
+    "peer_area": "829/6394",
+    "peer_label": "center"
+  },
+  {
+    "anchor": "f24af21327fcd34af288e449",
+    "anchor_area": "1569/11932",
+    "peer": "827e0782f95251a03e641d57",
+    "peer_area": "5449/41399",
+    "peer_label": "scratch"
+  },
+  {
+    "anchor": "21c504f408da331e135a9cb7",
+    "anchor_area": "1332/9949",
+    "peer": "e5f036b32a5561a93c37f284",
+    "peer_area": "5874/43891",
+    "peer_label": "edge-loc"
+  },
+  {
+    "anchor": "cc6c00698415f53bf7a032c9",
+    "anchor_area": "1387/10352",
+    "peer": "9b6f31faa498c4dea92ea384",
+    "peer_area": "3319/25576",
+    "peer_label": "center"
+  },
+  {
+    "anchor": "475800c8a80edf88e823de3d",
+    "anchor_area": "3429/25576",
+    "peer": "868b1a2ebf032f9fe6e83cd3",
+    "peer_area": "1001/7544",
+    "peer_label": "scratch"
+  },
+  {
+    "anchor": "f7b355894c44c92a67e7ddaf",
+    "anchor_area": "1617/11932",
+    "peer": "ce77d80599194313345bff06",
+    "peer_area": "2939/21923",
+    "peer_label": "edge-loc"
+  },
+  {
+    "anchor": "a4dd6253078f7f8d103520c7",
+    "anchor_area": "6407/46476",
+    "peer": "25c2fcd8e07d8d9c4365c537",
+    "peer_area": "1569/11125",
+    "peer_label": "center"
+  },
+  {
+    "anchor": "b20a3d3f5652d2bcaad3d9ed",
+    "anchor_area": "3478/24547",
+    "peer": "f9b12824df9baff566cd9db5",
+    "peer_area": "6303/43891",
+    "peer_label": "scratch"
+  },
+  {
+    "anchor": "bdcb58132c28ac6a021a680a",
+    "anchor_area": "101/712",
+    "peer": "6569c48d6dcfebf8a1252268",
+    "peer_area": "569/3986",
+    "peer_label": "edge-loc"
+  },
+  {
+    "anchor": "4b4e0ab19214b163d22fa510",
+    "anchor_area": "6221/43624",
+    "peer": "5cd13c19a69c3f0edbdb2ec3",
+    "peer_area": "1843/12788",
+    "peer_label": "center"
+  },
+  {
+    "anchor": "9928e76551762c72210cf441",
+    "anchor_area": "6671/45264",
+    "peer": "0ce86b692cb4307c64d25dc2",
+    "peer_area": "6595/43891",
+    "peer_label": "scratch"
+  },
+  {
+    "anchor": "43c987c4d3f7ed806c91a235",
+    "anchor_area": "7209/47728",
+    "peer": "9fb7e0752fe52d0db84fc575",
+    "peer_area": "7831/51592",
+    "peer_label": "edge-loc"
+  },
+  {
+    "anchor": "0057de42bdd74bc0cd999169",
+    "anchor_area": "6951/44500",
+    "peer": "36261e28d228f16ed8f357f3",
+    "peer_area": "790/5041",
+    "peer_label": "center"
+  },
+  {
+    "anchor": "56e7c60110df5b9ecc3bee12",
+    "anchor_area": "6924/43891",
+    "peer": "e19649bc6293c9e0b6dfe5ca",
+    "peer_area": "7708/48575",
+    "peer_label": "scratch"
+  },
+  {
+    "anchor": "70b7450509c88230dec17ed2",
+    "anchor_area": "7005/44288",
+    "peer": "c991104bdf5fb80b87040dab",
+    "peer_area": "7063/43891",
+    "peer_label": "edge-loc"
+  },
+  {
+    "anchor": "f78e65f3879b6ad9954edf19",
+    "anchor_area": "1258/7787",
+    "peer": "84b6dcf28c2bbda00ea58f21",
+    "peer_area": "8325/49952",
+    "peer_label": "center"
+  },
+  {
+    "anchor": "c72bbf3ba4993c28ef89da9a",
+    "anchor_area": "3879/23864",
+    "peer": "19aaa7bafe374ca69e47aa58",
+    "peer_area": "8079/49628",
+    "peer_label": "scratch"
+  },
+  {
+    "anchor": "d17f9edc2489f29786c2c6e8",
+    "anchor_area": "7451/45201",
+    "peer": "de4d32aec67ee951d4b2f7b0",
+    "peer_area": "985/5966",
+    "peer_label": "edge-loc"
+  },
+  {
+    "anchor": "6612aa6db7a28ddc2766b5c6",
+    "anchor_area": "7481/45264",
+    "peer": "0d0031b385b46526be2e0eee",
+    "peer_area": "1245/7136",
+    "peer_label": "center"
+  },
+  {
+    "anchor": "8d54c21e894c86f5058a46b2",
+    "anchor_area": "7315/43891",
+    "peer": "4cdaef71f7a0976956a5bf44",
+    "peer_area": "7813/46664",
+    "peer_label": "scratch"
+  },
+  {
+    "anchor": "256ef3b46c6101958f1f020d",
+    "anchor_area": "6645/38521",
+    "peer": "e8742eb9e5f6605b01dc204e",
+    "peer_area": "8725/51152",
+    "peer_label": "edge-loc"
+  },
+  {
+    "anchor": "5dda64576d0a466b1cfdc305",
+    "anchor_area": "7921/45215",
+    "peer": "81569522dee934eae9d727cb",
+    "peer_area": "7263/40328",
+    "peer_label": "center"
+  },
+  {
+    "anchor": "9b50b207017c88e3d9e3cf40",
+    "anchor_area": "7700/43891",
+    "peer": "51054a14bbda8b7eafe7580d",
+    "peer_area": "7949/46552",
+    "peer_label": "scratch"
+  },
+  {
+    "anchor": "6b1adacf933f32d453210140",
+    "anchor_area": "8891/50132",
+    "peer": "0488cad52c3a1d5ebf733bc3",
+    "peer_area": "6981/39878",
+    "peer_label": "edge-loc"
+  },
+  {
+    "anchor": "968941d8733da909165b17ab",
+    "anchor_area": "8050/43891",
+    "peer": "48556ea2b5642dc3d69aa8e9",
+    "peer_area": "2529/12929",
+    "peer_label": "center"
+  },
+  {
+    "anchor": "691fe7eaef08a5f2a901f55d",
+    "anchor_area": "9843/51592",
+    "peer": "fe3b7b4f8c54677545a91136",
+    "peer_area": "6816/35299",
+    "peer_label": "scratch"
+  },
+  {
+    "anchor": "98d2ce12118416e1db0f36bf",
+    "anchor_area": "9973/51592",
+    "peer": "96b838ca92b56330b0db9f27",
+    "peer_area": "69/355",
+    "peer_label": "edge-loc"
+  },
+  {
+    "anchor": "10eb074df5bd741f2a47d0d9",
+    "anchor_area": "2935/15088",
+    "peer": "e8fafcfcbac035d498ab5cde",
+    "peer_area": "4989/24976",
+    "peer_label": "center"
+  },
+  {
+    "anchor": "6c3044bbcd412b549363e214",
+    "anchor_area": "10081/51592",
+    "peer": "0ec53649d13db8137f18bf16",
+    "peer_area": "133/710",
+    "peer_label": "scratch"
+  },
+  {
+    "anchor": "ea331c9362fa17fcb7962bea",
+    "anchor_area": "4549/23276",
+    "peer": "bee4390dce38f5250c2d84ab",
+    "peer_area": "139/710",
+    "peer_label": "edge-loc"
+  },
+  {
+    "anchor": "b7fab293d2736476fd640283",
+    "anchor_area": "10093/51592",
+    "peer": "4d0b47b9b0a586d93d92b043",
+    "peer_area": "4049/20164",
+    "peer_label": "center"
+  },
+  {
+    "anchor": "dcfddebaa4a320edd297d81e",
+    "anchor_area": "2478/12533",
+    "peer": "e2711ae1cdcc44a9ed3acc38",
+    "peer_area": "10583/51592",
+    "peer_label": "scratch"
+  },
+  {
+    "anchor": "ebe129a7c2386713f80ada36",
+    "anchor_area": "4981/25066",
+    "peer": "3b35785452427eb53d2f7701",
+    "peer_area": "9023/45264",
+    "peer_label": "edge-loc"
+  },
+  {
+    "anchor": "57083a6627eee84c72069467",
+    "anchor_area": "9059/45208",
+    "peer": "639c7b56d59b3edcd1016088",
+    "peer_area": "10065/49952",
+    "peer_label": "center"
+  },
+  {
+    "anchor": "ed099cbe3d710c023a7006b7",
+    "anchor_area": "4720/23361",
+    "peer": "e41442b68a05dc71a28b6d12",
+    "peer_area": "8533/50132",
+    "peer_label": "scratch"
+  },
+  {
+    "anchor": "ae15fe8e2802907878502bea",
+    "anchor_area": "8948/43891",
+    "peer": "a7d40738b7df51187d49ef3d",
+    "peer_area": "5280/26069",
+    "peer_label": "edge-loc"
+  },
+  {
+    "anchor": "731082e7e40eb702d6fa74c9",
+    "anchor_area": "2633/12898",
+    "peer": "3a202b5fd3c00e1e7514c353",
+    "peer_area": "8940/43999",
+    "peer_label": "center"
+  }
+]

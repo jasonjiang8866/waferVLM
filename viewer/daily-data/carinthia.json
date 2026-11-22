@@ -1,0 +1,62 @@
+[
+  {
+    "src": "daily-assets/carinthia-06c0ca86.webp",
+    "title": "Class 1 · 06c0ca86",
+    "credit": "Corinna Kofler et al. · CC BY 4.0",
+    "source": "https://zenodo.org/records/10715190",
+    "note": "Original Carinthia classification release. Full-field SEM preview converted to WebP. Carinthia-S uses the same image family.",
+    "license": "https://creativecommons.org/licenses/by/4.0/",
+    "sourceFile": "data/images/06c0ca868a9a4fce93afdbaa3dadce50.jpg",
+    "sha256": "fa5c35fb12658bffdb6f11429b616a9abe335e38b7452e939235671ff6ef115c"
+  },
+  {
+    "src": "daily-assets/carinthia-2328a26f.webp",
+    "title": "Class 2 · 2328a26f",
+    "credit": "Corinna Kofler et al. · CC BY 4.0",
+    "source": "https://zenodo.org/records/10715190",
+    "note": "Original Carinthia classification release. Full-field SEM preview converted to WebP. Carinthia-S uses the same image family.",
+    "license": "https://creativecommons.org/licenses/by/4.0/",
+    "sourceFile": "data/images/2328a26fb16a49b5b2964a1735454eb0.jpg",
+    "sha256": "48acbe84e2c4cdd1267b74c394bf7f9a477fab41a0680b39cb4461f1f4f85f56"
+  },
+  {
+    "src": "daily-assets/carinthia-001e80f2.webp",
+    "title": "Class 3 · 001e80f2",
+    "credit": "Corinna Kofler et al. · CC BY 4.0",
+    "source": "https://zenodo.org/records/10715190",
+    "note": "Original Carinthia classification release. Full-field SEM preview converted to WebP. Carinthia-S uses the same image family.",
+    "license": "https://creativecommons.org/licenses/by/4.0/",
+    "sourceFile": "data/images/001e80f214374b349cecef0c8e55d815.jpg",
+    "sha256": "a83f3a3bac2c45a01b2378246610d06b50c0ad9da6d6df868ad8ce5d4c0d7ea9"
+  },
+  {
+    "src": "daily-assets/carinthia-010cc0a8.webp",
+    "title": "Class 4 · 010cc0a8",
+    "credit": "Corinna Kofler et al. · CC BY 4.0",
+    "source": "https://zenodo.org/records/10715190",
+    "note": "Original Carinthia classification release. Full-field SEM preview converted to WebP. Carinthia-S uses the same image family.",
+    "license": "https://creativecommons.org/licenses/by/4.0/",
+    "sourceFile": "data/images/010cc0a8e2da4ec08991d00a69fb2b9e.jpg",
+    "sha256": "d20fec45cb8535bd52cf12c33b00d1eb36d118d0a5efbd37d64f3e995feeb3c8"
+  },
+  {
+    "src": "daily-assets/carinthia-75e64833.webp",
+    "title": "Class 5 · 75e64833",
+    "credit": "Corinna Kofler et al. · CC BY 4.0",
+    "source": "https://zenodo.org/records/10715190",
+    "note": "Original Carinthia classification release. Full-field SEM preview converted to WebP. Carinthia-S uses the same image family.",
+    "license": "https://creativecommons.org/licenses/by/4.0/",
+    "sourceFile": "data/images/75e64833559e418b8ee5a3760b0b6f21.jpg",
+    "sha256": "23c6f0e8612162d57bb765b08d7defff6ab502acd3f92cac99924fd850be9a89"
+  },
+  {
+    "src": "daily-assets/carinthia-02e7fc08.webp",
+    "title": "Class 6 · 02e7fc08",
+    "credit": "Corinna Kofler et al. · CC BY 4.0",
+    "source": "https://zenodo.org/records/10715190",
+    "note": "Original Carinthia classification release. Full-field SEM preview converted to WebP. Carinthia-S uses the same image family.",
+    "license": "https://creativecommons.org/licenses/by/4.0/",
+    "sourceFile": "data/images/02e7fc0869664405961d6183c9650c09.jpg",
+    "sha256": "345e2605f0405607913db31b71b65507ead9a3ced94acfea9ba227a8f2200651"
+  }
+]

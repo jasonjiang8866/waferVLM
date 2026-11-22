@@ -55,7 +55,7 @@ def seal_output(output):
 
 def train(dataset, output, steps=100, seed=17, accumulation=8, rank=8, learning_rate=0.0002,
           revision=MODEL_REVISION, device="cuda", max_length=1024, resume_from=None,
-          lower_learning_rate=False, profile=False):
+          lower_learning_rate=False, profile=False, epoch_order=None, record_epoch=False):
     import torch
     from transformers import Trainer, TrainerCallback, TrainingArguments, set_seed
 
@@ -164,14 +164,44 @@ def train(dataset, output, steps=100, seed=17, accumulation=8, rank=8, learning_
         torch.cuda.reset_peak_memory_stats()
     start = time.perf_counter()
     trainer_type = timed_trainer_class(recorder, accumulation) if recorder else Trainer
-    trainer = trainer_type(model=model, args=args, train_dataset=rows["train"],
-                      data_collator=AnswerCollator(processor, dataset, max_length, recorder),
-                      callbacks=[GradientCheck()])
+    train_rows = rows["train"]
+    collator = AnswerCollator(processor, dataset, max_length, recorder)
+    if record_epoch or epoch_order is not None:
+        if resumed or steps != math.ceil(len(train_rows) / accumulation):
+            raise ValueError("Epoch-order experiment requires one full fresh single-device epoch")
+        if args.world_size != 1:
+            raise ValueError("Epoch-order tracing requires one process")
+        from safetensors.torch import save
+        weights = {name: p.detach().cpu().contiguous() for name, p in model.named_parameters() if p.requires_grad}
+        diagnostics["initial_trainable_sha256"] = hashlib.sha256(save(weights)).hexdigest()
+        del weights
+        if epoch_order is not None:
+            source, target = epoch_order
+            lookup = {r["id"]: r for r in train_rows}
+            if any(len(seq) != len(lookup) or set(seq) != lookup.keys() for seq in (source, target)):
+                raise ValueError("Both epoch orders must permute all training maps")
+            remap = dict(zip(source, target, strict=True))
+            train_rows = [lookup[remap[r["id"]]] for r in train_rows]
+        actual_order = []
+        encode_batch = collator
+
+        def collator(batch):
+            actual_order.extend(row["id"] for row in batch)
+            return encode_batch(batch)
+
+    trainer = trainer_type(model=model, args=args, train_dataset=train_rows,
+                           data_collator=collator, callbacks=[GradientCheck()])
     try:
         result = trainer.train(resume_from_checkpoint=str(resume_from) if resumed else None)
     finally:
         if recorder:
             recorder.restore()
+    if record_epoch or epoch_order is not None:
+        if len(actual_order) != len(train_rows) or set(actual_order) != {r["id"] for r in train_rows}:
+            raise ValueError("Consumed epoch differs from the training set")
+        if epoch_order is not None and actual_order != target:
+            raise ValueError("Observed training order differs from the specified paired epoch")
+        write_json(output / "epoch-order.json", actual_order)
     if trainer.state.global_step != steps or diagnostics["gradient_checks"] != steps - start_step:
         raise ValueError("Unexpected optimizer-step count after resume")
     if not math.isfinite(result.training_loss):
