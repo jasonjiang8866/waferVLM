@@ -28,6 +28,7 @@ from runpod.vlm_repeat_capacity import enabled as resume_retry, PIN as CAPACITY_
 from runpod.vlm_repeat_finish_capacity import PIN as FINISH_CAPACITY_PIN
 from runpod.vlm_repeat_startup_recovery import enabled as startup_retry, PIN as STARTUP_PIN, WORK_SECONDS as STARTUP_RETRY_WORK_SECONDS
 
+from runpod import q2_pilot
 from runpod.provider import (
     MIG,
     REPOSITORY,
@@ -90,6 +91,8 @@ def training_seed():
 
 
 def evaluation():
+    if q2_pilot.enabled():
+        return False
     phase = os.environ.get('WAFER_VLM_PHASE', 'training')
     if phase not in {'training', 'repeat', 'holdout'}:
         raise RuntimeError('Unsupported VLM phase')
@@ -103,12 +106,16 @@ def ledger_seed():
 
 
 def pod_label():
+    if q2_pilot.enabled():
+        return "q2pilot"
     if holdout():
         return "vlmholdout"
     return 'vlmrepeats' if evaluation() else f'vlm{training_seed()}'
 
 
 def experiment():
+    if q2_pilot.enabled():
+        return "q2-pair-pilot"
     if holdout():
         return "vlm-holdout"
     return 'vlm-repeats' if evaluation() else "vlm-seed" + str(training_seed())
@@ -148,6 +155,8 @@ def identity():
 
 def gpu_price_caps():
     """Broader GPU authorization applies only to this final-two slice."""
+    if q2_pilot.enabled():
+        return dict(FINISH_CAPS)
     caps = dict(GPU_CAPS)
     if evaluation() and resuming() and resume_retry() and finishing():
         caps = dict(FINISH_CAPS)
@@ -155,6 +164,8 @@ def gpu_price_caps():
 
 
 def quote(rate, ledger=None):
+    if q2_pilot.enabled():
+        return q2_pilot.prices(rate, DISK_HOURLY)
     if startup_retry() and not (evaluation() and resuming() and resume_retry() and finishing()):
         raise ValueError('Startup recovery is only valid for the final-two continuation')
     if not finite(rate, 0.001) or rate > max(gpu_price_caps().values()):
@@ -297,9 +308,15 @@ def provenance():
 
 def preflight(api):
     identity()
-    evidence = provenance()
-    from runpod.vlm_ledger import reconcile
-    evidence["ledger"] = reconcile(identity(), require_current=False, output=OUT, seed=ledger_seed())
+    if q2_pilot.enabled():
+        evidence = dict(controller_sha=git("rev-parse","HEAD"), image=IMAGE,
+                        anonymous_manifest_verified=verify_image_manifest(),
+                        config_sha256=hashlib.sha256((ROOT / "docs/evidence/qwen-validation-area/training-pairs.json").read_bytes()).hexdigest(),
+                        ledger={"attempts": [], "usd": q2_pilot.PRIOR_USD, "seconds": q2_pilot.PRIOR_MINUTES * 60})
+    else:
+        evidence = provenance()
+        from runpod.vlm_ledger import reconcile
+        evidence["ledger"] = reconcile(identity(), require_current=False, output=OUT, seed=ledger_seed())
     attempts = evidence["ledger"]["attempts"]
     if evaluation():
         if not all(any(a.get('seed') == s and a.get('accepted') is True for a in attempts) for s in (42, 123)):
@@ -320,7 +337,8 @@ def preflight(api):
     repeat_gpus = (MIG, 'NVIDIA GeForce RTX 3090') if resume_retry() else (RESUME_GPU,)
     if finishing():
         repeat_gpus = FINISH_GPUS
-    for name in (repeat_gpus if evaluation() and resuming() else GPUS):
+    priority = FINISH_GPUS if q2_pilot.enabled() else (repeat_gpus if evaluation() and resuming() else GPUS)
+    for name in priority:
         minimum_cuda = MIN_CUDA_BY_GPU[name]
         entry = {"gpu": name, "min_cuda_version": minimum_cuda, "rate": None,
                  "approved_rate_cap": caps[name], "regions": []}
@@ -395,7 +413,6 @@ def preflight(api):
     save("preflight.json", evidence)
     if not choices:
         raise RuntimeError("No approved GPU with verified price/capacity")
-    priority = repeat_gpus if evaluation() and resuming() else GPUS
     def placement_order(choice):
         rate, gpu, regions, _, previously_rejected = choice
         # Prefer a GPU with several eligible sites for a one-shot holdout deployment.
@@ -411,7 +428,7 @@ def preflight(api):
         min_cuda_version=MIN_CUDA_BY_GPU[name],
         regions=regions,
         cost=cost,
-        budget=budget(api, reserve=APPROVED_USD),
+        budget=budget(api, reserve=5 if q2_pilot.enabled() else APPROVED_USD),
         checked_epoch=time.time(),
     )
     save("preflight.json", evidence)
@@ -426,7 +443,7 @@ def authorization_guard():
         or os.environ.get("GITHUB_RUN_ATTEMPT") != "1"
         or os.environ.get("CONFIRM_PAID") != "true"
         or os.environ.get("EXPECTED_SHA") != git("rev-parse", "HEAD")
-        or time.time() >= (RESUME_EXPIRES if evaluation() and resuming() else AUTHORIZATION_EXPIRES)
+        or (not q2_pilot.enabled() and time.time() >= (RESUME_EXPIRES if evaluation() and resuming() else AUTHORIZATION_EXPIRES))
     ):
         raise RuntimeError("Manual authorization/ref/SHA/attempt/expiry guard failed")
     token = os.environ.get("GH_TOKEN", "")
@@ -435,6 +452,9 @@ def authorization_guard():
     remote = request(f"https://api.github.com/repos/{REPOSITORY}/git/ref/heads/main", token=token)
     if remote.get("object", {}).get("sha") != os.environ["EXPECTED_SHA"]:
         raise RuntimeError("main moved; no paid launch")
+    if q2_pilot.enabled():
+        q2_pilot.guard(run)
+        return
     from runpod.vlm_ledger import reconcile
     reconcile(run, require_current=True, output=OUT, seed=ledger_seed())
 
@@ -500,6 +520,9 @@ def cleanup(api):
                     )
                 else:
                     evidence["cost"] = "unverified_no_local_intent"
+                if q2_pilot.enabled() and "started_epoch" in state:
+                    evidence["within_budget"] &= estimate - q2_pilot.PRIOR_USD <= 5
+                    evidence["within_runtime"] &= elapsed <= 6000
                 save("cleanup.json", evidence)
                 if evidence.get("within_budget") is False or evidence.get("within_runtime") is False:
                     raise RuntimeError("Estimated spend or runtime exceeded authorization")
@@ -593,6 +616,8 @@ def interrupt(signum, frame):
 
 
 def worker_code():
+    if q2_pilot.enabled():
+        return q2_pilot.bootstrap(git("rev-parse","HEAD"))
     if not evaluation():
         worker = base64.b64encode((ROOT / 'runpod/vlm_worker.py').read_bytes()).decode()
         return "import base64;exec(compile(base64.b64decode(" + repr(worker) + "),'paid_worker.py','exec'))"
@@ -635,7 +660,9 @@ def launch(api):
     spec = {"source_sha": SOURCE, "controller_sha": evidence["controller_sha"],
             "image": IMAGE, "gpu": evidence["gpu"],
             "gpu_hourly_usd": evidence["cost"]["gpu_hourly_usd"], "ledger": evidence["ledger"]}
-    if evaluation():
+    if q2_pilot.enabled():
+        spec.update(phase="q2-pair-pilot", config_sha256=evidence["config_sha256"])
+    elif evaluation():
         spec.update(phase='validation-repeats', config_sha256=evidence['config_sha256'],
                     input_manifest_sha256=evidence['inputs']['manifest_sha256'])
         if holdout():
@@ -683,7 +710,7 @@ def launch(api):
             "WAFER_RUN_ID": run,
             "WAFER_AUTHORIZATION": AUTHORIZATION,
             "WAFER_EXPERIMENT": experiment(),
-            "WAFER_SEED": str(training_seed()),
+            "WAFER_SEED": "17" if q2_pilot.enabled() else str(training_seed()),
             "WAFER_RESULT_TOKEN": token,
             "WAFER_DEADLINE": str(deadline - 90),
             "WAFER_SOURCE_SHA": SOURCE,
@@ -842,12 +869,14 @@ def launch(api):
                     result.get("source_sha") != SOURCE
                     or result.get("config_sha256") != evidence["config_sha256"]
                     or result.get("controller_sha") != evidence["controller_sha"]
-                    or result.get("profiles") != (["final-holdout"] if holdout() else ["validation-repeats"] if evaluation() else ["seed-confirmation"])
-                    or (not evaluation() and result.get("seed") != training_seed())
+                    or result.get("profiles") != (["q2-pair-pilot"] if q2_pilot.enabled() else ["final-holdout"] if holdout() else ["validation-repeats"] if evaluation() else ["seed-confirmation"])
+                    or (not q2_pilot.enabled() and not evaluation() and result.get("seed") != training_seed())
                     or not (OUT / "experiment.tar.gz").is_file()
                 ):
                     raise RuntimeError("Result provenance/completeness mismatch")
-                if holdout():
+                if q2_pilot.enabled():
+                    accepted = q2_pilot.verify(OUT / "experiment.tar.gz", spec)
+                elif holdout():
                     import tempfile
                     from runpod.confirmation_verify import unpack
                     from runpod.vlm_holdout import analyze
