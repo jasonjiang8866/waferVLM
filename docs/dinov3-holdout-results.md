@@ -30,6 +30,8 @@ Paired lot-group bootstrap: 10,000 resamples, RNG seed 20261110, shared group mu
 
 Only seed 42's intervals exclude zero for both metrics. The evidence supports a repeated positive direction and a clearer improvement for that prespecified pair; it does not establish a precisely estimated benefit for every seed. Seed 42 is not selected as a new release on this basis.
 
+**Interpretation guardrails:** Three positive training-seed contrasts are not a confidence interval over training seeds or future production lots. The reported per-contrast 95% bootstrap intervals are unadjusted for multiple comparisons; one positive seed-42 interval must not be promoted to an across-seed or family-wise significance claim. The same 148-map holdout already had public Qwen results before the frozen DINOv3 evaluation; this is a predeclared *additional model comparison*, not a new independently concealed holdout. No result-dependent seed/checkpoint selection or new performance claim follows from these diagnostics.
+
 ## Fixed seed-17 LoRA versus published Qwen step 250
 
 | Model | Correct | Accuracy | Macro-F1 | loc recall |
@@ -83,7 +85,7 @@ Primary cleanup confirmed **three consecutive absences**. [Independent cleanup 4
 - Inner `experiment.tar.gz`: 2,140,488 bytes; SHA-256 `9e9a0f3f3f0645d97235ab6c07d0b9f4e8fcc9e63d2df03c0ee9f4696d2ebc8a`.
 - [Independent cleanup artifact 14682995203](https://github.com/jasonjiang8866/waferVLM/actions/runs/44844163133/artifacts/14682995203): ZIP SHA-256 `07a9544a63737ee6d90186458d028c86468deea7dcc41506bca7a2f4bffe15bf`.
 
-Git preserves all predictions/probabilities, metrics, manifests, selected-weight hashes and cleanup receipts. The raw result artifact retains the six selected exports and run logs. To reproduce the CPU report from the verified inner archive:
+Git preserves all predictions/probabilities, metrics, manifests, selected-weight hashes and cleanup receipts. The raw result artifact retains the six selected exports and run logs. **The Actions artifact expires; an independently verified durable copy is not yet recorded.** See the [retention manifest and CPU-only archival procedure](dinov3-holdout-archive.md). To reproduce the CPU report from the verified inner archive:
 
 ```bash
 uv run --frozen python -m analysis.dinov3_confirmation_report \
