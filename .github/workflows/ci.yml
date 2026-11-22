@@ -75,6 +75,8 @@ jobs:
           python-version: '3.12'
       - run: python -m pip install uv==0.13.5
       - run: uv sync --frozen
+      - run: uv run --frozen python analysis/dinov3_qwen_validation.py
+      - run: uv run --frozen python -m unittest discover -s analysis/tests -p test_dinov3_qwen.py -v
       - name: Verify first-pass Qwen validation predictions and compute paired errors
         run: python analysis/qwen_validation_errors.py
       - run: uv run --frozen python -m unittest discover -s analysis -p test_qwen_q2.py -v
