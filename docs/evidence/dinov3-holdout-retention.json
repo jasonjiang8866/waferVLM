@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "run_id": "44843362544",
+  "freeze_commit_sha": "aa33e8b949e396892764a1a7503aaadc09a95fc4",
+  "freeze_sha256": "1b676ad216cc437f68718ca1e592628d2b4826e97f767c4daa8ff4ab11844202",
+  "selected_exports": {
+    "seed17-linear": "ffd76f22ac6838095cd6673a1c018369976d4c58d54ad66a1058e3928a8359f2",
+    "seed17-lora": "4cc6b86b051a079602d3791311aeb5b3b2ca51109f4404a7cc7afa9744059c6d",
+    "seed42-linear": "f1f04666e18e7eb97df127a69282f7d7ce331c0b83ee5ad1d2f5bace1c35f70a",
+    "seed42-lora": "e394ec4f7b183bda3022de1547ed7f8a3471b1a378db0fa67fdd2a2154239a68",
+    "seed123-linear": "c2f25d50d51b28ea2e156b23b883476ea7d5ccf911fef5862527b08a7eeb3bf7",
+    "seed123-lora": "325702074f26e847e65a276271b26f25b91a15888efe1068c1df91795c588abb"
+  },
+  "inner_tar_sha256": "9e9a0f3f3f0645d97235ab6c07d0b9f4e8fcc9e63d2df03c0ee9f4696d2ebc8a",
+  "artifacts": {
+    "primary": {
+      "artifact_id": 14682595469,
+      "name": "dinov3-study-holdout-44843362544",
+      "sha256": "c70e48ab4e558d038ab8b39c9bdf79c3291e9e3dedf47e15f289f634efaf5402",
+      "size_bytes": 2152945,
+      "expires_at": "2027-02-19T00:22:18Z"
+    },
+    "independent_cleanup": {
+      "artifact_id": 14682995203,
+      "name": "dinov3-study-cleanup-44843362544",
+      "sha256": "07a9544a63737ee6d90186458d028c86468deea7dcc41506bca7a2f4bffe15bf",
+      "size_bytes": 258,
+      "expires_at": "2027-02-19T00:29:32Z"
+    },
+    "intent": {
+      "artifact_id": 14681916299,
+      "name": "wafervlm-dinov3-study-v1-44843362544",
+      "sha256": "4de7fdeacf0f44f190329dd7292a22e295ef57b5ae537ed672124df0af10b1e8",
+      "size_bytes": 1346,
+      "expires_at": "2027-02-19T00:22:18Z"
+    }
+  },
+  "durable_copy": {
+    "status": "pending",
+    "location": null,
+    "verified_at": null,
+    "notes": "GitHub Actions artifacts are expiring evidence, not a durable independent copy. Choose an approved destination and verify before marking complete."
+  }
+}
