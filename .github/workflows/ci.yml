@@ -85,6 +85,10 @@ jobs:
       - run: uv run --frozen python -m unittest discover -s tests -p test_dinov3_archive.py -v
       - run: uv run --frozen python -m unittest discover -s runpod/study_tests -v
       - run: uv run --frozen python -m unittest discover -s analysis/tests -p test_dinov3_confirmation_report.py -v
+      - name: Audit committed DINO holdout evidence (CPU only, no provider access)
+        run: uv run --frozen python scripts/verify_dinov3_holdout_evidence.py
+      - name: Regression-test freeze, ledger, cleanup and retention drift (offline)
+        run: uv run --frozen python -m unittest discover -s analysis/tests -p test_dinov3_holdout_evidence.py -v
       - run: uv run --frozen wafervlm --help
       - run: python -m unittest discover -s runpod/tests -v
       - name: DINO tests remain offline with production scheduling inputs
