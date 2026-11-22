@@ -165,7 +165,7 @@ def gpu_price_caps():
 
 def quote(rate, ledger=None):
     if q2_pilot.enabled():
-        return q2_pilot.prices(rate, DISK_HOURLY)
+        return q2_pilot.prices(rate, DISK_HOURLY, ledger)
     if startup_retry() and not (evaluation() and resuming() and resume_retry() and finishing()):
         raise ValueError('Startup recovery is only valid for the final-two continuation')
     if not finite(rate, 0.001) or rate > max(gpu_price_caps().values()):
@@ -312,7 +312,7 @@ def preflight(api):
         evidence = dict(controller_sha=git("rev-parse","HEAD"), image=IMAGE,
                         anonymous_manifest_verified=verify_image_manifest(),
                         config_sha256=hashlib.sha256((ROOT / "docs/evidence/qwen-validation-area/training-pairs.json").read_bytes()).hexdigest(),
-                        ledger={"attempts": [], "usd": q2_pilot.PRIOR_USD, "seconds": q2_pilot.PRIOR_MINUTES * 60})
+                        ledger=q2_pilot.recovery_ledger())
     else:
         evidence = provenance()
         from runpod.vlm_ledger import reconcile
@@ -522,7 +522,7 @@ def cleanup(api):
                     evidence["cost"] = "unverified_no_local_intent"
                 if q2_pilot.enabled() and "started_epoch" in state:
                     evidence["within_budget"] &= estimate - q2_pilot.PRIOR_USD <= 5
-                    evidence["within_runtime"] &= elapsed <= 6000
+                    evidence["within_runtime"] &= evidence["estimated_total_seconds"] <= q2_pilot.PRIOR_MINUTES * 60 + 6000
                 save("cleanup.json", evidence)
                 if evidence.get("within_budget") is False or evidence.get("within_runtime") is False:
                     raise RuntimeError("Estimated spend or runtime exceeded authorization")
@@ -724,6 +724,8 @@ def launch(api):
             "WAFER_DATASET_SHA": json.loads((ROOT / "docs/evidence/wm811k-lot17.json").read_text())["dataset_sha256"],
         },
     }
+    if q2_pilot.enabled() and len(json.dumps(payload).encode()) > 60 * 1024:
+        raise RuntimeError("Q2 Pod payload exceeds the tested transport bound")
     if evaluation():
         payload['env'].pop('WAFER_SEED')
         if holdout():
