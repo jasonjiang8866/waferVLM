@@ -31,7 +31,7 @@ class SizeTests(unittest.TestCase):
                 config_bytes = (snapshot / 'config.json').read_bytes()
                 with (snapshot / 'model.safetensors').open('rb') as f:
                     fixture_spec = replace(spec, weights_sha256=hashlib.file_digest(f, 'sha256').hexdigest(),
-                        config_blob=hashlib.sha1(b'blob %d\0' % len(config_bytes) + config_bytes).hexdigest(),
+                        config_sha256=hashlib.sha256(config_bytes).hexdigest(),
                         parameters=sum(p.numel() for p in fixture.parameters()))
                 with patch.dict(BACKBONES, {size: fixture_spec}):
                     for mode in ('linear', 'lora'):
@@ -52,7 +52,7 @@ class SizeTests(unittest.TestCase):
                             if size == 'base':
                                 with self.assertRaisesRegex(ValueError, 'tensor'):
                                     restore_weights(restored, Path(tmp, f'small-{mode}.safetensors'))
-                with self.assertRaisesRegex(ValueError, 'configuration blob'):
+                with self.assertRaisesRegex(ValueError, 'config.json checksum'):
                     load_backbone('cpu', True, size)
-                with self.assertRaisesRegex(ValueError, 'weight checksum'):
+                with self.assertRaisesRegex(ValueError, 'model.safetensors checksum'):
                     spec.verify_file('model.safetensors', snapshot / 'model.safetensors')

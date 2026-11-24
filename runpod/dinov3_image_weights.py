@@ -9,7 +9,6 @@ from pathlib import Path
 
 from src.wafervlm.dinov3_backbones import BACKBONES
 
-SMALL_CONFIG_SHA256 = '9481247be9f95a134a5599402b4bfc838eecdf9a7fffbf4debd1c70ec213898b'
 FILES = ('config.json', 'model.safetensors')
 HF_ROOT = Path('/opt/dinov3-hf')
 LICENSE = Path('/opt/dinov3-license/LICENSE.md')
@@ -31,10 +30,8 @@ def snapshot(size='small'):
 
 def report(size='small'):
     spec = BACKBONES[size]
-    # The historical controller fingerprints Small without a local snapshot.
-    config_hash = SMALL_CONFIG_SHA256 if size == 'small' else spec.verify_file('config.json', snapshot(size) / 'config.json')
     return dict(model_id=spec.model_id, model_revision=spec.revision,
-                files_sha256={'config.json': config_hash, 'model.safetensors': spec.weights_sha256},
+                files_sha256={'config.json': spec.config_sha256, 'model.safetensors': spec.weights_sha256},
                 parameters=spec.parameters, status='weights-access-and-load-verified', paid_compute_started=False)
 
 

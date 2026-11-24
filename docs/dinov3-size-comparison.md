@@ -1,6 +1,6 @@
 # DINOv3 Small and Base on wafer maps
 
-The accepted [Small results](dinov3-holdout-results.md) cover three seeds and two adaptation methods. This extension compares the two official LVD-1689M backbones at the same 16-pixel patch size. The [registry](../src/wafervlm/dinov3_backbones.py) pins each Hub revision, the Git blob identity of its configuration, the SHA-256 of its safetensors file and its parameter count.
+The accepted [Small results](dinov3-holdout-results.md) cover three seeds and two adaptation methods. This extension compares the two official LVD-1689M backbones at the same 16-pixel patch size. The [registry](../src/wafervlm/dinov3_backbones.py) pins each Hub revision, the SHA-256 of its configuration and safetensors files and its parameter count.
 
 | Backbone | Parameters | Feature width | Classification head input |
 |---|---:|---:|---:|
