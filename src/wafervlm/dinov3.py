@@ -60,11 +60,17 @@ def load_backbone(device="cuda", local_files_only=False, backbone_size="small"):
         raise ValueError("Expected cuda or cpu")
     if device == "cuda" and (not torch.cuda.is_available() or not torch.cuda.is_bf16_supported()):
         raise ValueError("CUDA with BF16 support is required")
-    for name in ("config.json", "model.safetensors"):
-        path = hf_hub_download(spec.model_id, name, revision=spec.revision, local_files_only=local_files_only)
+    files = {name: Path(hf_hub_download(spec.model_id, name, revision=spec.revision,
+                                       local_files_only=local_files_only))
+             for name in ("config.json", "model.safetensors")}
+    for name, path in files.items():
         spec.verify_file(name, path)
+    # Use the verified snapshot path so PEFT discovery cannot query the Hub for an adapter.
+    snapshot = files["config.json"].parent
+    if files["model.safetensors"].parent != snapshot or (snapshot / "adapter_config.json").exists():
+        raise ValueError("Expected a single unadapted backbone snapshot")
     model, loading = AutoModel.from_pretrained(
-        spec.model_id, revision=spec.revision, trust_remote_code=False,
+        snapshot, trust_remote_code=False,
         local_files_only=True, use_safetensors=True, dtype=torch.float32,
         attn_implementation="sdpa", output_loading_info=True,
     )
