@@ -59,6 +59,10 @@ jobs:
     if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
     permissions:
       contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        backbone: [small, base]
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
@@ -72,6 +76,8 @@ jobs:
           file: runpod/Dockerfile.dinov3
           target: weighted
           push: false
-          build-args: SOURCE_SHA=${{ github.sha }}
+          build-args: |
+            SOURCE_SHA=${{ github.sha }}
+            DINO_BACKBONE=${{ matrix.backbone }}
           secrets: |
             hf_token=${{ secrets.HF_TOKEN }}

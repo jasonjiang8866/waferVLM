@@ -7,6 +7,7 @@ import threading
 import unittest
 import urllib.error
 import urllib.request
+from dataclasses import replace
 from contextlib import ExitStack
 from http.server import ThreadingHTTPServer
 from pathlib import Path
@@ -25,7 +26,9 @@ class EmbeddedWeightsTests(unittest.TestCase):
         data = {'config.json': b'{}', 'model.safetensors': b'synthetic test model'}
         for name, content in data.items():
             (weights/name).write_bytes(content)
-        stack.enter_context(patch.object(m, 'HASHES', {name:m.digest(weights/name) for name in data}))
+        stack.enter_context(patch.object(m, 'SMALL_CONFIG_SHA256', m.digest(weights/'config.json')))
+        stack.enter_context(patch.dict(m.BACKBONES, small=replace(m.BACKBONES['small'],
+            weights_sha256=m.digest(weights/'model.safetensors'))))
         m.LICENSE.write_text('Synthetic license for tests only\n'*50)
         m.METADATA.mkdir()
         (m.METADATA/'manifest.json').write_text(json.dumps(

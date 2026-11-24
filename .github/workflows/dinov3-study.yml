@@ -42,6 +42,12 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
+      # The accepted Small study compares its runtime byte-for-byte with its pinned image.
+      # Replay those three historical entry points while retaining the current ledger/controller.
+      - name: Materialize the frozen Small runtime for the original study
+        run: |
+          image_sha=$(python -c 'import json; print(json.load(open("configs/dinov3-confirmation.json"))["image_source_sha"])')
+          git restore --source="$image_sha" --worktree -- src/wafervlm/dinov3.py scripts/run_dinov3.py runpod/dinov3_image_weights.py
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
