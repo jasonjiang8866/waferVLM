@@ -27,6 +27,10 @@ def main():
         sub.add_argument("--device", choices=("cuda", "cpu"), default="cuda")
         sub.add_argument("--timeout-seconds", type=int, default=recipe()["max_work_seconds"])
         sub.add_argument("--child", action="store_true", help=argparse.SUPPRESS)
+    for sub in (preflight, training, evaluation):
+        sub.add_argument("--backbone-size", choices=("small", "base"),
+                         default=None if sub is evaluation else "small",
+                         help="Reload defaults to the backbone recorded in the training export")
     args = vars(parser.parse_args())
     command = args.pop("command")
     if command == "preflight":

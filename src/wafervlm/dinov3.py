@@ -9,13 +9,18 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 
+from .dinov3_backbones import BACKBONES
 from .core import LABELS, audit_dataset, checked_image, metrics, sha256_file, write_json, write_jsonl
 
 ROOT = Path(__file__).resolve().parents[2]
 
 
-def recipe():
-    return json.loads((ROOT / "configs/dinov3.json").read_text())
+def recipe(backbone_size="small"):
+    cfg = json.loads((ROOT / "configs/dinov3.json").read_text())
+    spec = BACKBONES[backbone_size]
+    if backbone_size == "small" and (cfg["model_id"], cfg["model_revision"]) != (spec.model_id, spec.revision):
+        raise ValueError("Frozen Small recipe identity mismatch")
+    return {**cfg, "model_id": spec.model_id, "model_revision": spec.revision}
 
 
 def check_data(dataset):
@@ -44,36 +49,48 @@ def preprocess(image):
     return (pixels - mean) / std
 
 
-def load_backbone(device="cuda", local_files_only=False):
+def load_backbone(device="cuda", local_files_only=False, backbone_size="small"):
     import torch
     from transformers import AutoModel
 
-    cfg = recipe()
+    from huggingface_hub import hf_hub_download
+
+    spec = BACKBONES[backbone_size]
     if device not in ("cuda", "cpu"):
         raise ValueError("Expected cuda or cpu")
     if device == "cuda" and (not torch.cuda.is_available() or not torch.cuda.is_bf16_supported()):
         raise ValueError("CUDA with BF16 support is required")
+    files = {name: Path(hf_hub_download(spec.model_id, name, revision=spec.revision,
+                                       local_files_only=local_files_only))
+             for name in ("config.json", "model.safetensors")}
+    for name, path in files.items():
+        spec.verify_file(name, path)
+    # Use the verified snapshot path so PEFT discovery cannot query the Hub for an adapter.
+    snapshot = files["config.json"].parent
+    if files["model.safetensors"].parent != snapshot or (snapshot / "adapter_config.json").exists():
+        raise ValueError("Expected a single unadapted backbone snapshot")
     model, loading = AutoModel.from_pretrained(
-        cfg["model_id"], revision=cfg["model_revision"], trust_remote_code=False,
-        local_files_only=local_files_only, dtype=torch.float32,
+        snapshot, trust_remote_code=False,
+        local_files_only=True, use_safetensors=True, dtype=torch.float32,
         attn_implementation="sdpa", output_loading_info=True,
     )
     if any(loading.get(k) for k in ("missing_keys", "unexpected_keys", "mismatched_keys", "error_msgs")):
         raise ValueError("Pretrained DINOv3 weights did not load completely")
     if (model.config.model_type != "dinov3_vit" or model.config.patch_size != 16
-            or model.config.hidden_size != 384 or model.config.num_register_tokens != 4):
-        raise ValueError("Unexpected ViT-S/16 architecture")
+            or model.config.hidden_size != spec.hidden_size or model.config.num_register_tokens != 4
+            or sum(p.numel() for p in model.parameters()) != spec.parameters):
+        raise ValueError(f"Unexpected architecture for {spec.model_id}")
     return model.to(device)
 
 
-def prepare_weights(output):
+def prepare_weights(output, backbone_size="small"):
     """CPU preflight: check gated access and fingerprint the pinned official weights."""
     from huggingface_hub import hf_hub_download
     from .experiment import new_output, seal_output
-    cfg = recipe()
+    cfg = recipe(backbone_size)
     files = {name: Path(hf_hub_download(cfg["model_id"], name, revision=cfg["model_revision"]))
              for name in ("config.json", "model.safetensors")}
-    model = load_backbone("cpu", local_files_only=True)
+    model = load_backbone("cpu", local_files_only=True, backbone_size=backbone_size)
     output = new_output(output)
     report = {"model_id": cfg["model_id"], "model_revision": cfg["model_revision"],
               "files_sha256": {name: sha256_file(path) for name, path in files.items()},
@@ -160,10 +177,11 @@ def restore_weights(model, path):
     parameters = {n: p for n, p in model.named_parameters() if p.requires_grad}
     if set(state) != set(parameters):
         raise ValueError("Classifier/adapter tensor coverage mismatch")
+    for name, tensor in state.items():
+        if tensor.shape != parameters[name].shape or not torch.isfinite(tensor).all():
+            raise ValueError("Invalid saved classifier/adapter tensor")
     with torch.no_grad():
         for name, tensor in state.items():
-            if tensor.shape != parameters[name].shape or not torch.isfinite(tensor).all():
-                raise ValueError("Invalid saved classifier/adapter tensor")
             parameters[name].copy_(tensor)
 
 
@@ -227,12 +245,12 @@ def predict(model, dataset, rows, device, batch_size=8, deadline=None):
 
 
 def train(dataset, output, mode, seed=17, learning_rate=None, epochs=None, device="cuda",
-          timeout_seconds=None):
+          timeout_seconds=None, backbone_size="small"):
     import torch
     from transformers import set_seed
     from .experiment import new_output, provenance, seal_output
 
-    cfg = recipe()
+    cfg = recipe(backbone_size)
     epochs = cfg["epochs"] if epochs is None else epochs
     cap = cfg["max_work_seconds"] if timeout_seconds is None else timeout_seconds
     rates = cfg.get(f"{mode}_learning_rates", [])
@@ -248,7 +266,7 @@ def train(dataset, output, mode, seed=17, learning_rate=None, epochs=None, devic
     deadline = started + cap
     try:
         set_seed(seed)
-        backbone = load_backbone(device)
+        backbone = load_backbone(device, backbone_size=backbone_size)
         model = make_classifier(backbone, mode, cfg["rank"])
         counts = assert_trainable(model)
         config = {**cfg, "mode": mode, "seed": seed, "epochs": epochs,
@@ -330,7 +348,7 @@ def train(dataset, output, mode, seed=17, learning_rate=None, epochs=None, devic
     return output
 
 
-def evaluate(dataset, trained, output, device="cuda"):
+def evaluate(dataset, trained, output, device="cuda", backbone_size=None):
     """Reload selected weights and measure validation at batch size one."""
     import torch
     from huggingface_hub import try_to_load_from_cache
@@ -341,18 +359,22 @@ def evaluate(dataset, trained, output, device="cuda"):
     trained = Path(trained)
     hashes = verify_tree(trained)
     info = json.loads((trained / "run.json").read_text())
-    cfg = recipe()
+    if backbone_size is None:
+        backbone_size = next((key for key, spec in BACKBONES.items() if spec.model_id == info["model_id"]), None)
+        if backbone_size is None:
+            raise ValueError("Unknown training backbone")
+    cfg = recipe(backbone_size)
     if (json.loads((trained / "status.json").read_text())["status"] != "completed"
             or info["model_id"] != cfg["model_id"] or info["model_revision"] != cfg["model_revision"]
             or info["dataset_sha256"] != cfg["dataset_sha256"]
             or info["validation_sha256"] != cfg["validation_sha256"]):
         raise ValueError("Training result identity or completion mismatch")
     run = info["config"]
-    for key in ("image_size", "image_mean", "image_std", "pooling", "rank"):
+    for key in ("model_id", "model_revision", "image_size", "image_mean", "image_std", "pooling", "rank"):
         if run[key] != cfg[key]:
             raise ValueError("Training preprocessing/adapter recipe differs: " + key)
     set_seed(run["seed"])
-    model = make_classifier(load_backbone(device), run["mode"], run["rank"])
+    model = make_classifier(load_backbone(device, backbone_size=backbone_size), run["mode"], run["rank"])
     cached = try_to_load_from_cache(cfg["model_id"], "model.safetensors", revision=cfg["model_revision"])
     base_digest = sha256_file(cached) if isinstance(cached, str) else None
     if base_digest != info["base_weights_sha256"] or (device == "cuda" and base_digest is None):
