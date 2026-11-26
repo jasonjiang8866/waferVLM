@@ -28,7 +28,7 @@ Use the frozen 790/160 split, full 256×256 images, batch 8, ten epochs (990 upd
 3. Compare Base-LoRA minus Small-LoRA macro-F1 within seed. Report Base-linear minus Small-linear, accuracy, per-class recall, rescued and newly missed loc IDs, trainable parameters, elapsed training time, throughput, peak allocation and lifecycle cost.
 4. Freeze endpoint hashes and analysis before scoring on the published 148 maps / 143 lots. Use 10,000 paired lot bootstrap resamples with seed 20261110 and eight fixed classes, scoring undefined F1 as zero. Independent confirmation of a size benefit requires a fresh lot-disjoint set checked for duplicate images.
 
-This change covers CPU compatibility. A GPU launch and size-comparison accuracy results are subsequent work.
+The [completed seed-17 RTX 4090 comparison](showcase/dinov3-size17/README.md) includes the four selected exports, validation metrics, paired predictions and independent cleanup. Base seeds 42 and 123 and the size comparison on unseen lots remain pending.
 
 ## Seed-17 GPU validation
 

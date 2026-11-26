@@ -1,0 +1,17 @@
+id,image_sha256,label,seed17-step200,seed17-step250,seed42-step200,seed42-step250,seed123-step200,seed123-step250,small-linear,base-linear,small-lora,base-lora
+0ae15163863765ba0c40815d,1206d710ee220d676590897b154ce325dcb5446228fe51163d7ef5cd1ae891ee,donut,center,center,center,center,center,center,loc,loc,loc,loc
+0dba1dc3f2c5cf63eda306ba,5b3f9ecc7c9a81f56d27c4033efaf384464074872fa1dbddd448bd1ad55f8455,loc,center,center,center,center,center,center,loc,loc,loc,loc
+22c61f53f1f5786e9fb394b8,b7cf9719adc1a171af632bc79bc8cc1dce6e227103bc8155a85a0da0d53f7844,random,near-full,near-full,near-full,near-full,near-full,near-full,near-full,near-full,near-full,near-full
+38dd30111d9a15f20ad272cc,5e62ee85dde127aadbbc8eebfac6b20a39cf6c49f47b58534857300c7788431b,loc,edge-loc,edge-loc,random,random,edge-loc,edge-loc,loc,loc,loc,loc
+3d0f3c97b77fd687704cb68a,934b76446a6e0b6a38225971394c1b0df8614d7b347a15363740c7a8ec7f663b,center,donut,donut,donut,donut,donut,donut,donut,donut,donut,donut
+50773a965c423a8290e617f2,d2b93a55b5252c477a0828d0b8f0deec50802a2b68cc2e27aa7e272bae52d708,loc,near-full,near-full,near-full,center,near-full,near-full,near-full,loc,near-full,loc
+625616319fe4ef10abe36968,d259c7dd6b3eac8663298f4ddd56680652037d89f09426a09273526b664a9cdf,scratch,loc,donut,center,center,donut,donut,scratch,loc,scratch,scratch
+642e22bf368a2c29385b9a83,714b463914aeae76285c53d6012774f771f9dd0ce58da4e33db10f83f3ff39ef,center,near-full,near-full,near-full,donut,near-full,near-full,near-full,loc,near-full,near-full
+aac6e9a0b3b5aa660ce62121,438f8e5f6a109f9c44463f19b2758365d98f190ea7f8f6f23d10cb8e30263965,loc,random,donut,random,random,random,donut,edge-loc,edge-loc,edge-loc,edge-loc
+be8bdd8417b86a07da6a61f2,6177091954cdc5aaeba66e8941c18cb44811d3d6afae671d3367d5f1dc78b314,loc,edge-loc,scratch,scratch,scratch,edge-loc,scratch,scratch,loc,scratch,scratch
+bf21211701b00bf2d683bacb,e349926c0e7c66560204c6125207329226d548c9e62cf06cec819ebd9cf824f5,edge-loc,near-full,near-full,random,random,edge-ring,edge-ring,donut,donut,donut,donut
+c2f25e94909a48c9ba5042ef,e9b62040e5f4ada8660f188e80aa059a1e6884d6ddf6db83ec067c591849138d,edge-loc,loc,loc,loc,center,loc,loc,edge-loc,edge-loc,edge-loc,edge-loc
+c882bea412b6513af0935266,d01eb8461e39fd85f6e2bc4a4a7f95a68a9abf587d3241132e7c3eb397f7855f,loc,edge-loc,edge-loc,edge-loc,scratch,edge-loc,edge-loc,edge-loc,edge-loc,scratch,scratch
+dd855c3b619057c30af18ade,00c79e18e2812c2cd46134b68037a1b4dc172f65a8c2944a722fd074ea6f5c09,loc,random,donut,random,random,edge-loc,edge-loc,loc,loc,loc,loc
+ddc10f023d1480284b53af51,4c01c1c9a95ad37d4b25f78472c4a470d5b6c4afdeec6530bab9d6e6a98b4b25,donut,loc,loc,loc,loc,loc,loc,donut,donut,donut,donut
+f5ca2de48af4e569a3ce1c2b,e93dac68255f566c7e1de8a5f68e08f483272d2a0fd1a862d0bac8e4f2f779ba,edge-ring,edge-loc,edge-loc,edge-loc,center,edge-loc,edge-loc,edge-ring,edge-ring,edge-loc,edge-loc

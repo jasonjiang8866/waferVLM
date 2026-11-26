@@ -1,0 +1,12 @@
+{
+  "status": "verified_absent",
+  "run_id": "45728043478",
+  "checks": 3,
+  "persistent_volumes_created": false,
+  "checked_epoch": 1795653674.8354468,
+  "elapsed_billing_bound_s": 1119.458574771881,
+  "estimated_usd": 0.2795314714980977,
+  "cumulative_estimated_usd": 1.9499480599446901,
+  "cumulative_runtime_bound_s": 6727.914556503296,
+  "within_cap": true
+}

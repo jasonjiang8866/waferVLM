@@ -1,0 +1,57 @@
+{
+  "run_id": "45728043478",
+  "controller_sha": "3298bc4a40e65219f87a427a0a36bf4de5bceb4f",
+  "image_source_sha": "c255bec677ba4b525e4997af60d9020592e15a46",
+  "image": "ghcr.io/jasonjiang8866/wafervlm@sha256:d64ef98a018ce25d41add6a8c3a65225ab83f22addb16ab47959e0c5b01ab329",
+  "phase": "size17",
+  "gpu": "NVIDIA GeForce RTX 4090",
+  "regions": [
+    "EU-CZ-1",
+    "EU-RO-1",
+    "EUR-IS-1",
+    "EUR-IS-2",
+    "EUR-NO-1",
+    "US-CA-2",
+    "US-IL-1"
+  ],
+  "cost": {
+    "gpu_hourly_usd": 0.89,
+    "disk_hourly_usd": 0.008928571428571428,
+    "work_seconds": 2700,
+    "cleanup_seconds": 600,
+    "maximum_estimated_usd": 0.8240178571428571,
+    "approved_total_usd": 10,
+    "approved_total_seconds": 30000
+  },
+  "ledger": {
+    "usd": 1.6704165884465925,
+    "seconds": 5608.455981731415,
+    "remaining_usd": 8.329583411553408,
+    "remaining_seconds": 24391.544018268585,
+    "basis": "intent-through-verified-absence estimate; not provider invoice",
+    "attempts": [
+      "44526240351",
+      "44528940006",
+      "44530840974",
+      "44533432837",
+      "44535674111",
+      "44537796019",
+      "44543065761",
+      "44545881009",
+      "44548327386",
+      "44553165505",
+      "44555689478",
+      "44843362544",
+      "45726315361"
+    ]
+  },
+  "plan_sha256": "dd063d8add284fb7890e983b5090b0f697042e92c8a8cc09e0ae26e75518de67",
+  "overlay_sha256": "e20a110c2d41b6b949204836eaf3f556d1db61088747ee86532eb4bfe6e84163",
+  "input_artifact": {
+    "model": "facebook/dinov3-vitb16-pretrain-lvd1689m",
+    "revision": "5931719e67bbdb9737e363e781fb0c67687896bc",
+    "sha256": "9a21ac3df0c63839d62612dda6f454d816c25611cc7a52966ed5a5a94921dc8b"
+  },
+  "frozen_sha256": null,
+  "selection_reason": "explicit approved GPU"
+}
