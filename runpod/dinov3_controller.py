@@ -332,14 +332,16 @@ def cleanup(api):
     raise RuntimeError('Pod deletion unverified; reconcile immediately')
 
 
-def upload_weights(url, token, files, result, record_progress=None):
+def upload_weights(url, token, files, result, record_progress=None, *, base_transfer=False):
     record_progress = record_progress or save
+    chunk_size = 1024**2 if base_transfer else UPLOAD_CHUNK_BYTES
+    retry_status = {408, 429, 404} if base_transfer else {408, 429}
     for name, path in files.items():
         if name in result.get('received', []):
             continue
         total, offset = path.stat().st_size, 0
         with path.open('rb') as data:
-            while block := data.read(UPLOAD_CHUNK_BYTES):
+            while block := data.read(chunk_size):
                 for attempt in range(3):
                     record = dict(file=name, offset=offset, size=len(block), total=total, attempt=attempt+1)
                     req = urllib.request.Request(url + '/weights/' + name, data=block, method='PUT', headers={
@@ -357,7 +359,19 @@ def upload_weights(url, token, files, result, record_progress=None):
                         status = exc.code if isinstance(exc, urllib.error.HTTPError) else None
                         record_progress('transfer.json', dict(**record, status='failed', http_status=status,
                                                   error_type=type(exc).__name__))
-                        if attempt == 2 or (status is not None and status not in {408, 429} and status < 500):
+                        if isinstance(exc, urllib.error.HTTPError):
+                            exc.close()
+                        if base_transfer and status == 404:
+                            # Only record whether the authenticated worker is reachable.
+                            # The proxy response and worker payload can contain private details.
+                            try:
+                                observation = request(url + '/result', token=token)
+                                waiting = observation.get('phase') == 'await-base'
+                                health = 'await-base' if waiting else 'worker-responded'
+                            except RuntimeError:
+                                health = 'unreachable'
+                            record_progress('transfer-404.json', dict(**record, worker_health=health))
+                        if attempt == 2 or (status is not None and status not in retry_status and status < 500):
                             raise
                         time.sleep(2 * (attempt + 1))
                 offset += len(block)

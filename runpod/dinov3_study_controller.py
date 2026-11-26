@@ -396,7 +396,7 @@ def launch(api):
             if phase in SIZE_PHASES and current == 'await-base' and 'base' not in delivered:
                 from runpod.dinov3_size17 import base_files
                 stage('deliver_pinned_base')
-                upload_weights(url,token,base_files(),result,record_progress=save)
+                upload_weights(url,token,base_files(),result,record_progress=save,base_transfer=True)
                 delivered.add('base')
             desired=result.get('input_request')
             if desired and desired.get('nonce') not in delivered:
