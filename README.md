@@ -65,6 +65,10 @@ Selected learning rates: linear **0.003** (epoch 10); LoRA **0.0001**, head **0.
 
 [Full six-trial results, reload differences and cost evidence](docs/dinov3-seed17-results.md) · [Complete predictions and class probabilities in Git](docs/showcase/dinov3-seed17/README.md#complete-predictions-and-probabilities) · [Download selected heads/adapters and complete run evidence](https://github.com/jasonjiang8866/waferVLM/actions/runs/43716864164/artifacts/14163676440) (Actions retention: 2027-02-13).
 
+## Does a larger DINOv3 improve wafer classification?
+
+On the same RTX 4090, seed 17 and 160 development maps, ViT-S/16 LoRA classified **140/160** correctly (macro-F1 **0.8731**), and ViT-B/16 LoRA classified **144/160** correctly (**0.9003**). The paired macro-F1 difference was **+0.0272**. The comparison covers a single seed on the split used for epoch selection. [Four-arm results, loc changes and predictions](docs/showcase/dinov3-size17/README.md).
+
 ## DINOv3 across training seeds
 
 The 2026-11-19 confirmation completed **18/18 fresh-process validation passes** on an RTX 4090. LoRA improves accuracy and macro-F1 in all three seeds; seeds 42/123 use the frozen seed-17 learning rates and training budget. Repeated processes have zero label changes for each fixed model.
@@ -255,7 +259,7 @@ Individual stages are available through `wafervlm evaluate`, `train` and `compar
 
 ## RunPod
 
-**DINOv3 has a separate US$10 / 500-minute authorization.** Through the completed three-seed validation and accepted holdout evaluation (including five earlier failed holdout attempts), conservative cumulative usage is **US$1.6704166 / 93.4743 minutes**. The accepted holdout run adds **US$0.0788806 / 5.2650 minutes**. The latest Pod is independently verified absent; no persistent volume was created. These are lifecycle estimates, not invoices. See [DINO cost and cleanup evidence](docs/dinov3-holdout-results.md#execution-cost-and-cleanup) and the [original seed-17 receipt](docs/dinov3-seed17-results.md#cost-and-cleanup).
+**DINOv3 has a separate US$10 / 500-minute authorization.** Through the seed-17 Small/Base pilot, cumulative lifecycle usage is estimated at **US$1.9499 / 112.13 minutes**, including earlier attempts. The four-arm pilot used **US$0.2795 / 18.66 minutes**. The [size report](docs/showcase/dinov3-size17/README.md) links the independent Pod cleanup. [Earlier holdout costs](docs/dinov3-holdout-results.md#execution-cost-and-cleanup) and [the original seed-17 receipt](docs/dinov3-seed17-results.md#cost-and-cleanup) remain available.
 
 See [runpod/README.md](runpod/README.md) for the extended US$30 /1,100-minute total experiment authorization, per-GPU price caps, pinned published image, data verification and cleanup design. `RUNPOD_API_KEY` stays in the Actions controller; neither the training code nor the worker receives it. Host filtering uses `minCudaVersion=12.8`, never an exact 12.8 requirement. The Broker remains GET-only; the separate waferVLM controller implements the paid lifecycle. Merging code does not launch compute: the GPU workflow requires a manual dispatch, exact main SHA and an unused authorization marker. The lower-LR continuation completed step 200 and its temporary Pod deletion was independently verified. Results and full recovery files are preserved in the [checkpoint-200 Release](https://github.com/jasonjiang8866/waferVLM/releases/tag/checkpoint-200-v1). After both diagnostics and the completed 200→300 continuation, conservative cumulative usage is **US$5.903039 / 491.911 minutes** within **US$30 / 1,100 minutes**. The continuation Pod is verified absent by primary and independent cleanup. See the [continuation cost and cleanup evidence](docs/continuation-300-results.md#cleanup-and-cost-ledger). The consumed authorization marker remains guarded; publishing results does not launch compute.
 
