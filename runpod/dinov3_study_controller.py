@@ -26,6 +26,7 @@ ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / 'dinov3-study-results'
 AUTH = 'wafervlm-dinov3-study-v1'
 BASE = f'https://api.github.com/repos/{REPOSITORY}'
+SIZE_PHASES = ('size17', 'size-confirmation')
 GPU_CAPS = {'NVIDIA GeForce RTX 4090': .89, 'NVIDIA GeForce RTX 5090': 1.39}
 DISK_GB = 60
 DISK_RATE = DISK_GB * .10 / (28 * 24)
@@ -114,7 +115,7 @@ def manual_guard():
     sha = subprocess.check_output(['git','rev-parse','HEAD'], cwd=ROOT, text=True).strip()
     if (os.environ.get('GITHUB_EVENT_NAME') != 'workflow_dispatch' or os.environ.get('GITHUB_REF') != 'refs/heads/main'
             or os.environ.get('GITHUB_RUN_ATTEMPT') != '1' or os.environ.get('CONFIRM_PAID') != 'true'
-            or os.environ.get('EXPECTED_SHA') != sha or os.environ.get('DINO_PHASE') not in ('validation','holdout','size17')):
+            or os.environ.get('EXPECTED_SHA') != sha or os.environ.get('DINO_PHASE') not in ('validation','holdout',*SIZE_PHASES)):
         raise ValueError('First manual dispatch and exact reviewed main required')
     if request(BASE + '/git/ref/heads/main', token=os.environ['GH_TOKEN'])['object']['sha'] != sha:
         raise ValueError('Main moved before dispatch')
@@ -140,7 +141,7 @@ def overlay(phase):
     files = ['runpod/dinov3_study.py','runpod/dinov3_study_worker.py','configs/dinov3-confirmation.json',
              'docs/showcase/dinov3-seed17/validation.jsonl']
     worker = 'runpod.dinov3_study_worker'
-    if phase == 'size17':
+    if phase in SIZE_PHASES:
         files = ['runpod/dinov3_study.py','configs/dinov3-confirmation.json',*SIZE_RUNTIME]
         worker = 'runpod.dinov3_size_worker'
     elif phase == 'holdout':
@@ -197,7 +198,7 @@ def preflight(api):
     save('ledger.json', ledger)
     stage('runtime_files')
     for name in RUNTIME_FILES:
-        if phase == 'size17' and name in {*SIZE_RUNTIME, 'runpod/dinov3_image_weights.py'}:
+        if phase in SIZE_PHASES and name in {*SIZE_RUNTIME, 'runpod/dinov3_image_weights.py'}:
             # Training/HTTP modules are hash-bound by the overlay. The pinned image's
             # original image verifier checks its original embedded Small fingerprint.
             continue
@@ -210,12 +211,15 @@ def preflight(api):
     image_provenance(p['image'], p['image_source_sha'])
     stage('input_artifact')
     weight_fingerprint()
-    if phase == 'size17':
+    if phase in SIZE_PHASES:
         from runpod.dinov3_size17 import base_files, GPU
         from wafervlm.dinov3_backbones import BACKBONES
         base_files()  # Rehash staged bytes before any provider create call.
         pin = dict(model=BACKBONES['base'].model_id, revision=BACKBONES['base'].revision,
                    sha256=BACKBONES['base'].weights_sha256)
+        if phase == 'size-confirmation':
+            from runpod.dinov3_size_confirmation import stage_baselines
+            pin['small_comparators'] = stage_baselines()
         if os.environ.get('DINO_GPU_CHOICE') != GPU:
             raise ValueError('Size comparison requires explicit RTX 4090')
     else:
@@ -389,7 +393,7 @@ def launch(api):
             if current!=last and isinstance(current,str) and re.fullmatch('[a-z0-9_-]{1,50}',current):
                 print('DINO study phase: '+current,flush=True);last=current
                 save('worker-status.json',{k:result[k] for k in ('status','phase','error_type','failed_phase') if k in result})
-            if phase == 'size17' and current == 'await-base' and 'base' not in delivered:
+            if phase in SIZE_PHASES and current == 'await-base' and 'base' not in delivered:
                 from runpod.dinov3_size17 import base_files
                 stage('deliver_pinned_base')
                 upload_weights(url,token,base_files(),result,record_progress=save)
@@ -412,9 +416,15 @@ def launch(api):
                     worker=json.loads((root/'worker.json').read_text())
                     if any(worker.get(k)!=spec[k] for k in ('controller_sha','image_source_sha','image','plan_sha256','overlay_sha256')):
                         raise ValueError('Worker provenance differs from launch')
-                    if phase == 'size17':
+                    if phase in SIZE_PHASES:
                         from runpod.dinov3_size17 import verify
-                        accepted = verify(root,spec)
+                        if worker.get('phase') != phase:
+                            raise ValueError('Size worker phase mismatch')
+                        small_archive = None
+                        if phase == 'size-confirmation':
+                            from runpod.dinov3_size_confirmation import archive_path
+                            small_archive = archive_path()
+                        accepted = verify(root,spec,small_archive)
                     else:
                         accepted=verify_results(root,phase,spec)
                 accepted['archive_sha256']=sha;save('acceptance.json',accepted)

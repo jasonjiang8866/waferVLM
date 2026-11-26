@@ -14,7 +14,7 @@ on:
       phase:
         description: 'Holdout requires six weight hashes already committed'
         type: choice
-        options: [validation, holdout, size17]
+        options: [validation, holdout, size17, size-confirmation]
         default: validation
       gpu:
         description: 'auto checks 4090 first, then approved 5090; CUDA >=12.8'
@@ -49,7 +49,7 @@ jobs:
       # The accepted Small study compares its runtime byte-for-byte with its pinned image.
       # Replay those three historical entry points while retaining the current ledger/controller.
       - name: Materialize the frozen Small runtime for the original study
-        if: inputs.phase != 'size17'
+        if: inputs.phase == 'validation' || inputs.phase == 'holdout'
         run: |
           image_sha=$(python -c 'import json; print(json.load(open("configs/dinov3-confirmation.json"))["image_source_sha"])')
           git restore --source="$image_sha" --worktree -- src/wafervlm/dinov3.py scripts/run_dinov3.py runpod/dinov3_image_weights.py runpod/dinov3_worker.py
@@ -60,8 +60,11 @@ jobs:
       - run: uv sync --frozen
       - name: Offline study contract tests
         run: uv run --frozen python -m unittest discover -s runpod/study_tests -p test_dino_study.py -v
+      - name: Check size worker and acceptance contract
+        if: inputs.phase == 'size17' || inputs.phase == 'size-confirmation'
+        run: uv run --frozen python -m unittest discover -s runpod/study_tests -p test_dino_size17.py -v
       - name: Stage the pinned Base files on the runner before paid allocation
-        if: inputs.phase == 'size17'
+        if: inputs.phase == 'size17' || inputs.phase == 'size-confirmation'
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: uv run --frozen --with huggingface-hub==1.33.0 python -m runpod.dinov3_size17 stage
