@@ -67,6 +67,29 @@ class TransferTests(unittest.TestCase):
             self.assertEqual(json.loads((output/'transfer.json').read_text())['status'],'acknowledged')
         self.exchange(Proxy,action)
 
+    def test_base_transfer_replays_the_same_range_after_a_proxy_404(self):
+        class Proxy(w.Handler):
+            ranges = []
+            def do_PUT(self):
+                if self.path == '/weights/model.safetensors':
+                    self.ranges.append(self.headers['Content-Range'])
+                    if len(self.ranges) == 1:
+                        self.rfile.read(int(self.headers['Content-Length']))
+                        self.send_error(404)
+                        return
+                super().do_PUT()
+
+        def action(url, paths, cache, output):
+            with patch.object(c.time, 'sleep'):
+                c.upload_weights(url, 'local-test-only', paths, {}, base_transfer=True)
+            self.assertEqual(Proxy.ranges[0], Proxy.ranges[1])
+            self.assertTrue(Proxy.ranges[0].startswith('bytes 0-1048575/'))
+            self.assertEqual((cache/'model.safetensors').read_bytes(), paths['model.safetensors'].read_bytes())
+            self.assertTrue(w.READY.is_set())
+            observation = json.loads((output/'transfer-404.json').read_text())
+            self.assertEqual(observation['worker_health'], 'worker-responded')
+        self.exchange(Proxy, action)
+
     def test_http_failure_is_diagnostic_without_token_or_response_body(self):
         class Reject(w.Handler):
             def do_PUT(self): self.send_error(413,'unsafe response body')
