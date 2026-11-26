@@ -48,7 +48,7 @@ class HoldoutEvidenceTests(unittest.TestCase):
 
     def test_insufficient_independent_cleanup_detected(self):
         self.change(RECEIPT, lambda d: d["independent"]["cleanup"].update(checks=1))
-        self.change(LEDGER, lambda d: d["attempts"][-1]["independent"]["cleanup"].update(checks=1))
+        self.change(LEDGER, lambda d: next(r for r in d["attempts"] if str(r["run_id"]) == "44843362544")["independent"]["cleanup"].update(checks=1))
         with self.assertRaisesRegex(ValueError, "Insufficient consecutive"):
             verify_repository(self.root)
 
