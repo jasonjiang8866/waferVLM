@@ -74,8 +74,11 @@ def verify_repository(root=ROOT):
     attempts = ledger["attempts"]
     ids = [str(a["run_id"]) for a in attempts]
     require(len(attempts) >= 2 and len(ids) == len(set(ids))
-            and ids[-1] == run_id, "Ledger history changed or reused")
-    last = attempts[-1]
+            and run_id in ids, "Ledger history changed or reused")
+    index = ids.index(run_id)
+    require(index > 0 and ids[:index] == spec["ledger"]["attempts"],
+            "Ledger prefix at the frozen holdout run differs")
+    last = attempts[index]
     for key in ("run_id", "controller_sha", "conclusion", "artifact_id",
                 "zip_sha256", "cleanup", "independent"):
         require(last[key] == receipt[key], f"Ledger/receipt {key} differs")
@@ -94,7 +97,7 @@ def verify_repository(root=ROOT):
             and 0 < first["estimated_usd"] < ledger["approved_usd"]
             and 0 < first["elapsed_billing_bound_s"] < ledger["approved_seconds"],
             "Unbounded allocation cost/duration")
-    previous = attempts[-2]["cleanup"]
+    previous = attempts[index - 1]["cleanup"]
     require(equal_number(previous["cumulative_estimated_usd"], spec["ledger"]["usd"])
             and equal_number(previous["cumulative_runtime_bound_s"], spec["ledger"]["seconds"])
             and equal_number(first["cumulative_estimated_usd"],
