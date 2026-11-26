@@ -29,3 +29,9 @@ Use the frozen 790/160 split, full 256×256 images, batch 8, ten epochs (990 upd
 4. Freeze endpoint hashes and analysis before scoring on the published 148 maps / 143 lots. Use 10,000 paired lot bootstrap resamples with seed 20261110 and eight fixed classes, scoring undefined F1 as zero. Independent confirmation of a size benefit requires a fresh lot-disjoint set checked for duplicate images.
 
 This change covers CPU compatibility. A GPU launch and size-comparison accuracy results are subsequent work.
+
+## Seed-17 GPU validation
+
+On the DINO study workflow select `size17`, the exact main SHA and `NVIDIA GeForce RTX 4090`. The existing DINO ledger, inventory checks, one-create receipt, independent cleanup and 45-minute work / 10-minute cleanup bounds apply. Small comes from the pinned historical image. Actions stages and hashes Base before allocation, then sends the two pinned files to the temporary Pod through the authenticated chunk endpoint. The credential stays on the runner. The overlay digest binds the new training source separately from the underlying image.
+
+All four arms share one Pod. Primary metrics use the selected epoch's batch-8 development predictions. Acceptance rechecks the 160 sample identities, all eight probabilities, 990 updates, 7,900 presentations, earliest best epoch and selected weight hashes. The archive retains the four exports. The report includes both paired accuracy tables, macro-F1 deltas, loc IDs in each outcome, timing and peak training allocation.
