@@ -52,11 +52,19 @@ class Handler(BaseHTTPRequestHandler):
     def authorized(self):
         return hmac.compare_digest(self.headers.get('Authorization', ''), 'Bearer ' + TOKEN)
 
+    weight_limits = FILES
+
+    def upload_root(self):
+        return cache_root()
+
+    def allows_upload(self):
+        return os.environ.get('DINO_WEIGHTS_MODE') != 'embedded'
+
     def do_PUT(self):
         if not self.authorized():
             self.send_error(403)
             return
-        if os.environ.get('DINO_WEIGHTS_MODE') == 'embedded':
+        if not self.allows_upload():
             self.send_error(405)
             return
         name = self.path.removeprefix('/weights/')
@@ -69,14 +77,14 @@ class Handler(BaseHTTPRequestHandler):
             self.send_error(400)
             return
         start, end, total = map(int, span.groups())
-        if not (0 <= start <= end < total <= FILES[name] and end-start+1 == size
+        if not (0 <= start <= end < total <= self.weight_limits[name] and end-start+1 == size
                 and 0 < size <= UPLOAD_CHUNK_BYTES):
             self.send_error(400)
             return
         # Read at most one bounded chunk. Commit only authenticated, hash-checked
         # bytes. Replaying an acknowledged chunk is safe after a lost response.
         with LOCK:
-            target = cache_root() / name
+            target = self.upload_root() / name
             target.parent.mkdir(parents=True, exist_ok=True)
             temporary = target.with_suffix('.upload')
             self.connection.settimeout(45)
@@ -104,7 +112,7 @@ class Handler(BaseHTTPRequestHandler):
                         temporary.unlink()
                         raise ValueError('weight_hash_mismatch')
                     temporary.replace(target)
-                    STATE['received'] = [n for n in FILES if (cache_root() / n).is_file()]
+                    STATE['received'] = [n for n in FILES if (self.upload_root() / n).is_file()]
                     if len(STATE['received']) == len(FILES):
                         READY.set()
             except Exception:

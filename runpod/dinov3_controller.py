@@ -332,7 +332,8 @@ def cleanup(api):
     raise RuntimeError('Pod deletion unverified; reconcile immediately')
 
 
-def upload_weights(url, token, files, result):
+def upload_weights(url, token, files, result, record_progress=None):
+    record_progress = record_progress or save
     for name, path in files.items():
         if name in result.get('received', []):
             continue
@@ -350,11 +351,11 @@ def upload_weights(url, token, files, result):
                         with urllib.request.build_opener(NoRedirect).open(req, timeout=45) as response:
                             if response.status != 204:
                                 raise ValueError('Weight delivery not acknowledged')
-                        save('transfer.json', dict(**record, status='acknowledged'))
+                        record_progress('transfer.json', dict(**record, status='acknowledged'))
                         break
                     except (urllib.error.URLError, TimeoutError, OSError) as exc:
                         status = exc.code if isinstance(exc, urllib.error.HTTPError) else None
-                        save('transfer.json', dict(**record, status='failed', http_status=status,
+                        record_progress('transfer.json', dict(**record, status='failed', http_status=status,
                                                   error_type=type(exc).__name__))
                         if attempt == 2 or (status is not None and status not in {408, 429} and status < 500):
                             raise
