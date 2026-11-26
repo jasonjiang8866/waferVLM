@@ -195,6 +195,7 @@ def preflight(api):
     stage('ledger')
     ledger = reconcile(run)
     save('ledger.json', ledger)
+    stage('runtime_files')
     for name in RUNTIME_FILES:
         if phase == 'size17' and name in {*SIZE_RUNTIME, 'runpod/dinov3_image_weights.py'}:
             # Training/HTTP modules are hash-bound by the overlay. The pinned image's
@@ -202,6 +203,8 @@ def preflight(api):
             continue
         old = subprocess.check_output(['git','show',p['image_source_sha']+':'+name], cwd=ROOT)
         if old != (ROOT/name).read_bytes():
+            save('runtime-mismatch.json', dict(path=name, pinned_sha256=hashlib.sha256(old).hexdigest(),
+                                               runner_sha256=hashlib.sha256((ROOT/name).read_bytes()).hexdigest()))
             raise ValueError('Runtime differs from pinned DINO image: '+name)
     stage('image')
     image_provenance(p['image'], p['image_source_sha'])
