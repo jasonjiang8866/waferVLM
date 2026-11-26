@@ -1,4 +1,5 @@
 name: Qwen Q2 matched-area training pilot
+run-name: Qwen Q2 ${{ inputs.confirm_paid && 'paid' || 'preflight' }} [${{ inputs.request_id || github.run_id }}]
 on:
   workflow_dispatch:
     inputs:
@@ -7,18 +8,42 @@ on:
         type: boolean
         default: false
         required: true
+      request_id:
+        description: 'Optional operator request ID for matching an ambiguous dispatch'
+        type: string
+        required: false
       expected_sha:
-        description: 'Reviewed main commit SHA'
+        description: 'Reviewed commit SHA for the selected ref'
         type: string
         required: true
 permissions:
   contents: read
   actions: read
 concurrency:
-  group: wafervlm-paid-usd20
+  group: ${{ inputs.confirm_paid && 'wafervlm-paid-usd20' || format('qwen-q2-preflight-{0}', github.run_id) }}
   cancel-in-progress: false
 jobs:
+  dispatch-receipt:
+    runs-on: ubuntu-24.04
+    permissions: {}
+    timeout-minutes: 2
+    env:
+      REQUEST_ID: ${{ inputs.request_id }}
+      EXPECTED_SHA: ${{ inputs.expected_sha }}
+      CONFIRM_PAID: ${{ inputs.confirm_paid }}
+    steps:
+      - name: Record dispatch identity and verify the selected revision
+        shell: bash
+        run: |
+          set -eu
+          [[ -z "$REQUEST_ID" || "$REQUEST_ID" =~ ^[a-zA-Z0-9_-]{1,80}$ ]]
+          printf 'Run URL: %s/%s/actions/runs/%s\nRevision: %s\nRequest: %s\nPaid requested: %s\n' \
+            "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID" \
+            "$GITHUB_SHA" "${REQUEST_ID:-$GITHUB_RUN_ID}" "$CONFIRM_PAID" >> "$GITHUB_STEP_SUMMARY"
+          [[ "$EXPECTED_SHA" == "$GITHUB_SHA" ]]
+          [[ "$CONFIRM_PAID" == false || "$GITHUB_REF" == refs/heads/main ]]
   experiment:
+    needs: dispatch-receipt
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     timeout-minutes: 115

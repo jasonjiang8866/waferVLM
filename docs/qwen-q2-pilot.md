@@ -33,3 +33,18 @@ The [manual GPU workflow](../.github/workflows/qwen-q2.yml) checks global invent
 The [first allocation](https://github.com/jasonjiang8866/waferVLM/actions/runs/44990448161) received an RTX 4090 in US-NC-1 at US$0.89/hour. The worker endpoint returned HTTP 404 until startup timed out. The allocation consumed an estimated US$0.31313 and 20.90 minutes through verified absence, including ephemeral disk. This leaves 69.10 minutes of work and ten minutes of cleanup in the pilot budget. Its original startup command raises `FileNotFoundError` on an empty filesystem without `/workspace`. The remote diagnostic records error categories only. A replacement requires the original startup-timeout artifact and both deletion receipts, verified by SHA-256, plus exactly one new intent and the original intent. The controller subtracts the first allocation from the **same US$5 and 100 minutes**, including startup and validation, and reserves ten minutes for cleanup. It rechecks inventory and account headroom immediately before allocating. The default dispatch performs read-only preflight.
 
 After both arms finish, the controller retrieves the two adapters, observed epoch orders, gradient diagnostics and all 320 raw validation predictions. It recalculates the paired comparison from those predictions. A separate [cleanup workflow](../.github/workflows/qwen-q2-cleanup.yml) checks the originating Pod independently. Cost uses an allocation-intent-to-absence estimate including ephemeral disk.
+
+### Dispatch receipts
+
+From a checkout containing the receipt workflow, use an authenticated GitHub CLI, jq and Python 3. To test the GitHub dispatch path on a development branch, pass its pushed branch name and reviewed commit. Only the receipt job runs there. On `main` the default also checks live inventory and the reconciled budget.
+
+```bash
+bash scripts/qwen_q2_dispatch.sh submit /tmp/qwen-q2-probe "$(git branch --show-current)" "$(git rev-parse HEAD)"
+bash scripts/qwen_q2_dispatch.sh find /tmp/qwen-q2-probe
+```
+
+The first command records the request locally before posting it once. GitHub API version `2026-03-10` returns the run ID and URL in the response. If the response is lost, reuse the same directory with `find`. It performs GET requests and matches the workflow, branch, revision and request ID. The ID identifies a request for lookup. Submitting from a new directory creates a separate request.
+
+For an authorized paid launch, use a new receipt directory, the `main` ref, its reviewed SHA and the explicit `--paid` switch. A run URL confirms dispatch. GPU allocation and both arms' predictions require their respective controller artifacts. The Actions web form also accepts an optional request ID.
+
+[GitHub workflow dispatch API](https://docs.github.com/en/rest/actions/workflows?apiVersion=2026-03-10#create-a-workflow-dispatch-event)
