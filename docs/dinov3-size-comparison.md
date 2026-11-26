@@ -35,3 +35,11 @@ The [completed seed-17 RTX 4090 comparison](showcase/dinov3-size17/README.md) in
 On the DINO study workflow select `size17`, the exact main SHA and `NVIDIA GeForce RTX 4090`. The existing DINO ledger, inventory checks, one-create receipt, independent cleanup and 45-minute work / 10-minute cleanup bounds apply. Small comes from the pinned historical image. Actions stages and hashes Base before allocation, then sends the two pinned files to the temporary Pod through the authenticated chunk endpoint. The credential stays on the runner. The overlay digest binds the new training source separately from the underlying image.
 
 All four arms share one Pod. Primary metrics use the selected epoch's batch-8 development predictions. Acceptance rechecks the 160 sample identities, all eight probabilities, 990 updates, 7,900 presentations, earliest best epoch and selected weight hashes. The archive retains the four exports. The report includes both paired accuracy tables, macro-F1 deltas, loc IDs in each outcome, timing and peak training allocation.
+
+## Cross-seed development confirmation
+
+Select `size-confirmation` and the explicit RTX 4090 on the same manual workflow. One temporary Pod trains Base linear and Base LoRA at seeds 42 and 123. Each run uses the seed-17 recipe and its selected epoch's batch-8 predictions. This dispatch produces four new weight exports and 640 new validation predictions.
+
+Before allocation the runner opens the original Small [training archive](https://github.com/jasonjiang8866/waferVLM/actions/runs/44537796019), checks both archive hashes and all four exported file manifests against the frozen endpoints, and validates the original selected-epoch predictions against all 160 map IDs, labels and image hashes. It reuses those four sets of predictions. The seed-17 reference is the separately pinned four-arm 4090 pilot. No additional Small fit or holdout pass is required for this development comparison.
+
+CPU acceptance reports Base minus Small separately for linear and LoRA at each seed. The primary outcome is the signed LoRA macro-F1 difference, reported for all three seeds, including ties and regressions. Each pair also records four correctness counts and the loc IDs in each cell. The phase counts new and reused rows separately. Evaluation on the 148 unseen-lot maps requires a later freeze.

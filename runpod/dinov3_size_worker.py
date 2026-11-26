@@ -1,4 +1,4 @@
-"""One temporary 4090 for four seed-17 development fits."""
+"""One temporary 4090 for four development fits."""
 import json
 import os
 import shutil
@@ -11,7 +11,7 @@ from http.server import ThreadingHTTPServer
 from pathlib import Path
 
 from runpod import dinov3_worker as w
-from runpod.dinov3_size17 import ARMS, train_args
+from runpod.dinov3_size17 import training_arms, train_args
 from wafervlm.dinov3_backbones import BACKBONES
 
 
@@ -27,7 +27,7 @@ class BaseUpload(w.Handler):
 
 
 def work():
-    record = dict(phase='size17', controller_sha=os.environ['DINO_CONTROLLER_SHA'],
+    record = dict(phase=os.environ['DINO_PHASE'], controller_sha=os.environ['DINO_CONTROLLER_SHA'],
                   image=os.environ['DINO_IMAGE'], image_source_sha=os.environ['WAFERVLM_SOURCE_SHA'],
                   plan_sha256=os.environ['DINO_PLAN_SHA256'], overlay_sha256=os.environ['DINO_OVERLAY_SHA256'])
     try:
@@ -51,9 +51,8 @@ def work():
         run('data',['scripts/prepare_public_data.py','--trust-pickle','--cache','/workspace/dino-source',
                     '--output',str(w.DATASET)])
         shutil.copyfile(w.DATASET/'validation.jsonl',w.OUT/'validation.jsonl')
-        for size, mode in ARMS:
-            name = size+'-'+mode
-            run(name,train_args(size,mode,w.DATASET,w.OUT/'models'/name))
+        for seed, size, mode, name in training_arms(record['phase']):
+            run(name,train_args(size,mode,w.DATASET,w.OUT/'models'/name,seed=seed))
         record['status']='completed'
     except Exception as exc:
         record.update(status='rejected',error_type=type(exc).__name__,failed_phase=w.STATE.get('phase'))

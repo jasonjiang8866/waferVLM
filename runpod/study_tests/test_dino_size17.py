@@ -73,3 +73,35 @@ class SizePilotTests(unittest.TestCase):
             seal_output(folder)
             with self.assertRaisesRegex(ValueError,'training export'):
                 size.verify(root,launch)
+
+    def test_confirmation_bootstrap_and_distinct_training_seeds(self):
+        code, _ = overlay('size-confirmation')
+        check_create_payload(dict(cmd=[code]))
+        self.assertIn('runpod.dinov3_size_worker', code)
+        arms = size.training_arms('size-confirmation')
+        self.assertEqual([(s, b, m) for s, b, m, _ in arms],
+                         [(s, 'base', m) for s in (42, 123) for m in ('linear', 'lora')])
+        self.assertEqual(len({name for _, _, _, name in arms}), 4)
+        for seed, backbone, mode, name in arms:
+            args = size.train_args(backbone, mode, 'data', 'out', seed)
+            self.assertEqual(name, f'seed{seed}-base-{mode}')
+            self.assertEqual(args[args.index('--seed')+1], str(seed))
+
+    def test_confirmation_report_keeps_seed_pairs_separate(self):
+        from unittest.mock import patch
+        from runpod import dinov3_size_confirmation as confirm
+        ref = size.reference_for('validation')
+        truth = [r['label'] for r in ref]
+        wrong = ['center' if y != 'center' else 'loc' for y in truth]
+        scores, predictions, small_scores, small_labels = {}, {}, {}, {}
+        for seed, _, mode, name in size.training_arms('size-confirmation'):
+            small = name.replace('-base-', '-small-')
+            predictions[name], small_labels[small] = (truth,wrong) if seed == 42 else (wrong,truth)
+            for key, source, destination in ((small,small_labels,small_scores),(name,predictions,scores)):
+                destination[key] = metrics([dict(label=y,prediction=z) for y,z in zip(truth,source[key])])
+        with patch.object(confirm, 'small_models', return_value=(small_scores,small_labels)):
+            result = confirm.confirmation_report(ref, scores, predictions, None)
+        self.assertEqual(result['positive_macro_f1_seeds']['lora'], [17,42])
+        self.assertEqual(result['comparisons']['42']['linear']['counts']['base_only'],160)
+        self.assertEqual(result['comparisons']['123']['lora']['counts']['small_only'],160)
+        self.assertEqual(result['holdout_predictions'],0)
