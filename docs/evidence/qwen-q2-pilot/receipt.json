@@ -1,0 +1,76 @@
+{
+  "run_id": 46126542132,
+  "artifact_id": 15257840588,
+  "artifact_sha256": "f001d80027b0d6d30cb7b6abe3356d476df4fd90acf24a0df118c4ccecd54bbc",
+  "independent_run_id": 46130596437,
+  "independent_artifact_id": 15257666042,
+  "independent_artifact_sha256": "0245497ad407b9f1b564371b93a559ee557be425416c787460a0cf2bc64f87e8",
+  "launch": {
+    "source_sha": "11d2e5f088b350dd9391864dbe2869417fff5af7",
+    "controller_sha": "0b34af96798c058471dcaab2536790e43b52b173",
+    "image": "ghcr.io/jasonjiang8866/wafervlm@sha256:a6d31b4f12c2c3ee64c59d08b1e67c89e9bbf9b46cbdb4179417f1d1efa3fa79",
+    "gpu": "NVIDIA GeForce RTX 4090",
+    "gpu_hourly_usd": 0.89,
+    "ledger": {
+      "attempts": [
+        44990448161
+      ],
+      "usd": 11.73632611857979,
+      "seconds": 48727.797328281405
+    },
+    "phase": "q2-pair-pilot",
+    "config_sha256": "bf3519120fb510af90d8615e9d1dd80b8d2030a06a6c2f81a00f81bd88eaf47c"
+  },
+  "allocation": {
+    "id": "4s07dqs3far53q",
+    "gpu": "NVIDIA GeForce RTX 4090",
+    "data_center": "US-TX-3",
+    "observed_hourly_usd": 0.89
+  },
+  "primary_cleanup": {
+    "status": "verified_absent",
+    "name": "wafer-20261107-usd20-q2pilot-46126542132",
+    "checked_epoch": 1795858066.2682655,
+    "consecutive_absent_checks": 3,
+    "creation_confirmed": true,
+    "elapsed_billing_bound_s": 3087.26970911026,
+    "estimated_total_usd": 12.507224715586785,
+    "within_budget": true,
+    "estimated_total_seconds": 51815.067037391666,
+    "within_runtime": true,
+    "persistent_volumes_created": false,
+    "cost_basis": "conservative_intent_to_absence_estimate_not_invoice"
+  },
+  "independent_cleanup": {
+    "status": "verified_absent",
+    "name": "wafer-20261107-usd20-q2pilot-46126542132",
+    "checked_epoch": 1795858105.60653,
+    "consecutive_absent_checks": 3,
+    "creation_confirmed": false,
+    "cost": "unverified_no_local_intent"
+  },
+  "archive": {
+    "size": 40460848,
+    "sha256": "e47e1b294106875b719db5262ea8c9ab0a411100a77b5a0bd2e59170fcf22634"
+  },
+  "arms": {
+    "control": {
+      "executed_steps": 99,
+      "gradient_checks": 99,
+      "nonzero_gradient_checks": 99,
+      "initial_trainable_sha256": "908420aa564383d5d7dab9afa14986c5fb2b0281d8368a55d80cd5ccd78bc05b",
+      "predictions_sha256": "5a452de172d2ad86aae69fe29249f5b8591e4fefaa82b8623d712cf007237e16",
+      "epoch_order_sha256": "2bcc0565fd923adac91189ae7dfc16a458a307a9864b910a015bc79a8be7b6a2",
+      "adapter_sha256": "fde8761ca473a613173ef6955a6d5eb605556f58376342ef37b54d6caf8a3eca"
+    },
+    "matched": {
+      "executed_steps": 99,
+      "gradient_checks": 99,
+      "nonzero_gradient_checks": 99,
+      "initial_trainable_sha256": "908420aa564383d5d7dab9afa14986c5fb2b0281d8368a55d80cd5ccd78bc05b",
+      "predictions_sha256": "20aca57584efed0a4397854d9ddd172bb820c5393d02336437857991e4250e36",
+      "epoch_order_sha256": "720684f5b4a6575c78ebec835c8fb4f78f4ee35ca25198bee09dfd48edc7e6b2",
+      "adapter_sha256": "0a8da8ebcd82115f6f044e1a304a416023768605eee85aa72c4c5a3ac68855ae"
+    }
+  }
+}

@@ -1,0 +1,95 @@
+{
+  "arms": {
+    "control": {
+      "q2_loc_hits": 1,
+      "q2_loc_maps": 9,
+      "loc_recall": 0.35,
+      "false_loc": 8,
+      "false_loc_by_class": {
+        "center": 4,
+        "donut": 1,
+        "edge-loc": 1,
+        "edge-ring": 0,
+        "near-full": 1,
+        "random": 0,
+        "scratch": 1
+      },
+      "accuracy": 0.65625,
+      "macro_f1": 0.6499623689644178,
+      "invalid_rate": 0.0
+    },
+    "matched": {
+      "q2_loc_hits": 5,
+      "q2_loc_maps": 9,
+      "loc_recall": 0.5,
+      "false_loc": 23,
+      "false_loc_by_class": {
+        "center": 9,
+        "donut": 2,
+        "edge-loc": 4,
+        "edge-ring": 0,
+        "near-full": 0,
+        "random": 0,
+        "scratch": 8
+      },
+      "accuracy": 0.51875,
+      "macro_f1": 0.49495327081132057,
+      "invalid_rate": 0.0
+    }
+  },
+  "delta_matched_minus_control": {
+    "q2_loc_hits": 4,
+    "loc_recall": 0.15000000000000002,
+    "false_loc": 15,
+    "macro_f1": -0.15500909815309727,
+    "accuracy": -0.13749999999999996,
+    "invalid_rate": 0.0
+  },
+  "q2_paired": [
+    {
+      "id": "0dba1dc3f2c5cf63eda306ba",
+      "control": "scratch",
+      "matched": "loc"
+    },
+    {
+      "id": "1c18eef61ba0d63614e7f7b4",
+      "control": "scratch",
+      "matched": "loc"
+    },
+    {
+      "id": "25655dcf08e945365c42b097",
+      "control": "scratch",
+      "matched": "scratch"
+    },
+    {
+      "id": "4000f35bad1dc0340fe42ced",
+      "control": "loc",
+      "matched": "loc"
+    },
+    {
+      "id": "6b50767f9fb76204a06fd462",
+      "control": "scratch",
+      "matched": "scratch"
+    },
+    {
+      "id": "9fabe2d02816a95875a4036d",
+      "control": "donut",
+      "matched": "loc"
+    },
+    {
+      "id": "a0e728f5e17ab47d730338ad",
+      "control": "scratch",
+      "matched": "scratch"
+    },
+    {
+      "id": "be8bdd8417b86a07da6a61f2",
+      "control": "edge-loc",
+      "matched": "loc"
+    },
+    {
+      "id": "c882bea412b6513af0935266",
+      "control": "edge-loc",
+      "matched": "edge-loc"
+    }
+  ]
+}

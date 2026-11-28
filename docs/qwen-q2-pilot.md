@@ -17,6 +17,29 @@ All 37 Q2 training loc maps receive one distinct peer. In ascending loc-area ord
 
 Report all nine paired predictions and both directions of change even if results worsen. Treat an increase in Q2 hits with no increase in overall false loc calls and no decrease in macro-F1 as a reason to repeat with additional seeds. A single Q2 map moves recall by 11.1 percentage points. No reserved-lot score is used for this decision.
 
+## Seed-17 results
+
+Both arms completed 99 updates on the same RTX 4090 and produced a prediction for each of the 160 validation maps. The training records agree on the initial LoRA weight hash. Replaying the observed orders confirmed equal training exposure and the 37 intended pairs.
+
+| Validation metric | Default order | Matched order |
+| --- | ---: | ---: |
+| Correct on target Q2 loc maps | 1/9 | 5/9 |
+| Recall across all loc maps | 7/20 | 10/20 |
+| False loc calls among the 140 other maps | 8 | 23 |
+| Accuracy | 105/160 (65.625%) | 83/160 (51.875%) |
+| Eight-class macro-F1 | 0.649962 | 0.494953 |
+| Invalid outputs | 0 | 0 |
+
+Four target maps switched to the correct label and none switched away. Two had been called scratch, one donut and one edge-loc. Across the full validation set, 10 errors were corrected and 32 previously correct calls became errors. Among true scratch maps, false loc calls rose from 1 to 8. Among true center maps, they rose from 4 to 9. The pilot failed its prespecified criterion for repeating the matched order with more seeds. This comparison covers one seed on development data. [All nine paired calls and metrics](evidence/qwen-q2-pilot/comparison.json)
+
+Recompute the table using the checked-in predictions and the existing frozen validation manifest from the repository root.
+
+```sh
+PYTHONPATH=src python analysis/qwen_q2_pilot.py score docs/showcase/dinov3-seed17 docs/evidence/qwen-q2-pilot
+```
+
+The successful allocation ran in US-TX-3 at US$0.89 per GPU-hour. Its conservative estimate including temporary disk was US$0.7709 over 51.45 minutes. Together with the earlier startup timeout, the pilot used an estimated US$1.0840 and 72.35 minutes of the US$5 and 100-minute allowance. The controller and independent cleanup each recorded three consecutive checks confirming the Pod was absent. The run artifact contains the adapters, training orders and original worker logs. [GPU run](https://github.com/jasonjiang8866/waferVLM/actions/runs/46126542132) · [Independent cleanup](https://github.com/jasonjiang8866/waferVLM/actions/runs/46130596437) · [Artifact hashes and receipts](evidence/qwen-q2-pilot/receipt.json)
+
 ## Run and verify
 
 With the locked training dependencies installed, run from the repository root:

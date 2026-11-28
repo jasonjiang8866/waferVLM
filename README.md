@@ -43,6 +43,8 @@ All 18 passes and 2,880 predictions were independently verified. Repeats ran acr
 
 These are **recorded checkpoint-250 validation predictions**, including a mistake. [Inspect the full prompt, sample IDs, original predictions and reproduction steps](docs/showcase/checkpoint-250/README.md).
 
+A separate seed-17 pilot compared two training orders over one epoch. Area matching raised correct calls on nine target `loc` maps from 1 to 5. False `loc` calls rose from 8 to 23 on the other classes, and overall macro-F1 fell from 0.6500 to 0.4950. [Paired validation results](docs/qwen-q2-pilot.md#seed-17-results)
+
 ## Eight defect-pattern labels
 
 ![Eight real WM-811K wafer maps explaining center, donut, edge-loc, edge-ring, loc, near-full, random and scratch.](docs/showcase/checkpoint-250/label-atlas.png)
